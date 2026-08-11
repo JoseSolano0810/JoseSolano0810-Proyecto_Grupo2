@@ -1,4 +1,5 @@
 <?php
+
 require_once ROOT_PATH . '/database/Database.php';
 require_once ROOT_PATH . '/models/Tratamiento.php';
 require_once ROOT_PATH . '/services/AuthService.php';
@@ -15,6 +16,7 @@ class TratamientoController
 
     public function listar(): array
     {
+
         return [
             ['paciente'=>'Ana Rojas',    'tratamiento'=>'Ortodoncia fase 2',     'progreso'=>72, 'sesiones_total'=>12,'sesiones_realizadas'=>8, 'inicio'=>'10/03/2026','estado'=>'proceso'],
             ['paciente'=>'Luis Vargas',  'tratamiento'=>'Implante dental',        'progreso'=>45, 'sesiones_total'=>6, 'sesiones_realizadas'=>3, 'inicio'=>'15/04/2026','estado'=>'proceso'],
@@ -26,11 +28,13 @@ class TratamientoController
 
     public function crear(): void
     {
+
         echo json_encode(['ok' => true, 'demo' => true]);
     }
 
     public function actualizarProgreso(): void
     {
+
         echo json_encode(['ok' => true, 'demo' => true]);
     }
 }

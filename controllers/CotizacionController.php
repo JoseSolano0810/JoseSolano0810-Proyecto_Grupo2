@@ -1,4 +1,5 @@
 <?php
+
 require_once ROOT_PATH . '/database/Database.php';
 require_once ROOT_PATH . '/models/Cotizacion.php';
 require_once ROOT_PATH . '/services/AuthService.php';
@@ -16,6 +17,7 @@ class CotizacionController
 
     public function listar(): array
     {
+
         return [
             ['id'=>'COT-001','paciente'=>'Ana Rojas',    'fecha'=>'28/07/2026','monto'=>84071,'iva'=>10929,'total'=>95000, 'estado'=>'aprobada'],
             ['id'=>'COT-002','paciente'=>'Luis Vargas',  'fecha'=>'29/07/2026','monto'=>106195,'iva'=>13805,'total'=>120000,'estado'=>'pendiente'],
@@ -27,11 +29,13 @@ class CotizacionController
 
     public function crear(): void
     {
+
         echo json_encode(['ok' => true, 'demo' => true]);
     }
 
     public function aprobar(): void
     {
+
         echo json_encode(['ok' => true, 'demo' => true]);
     }
 }

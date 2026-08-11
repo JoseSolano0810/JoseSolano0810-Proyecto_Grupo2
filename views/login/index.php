@@ -8,36 +8,32 @@
     <link rel="stylesheet" href="<?= BASE_URL ?>/public/css/estilos.css">
 </head>
 <body>
+
 <div class="pagina-login">
+
     <div class="login-panel-izquierdo">
         <div class="login-logo">
             <div class="login-logo-icono"><i class="bi bi-heart-pulse"></i></div>
             <span class="login-logo-texto">Odent</span>
         </div>
-
         <h2 class="login-titulo-panel">Centro Odontológico<br>en un solo lugar</h2>
-
         <p class="login-subtitulo-panel">
             Gestión clínica, administrativa y financiera
             integrada para todo el equipo de la clínica.
         </p>
-
         <div class="login-caracteristicas">
             <div class="login-caracteristica">
                 <i class="bi bi-calendar2-check"></i>
                 <span>Agenda y citas en tiempo real</span>
             </div>
-
             <div class="login-caracteristica">
                 <i class="bi bi-file-medical"></i>
                 <span>Expedientes clínicos digitales</span>
             </div>
-
             <div class="login-caracteristica">
                 <i class="bi bi-shield-check"></i>
                 <span>Acceso controlado por rol</span>
             </div>
-
             <div class="login-caracteristica">
                 <i class="bi bi-graph-up-arrow"></i>
                 <span>Reportes y bitácora de auditoría</span>
@@ -47,6 +43,7 @@
 
     <div class="login-panel-derecho">
         <div class="login-card">
+
             <div class="login-encabezado">
                 <span class="etiqueta-odent">ODENT</span>
                 <h1>Iniciar sesión</h1>
@@ -61,35 +58,22 @@
             <?php endif; ?>
 
             <form action="<?= BASE_URL ?>/index.php?accion=login" method="POST" id="form-login">
+
                 <div class="campo-grupo">
                     <label for="nombre">Nombre de usuario</label>
-
                     <div class="input-icono">
                         <i class="bi bi-person"></i>
-
-                        <input
-                            type="text"
-                            id="nombre"
-                            name="nombre"
-                            placeholder="Ingrese su usuario"
-                            autocomplete="username"
-                        >
+                        <input type="text" id="nombre" name="nombre"
+                               placeholder="Ingrese su usuario" autocomplete="username">
                     </div>
                 </div>
 
                 <div class="campo-grupo">
                     <label for="contrasena">Contraseña</label>
-
                     <div class="input-icono">
                         <i class="bi bi-lock"></i>
-
-                        <input
-                            type="password"
-                            id="contrasena"
-                            name="contrasena"
-                            placeholder="Ingrese su contraseña"
-                            autocomplete="current-password"
-                        >
+                        <input type="password" id="contrasena" name="contrasena"
+                               placeholder="Ingrese su contraseña" autocomplete="current-password">
                     </div>
                 </div>
 
@@ -97,6 +81,7 @@
                     <i class="bi bi-box-arrow-in-right"></i>
                     Ingresar al sistema
                 </button>
+
             </form>
 
             <div class="divisor-acceso">Acceso de demostración</div>
@@ -125,8 +110,10 @@
                     <i class="bi bi-chevron-right flecha"></i>
                 </a>
             </div>
+
         </div>
     </div>
+
 </div>
 
 <script src="<?= BASE_URL ?>/public/js/app.js"></script>

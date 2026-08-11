@@ -1,7 +1,5 @@
 
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@500;600;700&display=swap');
-
 
 :root {
     --azul-odent:    #17324D;
@@ -20,7 +18,6 @@
     --transicion:    .2s ease;
 }
 
-
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -32,7 +29,6 @@ body {
 }
 
 a { text-decoration: none; color: inherit; }
-
 
 h1, h2, h3, h4, h5, h6 {
     font-family: 'Montserrat', sans-serif;
@@ -52,7 +48,6 @@ h4 { font-size: 18px; font-weight: 600; }
     color: var(--verde-odent);
     text-transform: uppercase;
 }
-
 
 .btn-odent {
     background-color: var(--azul-odent);
@@ -109,7 +104,6 @@ h4 { font-size: 18px; font-weight: 600; }
 }
 .btn-peligro:hover { background-color: #a93226; }
 
-
 .tarjeta {
     background-color: var(--blanco);
     border: 1px solid var(--borde);
@@ -117,7 +111,6 @@ h4 { font-size: 18px; font-weight: 600; }
     padding: 24px;
     box-shadow: var(--sombra);
 }
-
 
 .campo-grupo {
     display: flex;
@@ -151,7 +144,6 @@ h4 { font-size: 18px; font-weight: 600; }
     box-shadow: 0 0 0 3px rgba(47,127,122,.15);
 }
 
-
 .tabla-odent {
     width: 100%;
     border-collapse: collapse;
@@ -175,7 +167,6 @@ h4 { font-size: 18px; font-weight: 600; }
 }
 .tabla-odent tbody tr:hover { background-color: #f0f4f6; }
 
-
 .badge-estado {
     display: inline-block;
     padding: 3px 10px;
@@ -187,7 +178,6 @@ h4 { font-size: 18px; font-weight: 600; }
 .badge-pendiente, .badge-proceso   { background-color:#fff8e1; color:#f59e0b; }
 .badge-cancelada, .badge-inactivo  { background-color:#fde8e8; color:#C0392B; }
 .badge-completada                  { background-color:#e8f4fd; color:#17324D; }
-
 
 .pagina-login {
     min-height: 100vh;
@@ -447,12 +437,10 @@ h4 { font-size: 18px; font-weight: 600; }
     flex-shrink: 0;
 }
 
-
 .layout-app {
     display: flex;
     min-height: 100vh;
 }
-
 
 .sidebar {
     width: var(--sidebar-w);
@@ -593,7 +581,6 @@ h4 { font-size: 18px; font-weight: 600; }
 }
 .btn-cerrar-sesion:hover { color: #fc8181; }
 
-
 .contenido-principal {
     margin-left: var(--sidebar-w);
     flex: 1;
@@ -601,7 +588,6 @@ h4 { font-size: 18px; font-weight: 600; }
     flex-direction: column;
     min-height: 100vh;
 }
-
 
 .topbar {
     height: var(--header-h);
@@ -665,10 +651,8 @@ h4 { font-size: 18px; font-weight: 600; }
     color: var(--gris-azulado);
 }
 
-
 .pagina { display: none; padding: 28px; }
 .pagina.activa { display: block; }
-
 
 .kpi-grid {
     display: grid;
@@ -715,7 +699,6 @@ h4 { font-size: 18px; font-weight: 600; }
     margin-top: 3px;
 }
 
-
 .panel-grid {
     display: grid;
     gap: 22px;
@@ -730,7 +713,6 @@ h4 { font-size: 18px; font-weight: 600; }
     margin-bottom: 16px;
 }
 .panel-titulo h3 { font-size: 16px; }
-
 
 .cita-item {
     display: flex;
@@ -755,7 +737,6 @@ h4 { font-size: 18px; font-weight: 600; }
 .cita-paciente { font-size: 14px; font-weight: 500; }
 .cita-tratamiento { font-size: 12px; color: var(--gris-azulado); margin-top: 1px; }
 
-
 .tratamiento-item { margin-bottom: 16px; }
 .tratamiento-header {
     display: flex;
@@ -776,7 +757,6 @@ h4 { font-size: 18px; font-weight: 600; }
     border-radius: 10px;
     transition: width .6s ease;
 }
-
 
 .odontograma-container {
     background: var(--blanco);
@@ -832,7 +812,6 @@ h4 { font-size: 18px; font-weight: 600; }
     border: 1.5px solid;
 }
 
-
 .inventario-item {
     display: flex;
     align-items: center;
@@ -857,7 +836,6 @@ h4 { font-size: 18px; font-weight: 600; }
 .inventario-nombre { font-size: 14px; font-weight: 500; }
 .inventario-stock  { font-size: 12px; color: var(--gris-azulado); }
 .stock-bajo { color: #C0392B; font-weight: 600; }
-
 
 .paciente-bienvenida {
     background: linear-gradient(120deg, var(--azul-odent) 0%, var(--verde-odent) 100%);
@@ -908,7 +886,6 @@ h4 { font-size: 18px; font-weight: 600; }
     font-weight: 700;
     color: #856404;
 }
-
 
 .asistente-chat {
     display: flex;
@@ -973,7 +950,6 @@ h4 { font-size: 18px; font-weight: 600; }
 }
 .chat-input button:hover { background: var(--azul-odent); }
 
-
 .alerta {
     padding: 12px 18px;
     border-radius: var(--radio);
@@ -987,7 +963,6 @@ h4 { font-size: 18px; font-weight: 600; }
 .alerta.exito   { background:#e0f2f1; color:#2F7F7A; border-left:4px solid var(--verde-odent); }
 .alerta.peligro { background:#fde8e8; color:#C0392B; border-left:4px solid #C0392B; }
 .alerta.aviso   { background:#fff8e1; color:#856404; border-left:4px solid #ffc107; }
-
 
 .modal-overlay {
     position: fixed;
@@ -1042,7 +1017,6 @@ h4 { font-size: 18px; font-weight: 600; }
     justify-content: flex-end;
     margin-top: 24px;
 }
-
 
 @media (max-width: 900px) {
     .login-panel-izquierdo { display: none; }

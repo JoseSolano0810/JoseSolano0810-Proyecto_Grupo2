@@ -1,7 +1,7 @@
 <?php
+
 require_once __DIR__ . '/config/config.php';
 
-// Cargar controllers
 require_once ROOT_PATH . '/controllers/LoginController.php';
 require_once ROOT_PATH . '/controllers/CitaController.php';
 require_once ROOT_PATH . '/controllers/PacienteController.php';
@@ -10,14 +10,11 @@ require_once ROOT_PATH . '/controllers/CotizacionController.php';
 require_once ROOT_PATH . '/controllers/PagoController.php';
 require_once ROOT_PATH . '/services/AuthService.php';
 
-
 $accion = $_GET['accion'] ?? 'inicio';
 $metodo = $_SERVER['REQUEST_METHOD'];
 
-//  Enrutador 
 switch ($accion) {
 
-    /*  Login  */
     case 'inicio':
     case 'login':
         $ctrl = new LoginController();
@@ -32,13 +29,11 @@ switch ($accion) {
         AuthService::cerrarSesion();
         break;
 
-    /*  Demo sin BD  */
     case 'demo':
         $rol = $_GET['rol'] ?? 'odontologo';
         cargarDashboardDemo($rol);
         break;
 
-    /*  Citas   */
     case 'citas.listar':
         $ctrl = new CitaController();
         echo json_encode($ctrl->listar());
@@ -54,7 +49,6 @@ switch ($accion) {
         $ctrl->cancelar();
         break;
 
-    /*  Pacientes  */
     case 'pacientes.listar':
         $ctrl = new PacienteController();
         echo json_encode($ctrl->listar());
@@ -65,7 +59,6 @@ switch ($accion) {
         $ctrl->crear();
         break;
 
-    /*  Cotizaciones  */
     case 'cotizaciones.listar':
         $ctrl = new CotizacionController();
         echo json_encode($ctrl->listar());
@@ -76,7 +69,6 @@ switch ($accion) {
         $ctrl->crear();
         break;
 
-    /*  Pagos  */
     case 'pagos.listar':
         $ctrl = new PagoController();
         echo json_encode($ctrl->listar());
@@ -87,7 +79,6 @@ switch ($accion) {
         $ctrl->registrar();
         break;
 
-    /*  Tratamientos  */
     case 'tratamientos.listar':
         $ctrl = new TratamientoController();
         echo json_encode($ctrl->listar());
@@ -98,7 +89,6 @@ switch ($accion) {
         $ctrl->crear();
         break;
 
-    /*  Error  */
     default:
         http_response_code(404);
         $ctrl = new LoginController();
@@ -106,7 +96,6 @@ switch ($accion) {
         break;
 }
 
-/*  Funcion auxiliar modo demo */
 function cargarDashboardDemo(string $rol): void
 {
     $citaCtrl        = new CitaController();
@@ -118,7 +107,8 @@ function cargarDashboardDemo(string $rol): void
     switch ($rol) {
 
         case 'odontologo':
-            $usuario       = ['nombre' => 'Dra. Melissa Salguero', 'iniciales' => 'MS'];
+
+            $usuario       = ['nombre' => 'Dr. Carlos Méndez', 'iniciales' => 'CM'];
             $pagina_activa = 'inicio';
             $citas         = $citaCtrl->listar();
             $pacientes     = $pacienteCtrl->listar();
@@ -137,7 +127,7 @@ function cargarDashboardDemo(string $rol): void
             break;
 
         case 'recepcionista':
-            $usuario       = ['nombre' => 'Sofia Salguero', 'iniciales' => 'SS'];
+            $usuario       = ['nombre' => 'Laura Jiménez', 'iniciales' => 'LJ'];
             $pagina_activa = 'inicio';
             $citas         = $citaCtrl->listar();
             $pacientes     = $pacienteCtrl->listar();
@@ -147,7 +137,7 @@ function cargarDashboardDemo(string $rol): void
             break;
 
         case 'paciente':
-            $usuario         = ['nombre' => 'Jose Solano', 'iniciales' => 'JS'];
+            $usuario         = ['nombre' => 'Ana Rojas', 'iniciales' => 'AR'];
             $pagina_activa   = 'inicio';
             $mis_citas       = $citaCtrl->listar();
             $mis_tratamientos = $tratamientoCtrl->listar();
@@ -155,7 +145,7 @@ function cargarDashboardDemo(string $rol): void
             $saldo_pendiente = 60000;
             $proxima_cita    = [
                 'mes'=>'AGO','dia'=>'14','hora'=>'09:00 a.m.',
-                'odontologo'=>'Dra. Melissa Salguero','tratamiento'=>'Control de ortodoncia',
+                'odontologo'=>'Dr. Carlos Méndez','tratamiento'=>'Control de ortodoncia',
             ];
             require_once ROOT_PATH . '/views/paciente/index.php';
             break;

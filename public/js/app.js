@@ -1,3 +1,4 @@
+
 'use strict';
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -8,7 +9,6 @@ document.addEventListener('DOMContentLoaded', function () {
     iniciarValidacionLogin();
 });
 
-
 function iniciarFechaTopbar() {
     const el = document.querySelector('.topbar-fecha');
     if (!el) return;
@@ -17,23 +17,19 @@ function iniciarFechaTopbar() {
     el.textContent = hoy.toLocaleDateString('es-CR', opciones);
 }
 
-
 function mostrarPagina(slug) {
-    
+
     document.querySelectorAll('.pagina').forEach(p => p.classList.remove('activa'));
 
-    
     const target = document.getElementById('pagina-' + slug);
     if (target) target.classList.add('activa');
 
-    
     document.querySelectorAll('.sidebar-enlace').forEach(l => l.classList.remove('activo'));
     const enlaceActivo = document.querySelector(`.sidebar-enlace[onclick*="'${slug}'"]`);
     if (enlaceActivo) enlaceActivo.classList.add('activo');
 
     actualizarTopbarTitulo();
 
-    
     if (window.innerWidth < 768) {
         document.getElementById('sidebar')?.classList.remove('abierto');
     }
@@ -65,12 +61,11 @@ function actualizarTopbarTitulo() {
     topbar.textContent = titulos[slug] || 'Panel';
 }
 
-
 function abrirModal(id) {
     const m = document.getElementById(id);
     if (m) {
         m.classList.add('abierto');
-        
+
         document.body.style.overflow = 'hidden';
     }
 }
@@ -83,14 +78,12 @@ function cerrarModal(id) {
     }
 }
 
-
 document.addEventListener('click', function (e) {
     if (e.target.classList.contains('modal-overlay')) {
         e.target.classList.remove('abierto');
         document.body.style.overflow = '';
     }
 });
-
 
 document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
@@ -101,11 +94,10 @@ document.addEventListener('keydown', function (e) {
     }
 });
 
-
 let dienteSeleccionado = null;
 
 function seleccionarDiente(numero) {
-    
+
     if (dienteSeleccionado) {
         document.getElementById('diente-' + dienteSeleccionado)?.classList.remove('seleccionado');
     }
@@ -114,13 +106,12 @@ function seleccionarDiente(numero) {
     const el = document.getElementById('diente-' + numero);
     if (el) el.classList.add('seleccionado');
 
-    
     document.getElementById('detalle-diente').style.display = 'none';
     const panelEdicion = document.getElementById('panel-edicion-diente');
     if (panelEdicion) {
         panelEdicion.style.display = 'block';
         document.getElementById('diente-numero').value = numero;
-        
+
         const estadoActual = el ? [...el.classList].find(c => ['sano','caries','corona','ausente'].includes(c)) : 'sano';
         document.getElementById('diente-estado').value = estadoActual || 'sano';
     }
@@ -131,11 +122,11 @@ function guardarDiente() {
     const nuevoEstado = document.getElementById('diente-estado').value;
     const el = document.getElementById('diente-' + dienteSeleccionado);
     if (el) {
-        
+
         el.classList.remove('sano','caries','corona','ausente');
         el.classList.add(nuevoEstado);
     }
-    
+
     cancelarDiente();
     mostrarToast('Pieza ' + dienteSeleccionado + ' actualizada correctamente.', 'exito');
 }
@@ -151,7 +142,6 @@ function cancelarDiente() {
     if (detalle) detalle.style.display = 'block';
 }
 
-
 function iniciarCalculoIVA() {
     const inputMonto = document.getElementById('cot-monto');
     if (!inputMonto) return;
@@ -164,7 +154,6 @@ function iniciarCalculoIVA() {
         document.getElementById('cot-total').value = fmt(total);
     });
 }
-
 
 const respuestasChat = {
     'dolor':       'El dolor dental puede indicar caries profunda, infección o un nervio expuesto. Le recomendamos programar una cita lo antes posible. ¿Es el dolor constante o solo al masticar?',
@@ -197,13 +186,11 @@ function enviarMensajeChat() {
     const texto = input.value.trim();
     if (!texto) return;
 
-    
     const msgUsuario = document.createElement('div');
     msgUsuario.className = 'mensaje usuario';
     msgUsuario.textContent = texto;
     mensajes.appendChild(msgUsuario);
 
-   
     setTimeout(() => {
         const msgBot = document.createElement('div');
         msgBot.className = 'mensaje bot';
@@ -215,7 +202,6 @@ function enviarMensajeChat() {
     input.value = '';
     mensajes.scrollTop = mensajes.scrollHeight;
 
-   
 }
 
 function preguntaRapida(pregunta) {
@@ -229,7 +215,6 @@ function preguntaRapida(pregunta) {
 function chatEnter(e) {
     if (e.key === 'Enter') enviarMensajeChat();
 }
-
 
 function mostrarToast(mensaje, tipo = 'exito') {
     const toast = document.createElement('div');
@@ -247,7 +232,6 @@ function mostrarToast(mensaje, tipo = 'exito') {
     setTimeout(() => toast.remove(), 3500);
 }
 
-
 function iniciarValidacionLogin() {
     const form = document.getElementById('form-login');
     if (!form) return;
@@ -258,10 +242,9 @@ function iniciarValidacionLogin() {
             e.preventDefault();
             mostrarToast('Ingrese su usuario y contraseña.', 'peligro');
         }
-        
+
     });
 }
-
 
 const observador = new IntersectionObserver((entries) => {
     entries.forEach(entry => {

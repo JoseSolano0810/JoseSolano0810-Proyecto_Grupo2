@@ -23,13 +23,12 @@ class Database
         try {
             $this->connection = new PDO($dsn, DB_USER, DB_PASS, $opciones);
         } catch (PDOException $e) {
-            // loggear el error, no mostrarlo
+
             error_log('Error de conexión BD: ' . $e->getMessage());
             die(json_encode(['error' => 'No se pudo conectar a la base de datos.']));
         }
     }
 
-    /** Unica instancia de Database */
     public static function getInstance(): static
     {
         if (self::$instance === null) {
@@ -38,13 +37,11 @@ class Database
         return self::$instance;
     }
 
-    /** Objeto PDO para ejecutar consultas */
     public function getConnection(): PDO
     {
         return $this->connection;
     }
 
-    /** Evita que se clone o serialice la instancia */
     private function __clone() {}
     public function __wakeup() {}
 }
