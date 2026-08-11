@@ -101,7 +101,7 @@ $saldo_pendiente = 60000;
 
 <div class="layout-app">
 
-    <?php include __DIR__ . '/../shared/sidebar.php'; ?>
+    <?php include ROOT_PATH . '/views/shared/sidebar.php'; ?>
 
     <div class="contenido-principal">
 
