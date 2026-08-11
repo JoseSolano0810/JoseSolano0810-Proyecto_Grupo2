@@ -1,9 +1,3 @@
-<?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
-define('ROOT_PATH', str_replace('\\', '/', __DIR__));
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
