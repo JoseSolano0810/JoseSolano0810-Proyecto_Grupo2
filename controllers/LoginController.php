@@ -1,5 +1,4 @@
 <?php
-require_once ROOT_PATH . '/database/Database.php';
 require_once ROOT_PATH . '/models/Usuario.php';
 require_once ROOT_PATH . '/services/AuthService.php';
 
