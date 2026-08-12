@@ -108,7 +108,7 @@ function cargarDashboardDemo(string $rol): void
 
         case 'odontologo':
 
-            $usuario       = ['nombre' => 'Dr. Carlos Méndez', 'iniciales' => 'CM'];
+            $usuario       = ['nombre' => 'Dra. Melissa Salguero', 'iniciales' => 'MS'];
             $pagina_activa = 'inicio';
             $citas         = $citaCtrl->listar();
             $pacientes     = $pacienteCtrl->listar();
@@ -145,7 +145,7 @@ function cargarDashboardDemo(string $rol): void
             $saldo_pendiente = 60000;
             $proxima_cita    = [
                 'mes'=>'AGO','dia'=>'14','hora'=>'09:00 a.m.',
-                'odontologo'=>'Dr. Carlos Méndez','tratamiento'=>'Control de ortodoncia',
+                'odontologo'=>'Dra. Melissa Salguero','tratamiento'=>'Control de ortodoncia',
             ];
             require_once ROOT_PATH . '/views/paciente/index.php';
             break;

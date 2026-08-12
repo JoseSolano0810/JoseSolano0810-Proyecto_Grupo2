@@ -21,24 +21,6 @@
             Gestión clínica, administrativa y financiera
             integrada para todo el equipo de la clínica.
         </p>
-        <div class="login-caracteristicas">
-            <div class="login-caracteristica">
-                <i class="bi bi-calendar2-check"></i>
-                <span>Agenda y citas en tiempo real</span>
-            </div>
-            <div class="login-caracteristica">
-                <i class="bi bi-file-medical"></i>
-                <span>Expedientes clínicos digitales</span>
-            </div>
-            <div class="login-caracteristica">
-                <i class="bi bi-shield-check"></i>
-                <span>Acceso controlado por rol</span>
-            </div>
-            <div class="login-caracteristica">
-                <i class="bi bi-graph-up-arrow"></i>
-                <span>Reportes y bitácora de auditoría</span>
-            </div>
-        </div>
     </div>
 
     <div class="login-panel-derecho">
@@ -84,29 +66,26 @@
 
             </form>
 
-            <div class="divisor-acceso">Acceso de demostración</div>
+            <div class="divisor-acceso">Acceso rápido</div>
 
             <div class="acceso-rapido">
-                <p>Seleccione un perfil para explorar la interfaz:</p>
+                <p>Seleccione un perfil para ingresar:</p>
 
                 <a href="<?= BASE_URL ?>/index.php?accion=demo&rol=odontologo" class="btn-acceso odontologo">
                     <i class="bi bi-person-badge"></i>
                     <span>Odontólogo</span>
-                    <span class="badge-demo">DEMO</span>
                     <i class="bi bi-chevron-right flecha"></i>
                 </a>
 
                 <a href="<?= BASE_URL ?>/index.php?accion=demo&rol=recepcionista" class="btn-acceso recepcionista">
                     <i class="bi bi-headset"></i>
                     <span>Recepcionista</span>
-                    <span class="badge-demo">DEMO</span>
                     <i class="bi bi-chevron-right flecha"></i>
                 </a>
 
                 <a href="<?= BASE_URL ?>/index.php?accion=demo&rol=paciente" class="btn-acceso paciente">
                     <i class="bi bi-person-heart"></i>
                     <span>Paciente</span>
-                    <span class="badge-demo">DEMO</span>
                     <i class="bi bi-chevron-right flecha"></i>
                 </a>
             </div>
