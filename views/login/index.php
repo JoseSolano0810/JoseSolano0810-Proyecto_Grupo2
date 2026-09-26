@@ -12,24 +12,18 @@
 <div class="pagina-login">
 
     <div class="login-panel-izquierdo">
-        <div class="login-logo">
-            <div class="login-logo-icono"><i class="bi bi-heart-pulse"></i></div>
-            <span class="login-logo-texto">Odent</span>
-        </div>
-        <h2 class="login-titulo-panel">Centro Odontológico<br>en un solo lugar</h2>
-        <p class="login-subtitulo-panel">
-            Gestión clínica, administrativa y financiera
-            integrada para todo el equipo de la clínica.
-        </p>
+        <img src="<?= BASE_URL ?>/public/img/Odent_Logo.jpg"
+             alt="Odent Logo"
+             style="width: 160px; height: 160px; border-radius: 24px; object-fit: cover; margin-bottom: 24px;">
+        <h2 class="login-titulo-panel">Odent Centro Odontológico</h2>
+        <p class="login-subtitulo-panel">Dra. Melissa Salguero Zárate</p>
     </div>
 
     <div class="login-panel-derecho">
         <div class="login-card">
 
             <div class="login-encabezado">
-                <span class="etiqueta-odent">ODENT</span>
                 <h1>Iniciar sesión</h1>
-                <p>Ingrese sus credenciales para acceder al sistema</p>
             </div>
 
             <?php if (isset($error)): ?>
@@ -61,7 +55,7 @@
 
                 <button type="submit" class="btn-login-submit">
                     <i class="bi bi-box-arrow-in-right"></i>
-                    Ingresar al sistema
+                    Iniciar sesión
                 </button>
 
             </form>
