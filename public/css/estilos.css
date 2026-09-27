@@ -187,7 +187,9 @@ h4 { font-size: 18px; font-weight: 600; }
 
 .login-panel-izquierdo {
     flex: 0 0 45%;
-    background: linear-gradient(160deg, var(--azul-odent) 0%, #0d2035 60%, var(--verde-odent) 100%);
+    background-image: url('../img/Odent_Fondo1.png');
+    background-size: cover;
+    background-position: center;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -198,6 +200,7 @@ h4 { font-size: 18px; font-weight: 600; }
     position: relative;
     overflow: hidden;
 }
+
 .login-panel-izquierdo::before {
     content: '';
     position: absolute;
