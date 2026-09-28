@@ -9,7 +9,7 @@ class PacienteController
 
     public function __construct()
     {
-        AuthService::requerir(['recepcionista', 'odontologo', 'admin']);
+        AuthService::requerir(['recepcionista', 'odontologo', 'administrador']);
         $this->model = new Paciente();
     }
 
