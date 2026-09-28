@@ -82,6 +82,28 @@ class Usuario
         return (int) $this->db->lastInsertId();
     }
 
+        /**
+     * Actualiza los datos de un usuario (sin contraseña ni estado)
+     */
+    public function actualizar(int $id, array $datos): void
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE usuario
+             SET id_rol = ?, identificacion = ?, nombre_completo = ?,
+                 telefono = ?, correo = ?, nombre_usuario = ?
+             WHERE id_usuario = ?"
+        );
+        $stmt->execute([
+            $datos['rol_id'],
+            $datos['cedula'],
+            $datos['nombre'],
+            ($datos['telefono'] ?? '') !== '' ? $datos['telefono'] : null,
+            $datos['correo'],
+            $datos['usuario'],
+            $id,
+        ]);
+    }
+
     /**
      * Restablece contraseña
      */
