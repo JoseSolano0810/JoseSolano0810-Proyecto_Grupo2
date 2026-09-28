@@ -35,13 +35,16 @@ class UsuarioController
      */
     public function datosVista(): array
     {
-        $usuarios = array_map(fn($u) => [
-            'id'      => (int) $u['id_usuario'],
-            'nombre'  => $u['nombre_completo'],
-            'usuario' => $u['nombre_usuario'],
-            'correo'  => $u['correo'],
-            'rol'     => $u['rol'],
-            'estado'  => $u['estado'],
+            $usuarios = array_map(fn($u) => [
+            'id'       => (int) $u['id_usuario'],
+            'nombre'   => $u['nombre_completo'],
+            'usuario'  => $u['nombre_usuario'],
+            'cedula'   => $u['identificacion'],
+            'telefono' => $u['telefono'] ?? '',
+            'correo'   => $u['correo'],
+            'rol'      => $u['rol'],
+            'rol_id'   => (int) $u['id_rol'],
+            'estado'   => $u['estado'],
         ], $this->model->obtenerTodos());
 
         $roles = array_map(fn($r) => [
