@@ -10,7 +10,7 @@ class CitaController
     public function __construct()
     {
 
-        AuthService::requerir(['odontologo', 'recepcionista_dental', 'administrador']);
+        AuthService::requerir(['odontologo', 'asistente_dental', 'administrador']);
         $this->model = new Cita();
     }
 

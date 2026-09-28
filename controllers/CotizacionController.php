@@ -10,7 +10,7 @@ class CotizacionController
 
     public function __construct()
     {
-        AuthService::requerir(['recepcionista_dental', 'administrador']);
+        AuthService::requerir(['asistente_dental', 'administrador']);
         $this->model = new Cotizacion();
     }
 
