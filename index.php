@@ -67,6 +67,11 @@ switch ($accion) {
         $ctrl->cambiarEstado();
         break;
 
+    case 'usuarios.editar':
+        $ctrl = new UsuarioController();
+        $ctrl->editar();
+        break;
+
     // ── Citas ─────────────────────────────────────────────────
     case 'citas.listar':
         $ctrl = new CitaController();

@@ -187,6 +187,11 @@ $pagos            = $pagos            ?? [];
                                     <button class="btn-outline-odent"
                                             style="font-size:12px;padding:4px 10px;" title="Editar">
                                         <i class="bi bi-pencil"></i>
+                                        <button class="btn-outline-odent"
+        onclick='abrirEditarUsuario(<?= json_encode($u, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG) ?>)'
+        style="font-size:12px;padding:4px 10px;" title="Editar">
+    <i class="bi bi-pencil"></i>
+</button>
                                     </button>
                                     <button class="<?= $u['estado'] === 'activo' ? 'btn-peligro' : 'btn-odent' ?>"
                                             onclick="confirmarCambioEstado(<?= $u['id'] ?>, '<?= $u['estado'] ?>', '<?= htmlspecialchars($u['nombre'], ENT_QUOTES) ?>')"
@@ -630,6 +635,49 @@ $pagos            = $pagos            ?? [];
     </div>
 </div>
 
+<!-- Modal editar usuario -->
+<div class="modal-overlay" id="modal-editar-usuario">
+    <div class="modal-caja">
+        <div class="modal-header">
+            <h3>Editar usuario</h3>
+            <button class="modal-cerrar" onclick="cerrarModal('modal-editar-usuario')"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <input type="hidden" id="eu-id">
+        <div class="campo-grupo"><label>Nombre completo *</label>
+            <input type="text" id="eu-nombre" placeholder="Nombre y apellidos">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div class="campo-grupo"><label>Identificación *</label>
+                <input type="text" id="eu-cedula" placeholder="0-0000-0000">
+            </div>
+            <div class="campo-grupo"><label>Teléfono</label>
+                <input type="tel" id="eu-telefono" placeholder="0000-0000">
+            </div>
+        </div>
+        <div class="campo-grupo"><label>Correo electrónico *</label>
+            <input type="email" id="eu-correo" placeholder="correo@ejemplo.com">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div class="campo-grupo"><label>Nombre de usuario *</label>
+                <input type="text" id="eu-usuario" placeholder="nombre.apellido">
+            </div>
+            <div class="campo-grupo"><label>Rol *</label>
+                <select id="eu-rol">
+                    <?php foreach ($roles as $r): ?>
+                    <option value="<?= $r['id'] ?>"><?= ucfirst(str_replace('_', ' ', $r['nombre'])) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-outline-odent" onclick="cerrarModal('modal-editar-usuario')">Cancelar</button>
+            <button class="btn-odent" onclick="guardarEdicionUsuario()">
+                <i class="bi bi-check-lg"></i> Guardar cambios
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal restablecer contraseña -->
 <div class="modal-overlay" id="modal-restablecer">
     <div class="modal-caja">
@@ -779,6 +827,46 @@ async function guardarNuevoUsuario() {
         setTimeout(() => location.reload(), 1200);
     } else {
         alert(data.error ?? 'Error al registrar el usuario.');
+    }
+}
+
+/* ── Editar usuario ─────────────────────────────────────── */
+function abrirEditarUsuario(u) {
+    document.getElementById('eu-id').value       = u.id;
+    document.getElementById('eu-nombre').value   = u.nombre   ?? '';
+    document.getElementById('eu-cedula').value   = u.cedula   ?? '';
+    document.getElementById('eu-telefono').value = u.telefono ?? '';
+    document.getElementById('eu-correo').value   = u.correo   ?? '';
+    document.getElementById('eu-usuario').value  = u.usuario  ?? '';
+    document.getElementById('eu-rol').value      = u.rol_id;
+    abrirModal('modal-editar-usuario');
+}
+
+async function guardarEdicionUsuario() {
+    const id       = document.getElementById('eu-id').value;
+    const nombre   = document.getElementById('eu-nombre').value.trim();
+    const cedula   = document.getElementById('eu-cedula').value.trim();
+    const telefono = document.getElementById('eu-telefono').value.trim();
+    const correo   = document.getElementById('eu-correo').value.trim();
+    const usuario  = document.getElementById('eu-usuario').value.trim();
+    const rol_id   = document.getElementById('eu-rol').value;
+
+    if (!nombre || !cedula || !correo || !usuario || !rol_id) {
+        alert('Complete todos los campos obligatorios.'); return;
+    }
+
+    const res  = await fetch(`${BASE}/index.php?accion=usuarios.editar`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify({ id, nombre, cedula, telefono, correo, usuario, rol_id })
+    });
+    const data = await res.json();
+    if (data.ok) {
+        cerrarModal('modal-editar-usuario');
+        mostrarToast('Usuario actualizado correctamente.', 'exito');
+        setTimeout(() => location.reload(), 1200);
+    } else {
+        alert(data.error ?? 'Error al actualizar el usuario.');
     }
 }
 
