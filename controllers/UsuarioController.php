@@ -127,6 +127,97 @@ class UsuarioController
         }
     }
 
+        /**
+     * Edita los datos de un usuario existente
+     */
+    public function editar(): void
+    {
+        $datos = json_decode(file_get_contents('php://input'), true) ?? [];
+        $id    = (int) ($datos['id'] ?? 0);
+
+        if (!$id) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'ID de usuario requerido']);
+            return;
+        }
+
+        $actual = $this->model->obtenerPorId($id);
+        if (!$actual) {
+            http_response_code(404);
+            echo json_encode(['ok' => false, 'error' => 'Usuario no encontrado']);
+            return;
+        }
+
+        foreach (['nombre', 'cedula', 'correo', 'usuario', 'rol_id'] as $campo) {
+            if (empty(trim((string) ($datos[$campo] ?? '')))) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => "El campo $campo es requerido"]);
+                return;
+            }
+        }
+
+        $datos['nombre']   = trim($datos['nombre']);
+        $datos['cedula']   = trim($datos['cedula']);
+        $datos['correo']   = trim($datos['correo']);
+        $datos['usuario']  = trim($datos['usuario']);
+        $datos['telefono'] = trim($datos['telefono'] ?? '');
+        $datos['rol_id']   = (int) $datos['rol_id'];
+
+        if (!filter_var($datos['correo'], FILTER_VALIDATE_EMAIL)) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'El correo no tiene un formato válido']);
+            return;
+        }
+
+        if (!$this->model->existeRol($datos['rol_id'])) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'El rol seleccionado no existe']);
+            return;
+        }
+
+        // El admin no puede quitarse a sí mismo el rol
+        $esUsuarioActual = $id === (int) AuthService::usuarioActual()['id'];
+        if ($esUsuarioActual && $datos['rol_id'] !== (int) $actual['id_rol']) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'No puede cambiar su propio rol']);
+            return;
+        }
+
+        // Duplicados: el tercer parámetro ($id) excluye al propio usuario
+        if ($this->model->existeNombreUsuario($datos['usuario'], $id)) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'El nombre de usuario ya está en uso']);
+            return;
+        }
+        if ($this->model->existeCorreo($datos['correo'], $id)) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'El correo ya está registrado']);
+            return;
+        }
+        if ($this->model->existeIdentificacion($datos['cedula'], $id)) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'La identificación ya está registrada']);
+            return;
+        }
+
+        try {
+            $this->model->actualizar($id, $datos);
+
+            // Si se editó a sí mismo, refrescar la sesión
+            if ($esUsuarioActual) {
+                $_SESSION['usuario']['nombre']    = $datos['nombre'];
+                $_SESSION['usuario']['iniciales'] = AuthService::iniciales($datos['nombre']);
+                $_SESSION['usuario']['usuario']   = $datos['usuario'];
+            }
+
+            echo json_encode(['ok' => true, 'mensaje' => 'Usuario actualizado exitosamente']);
+        } catch (PDOException $e) {
+            error_log('USR-02 editar usuario: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => 'No se pudo actualizar el usuario']);
+        }
+    }
+
     /**
      *  Restablece contraseña
      */
