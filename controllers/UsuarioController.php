@@ -15,21 +15,41 @@ class UsuarioController
     }
 
     /**
-     * Lista usuarios
+     * Lista usuarios 
      */
     public function listar(): void
     {
-        $usuarios = $this->model->obtenerTodos();
-        echo json_encode(['ok' => true, 'data' => $usuarios]);
+        echo json_encode(['ok' => true, 'data' => $this->model->obtenerTodos()]);
     }
 
     /**
-     * Lista roles
+     * Lista roles 
      */
     public function roles(): void
     {
-        $roles = $this->model->obtenerRoles();
-        echo json_encode(['ok' => true, 'data' => $roles]);
+        echo json_encode(['ok' => true, 'data' => $this->model->obtenerRoles()]);
+    }
+
+    /**
+     * Datos para la vista del panel 
+     */
+    public function datosVista(): array
+    {
+        $usuarios = array_map(fn($u) => [
+            'id'      => (int) $u['id_usuario'],
+            'nombre'  => $u['nombre_completo'],
+            'usuario' => $u['nombre_usuario'],
+            'correo'  => $u['correo'],
+            'rol'     => $u['rol'],
+            'estado'  => $u['estado'],
+        ], $this->model->obtenerTodos());
+
+        $roles = array_map(fn($r) => [
+            'id'     => (int) $r['id_rol'],
+            'nombre' => $r['nombre'],
+        ], $this->model->obtenerRoles());
+
+        return ['usuarios' => $usuarios, 'roles' => $roles];
     }
 
     /**
@@ -48,9 +68,21 @@ class UsuarioController
             }
         }
 
+        if (!filter_var($datos['correo'], FILTER_VALIDATE_EMAIL)) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'El correo no tiene un formato válido']);
+            return;
+        }
+
         if (strlen($datos['contrasena']) < 8) {
             http_response_code(400);
             echo json_encode(['ok' => false, 'error' => 'La contraseña debe tener al menos 8 caracteres']);
+            return;
+        }
+
+        if (!$this->model->existeRol((int) $datos['rol_id'])) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'El rol seleccionado no existe']);
             return;
         }
 
@@ -66,18 +98,34 @@ class UsuarioController
             return;
         }
 
-        $id      = $this->model->crear($datos);
-        $usuario = $this->model->obtenerPorId($id);
+        if ($this->model->existeIdentificacion($datos['cedula'])) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'La identificación ya está registrada']);
+            return;
+        }
 
-        echo json_encode([
-            'ok'      => true,
-            'mensaje' => 'Usuario registrado exitosamente',
-            'data'    => $usuario
-        ]);
+        $datos['rol_id']   = (int) $datos['rol_id'];
+        $datos['telefono'] = trim($datos['telefono'] ?? '');
+
+        try {
+            $id      = $this->model->crear($datos);
+            $usuario = $this->model->obtenerPorId($id);
+            unset($usuario['contrasena_hash']);
+
+            echo json_encode([
+                'ok'      => true,
+                'mensaje' => 'Usuario registrado exitosamente',
+                'data'    => $usuario,
+            ]);
+        } catch (PDOException $e) {
+            error_log('USR-01 crear usuario: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => 'No se pudo registrar el usuario']);
+        }
     }
 
     /**
-     * Restablece contraseña
+     *  Restablece contraseña
      */
     public function restablecerContrasena(): void
     {
@@ -85,7 +133,7 @@ class UsuarioController
         $id    = (int) ($datos['id']        ?? 0);
         $nueva = trim($datos['contrasena']  ?? '');
 
-        if (!$id || empty($nueva)) {
+        if (!$id || $nueva === '') {
             http_response_code(400);
             echo json_encode(['ok' => false, 'error' => 'ID y nueva contraseña son requeridos']);
             return;
@@ -97,8 +145,7 @@ class UsuarioController
             return;
         }
 
-        $usuario = $this->model->obtenerPorId($id);
-        if (!$usuario) {
+        if (!$this->model->obtenerPorId($id)) {
             http_response_code(404);
             echo json_encode(['ok' => false, 'error' => 'Usuario no encontrado']);
             return;
@@ -106,14 +153,11 @@ class UsuarioController
 
         $this->model->restablecerContrasena($id, $nueva);
 
-        echo json_encode([
-            'ok'      => true,
-            'mensaje' => 'Contraseña restablecida exitosamente'
-        ]);
+        echo json_encode(['ok' => true, 'mensaje' => 'Contraseña restablecida exitosamente']);
     }
 
     /**
-     * activo/inactivo
+     * Activa / inactiva usuario
      */
     public function cambiarEstado(): void
     {
@@ -127,11 +171,20 @@ class UsuarioController
             return;
         }
 
+        if ($estado === 'inactivo' && $id === (int) AuthService::usuarioActual()['id']) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'No puede inactivar su propia cuenta']);
+            return;
+        }
+
+        if (!$this->model->obtenerPorId($id)) {
+            http_response_code(404);
+            echo json_encode(['ok' => false, 'error' => 'Usuario no encontrado']);
+            return;
+        }
+
         $this->model->cambiarEstado($id, $estado);
 
-        echo json_encode([
-            'ok'      => true,
-            'mensaje' => "Usuario $estado exitosamente"
-        ]);
+        echo json_encode(['ok' => true, 'mensaje' => "Usuario $estado exitosamente"]);
     }
 }

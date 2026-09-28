@@ -10,7 +10,7 @@ class Usuario
     }
 
     /**
-     * Busca usuario * nombre 
+     * Busca usuario por nombre
      */
     public function buscarPorNombreUsuario(string $nombreUsuario): ?array
     {
@@ -19,7 +19,6 @@ class Usuario
              FROM usuario u
              JOIN rol r ON u.id_rol = r.id_rol
              WHERE u.nombre_usuario = ?
-             AND u.estado = 'activo'
              LIMIT 1"
         );
         $stmt->execute([$nombreUsuario]);
@@ -27,7 +26,7 @@ class Usuario
     }
 
     /**
-     * usuarios * rol
+     * Todos los usuarios con su rol
      */
     public function obtenerTodos(): array
     {
@@ -44,7 +43,7 @@ class Usuario
     }
 
     /**
-     * usuario * ID
+     * Usuario por ID
      */
     public function obtenerPorId(int $id): ?array
     {
@@ -59,7 +58,7 @@ class Usuario
     }
 
     /**
-     * Crea usuario
+     * Crea usuario 
      */
     public function crear(array $datos): int
     {
@@ -75,7 +74,7 @@ class Usuario
             $datos['rol_id'],
             $datos['cedula'],
             $datos['nombre'],
-            $datos['telefono'] ?? null,
+            ($datos['telefono'] ?? '') !== '' ? $datos['telefono'] : null,
             $datos['correo'],
             $datos['usuario'],
             $hash,
@@ -96,7 +95,7 @@ class Usuario
     }
 
     /**
-     * activo/inactivo
+     * Activa / inactiva usuario
      */
     public function cambiarEstado(int $id, string $estado): void
     {
@@ -116,7 +115,17 @@ class Usuario
     }
 
     /**
-     * nombre de usuario ya existe
+     * Verifica rol
+     */
+    public function existeRol(int $idRol): bool
+    {
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM rol WHERE id_rol = ?");
+        $stmt->execute([$idRol]);
+        return (bool) $stmt->fetchColumn();
+    }
+
+    /**
+     * Nombre de usuario ya existe
      */
     public function existeNombreUsuario(string $nombreUsuario, ?int $excludeId = null): bool
     {
@@ -132,12 +141,26 @@ class Usuario
     }
 
     /**
-     * correo ya existe
+     * Correo ya existe
      */
     public function existeCorreo(string $correo, ?int $excludeId = null): bool
     {
         $sql    = "SELECT COUNT(*) FROM usuario WHERE correo = ?";
         $params = [$correo];
+        if ($excludeId) {
+            $sql     .= " AND id_usuario != ?";
+            $params[] = $excludeId;
+        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return (bool) $stmt->fetchColumn();
+    }
+
+
+    public function existeIdentificacion(string $identificacion, ?int $excludeId = null): bool
+    {
+        $sql    = "SELECT COUNT(*) FROM usuario WHERE identificacion = ?";
+        $params = [$identificacion];
         if ($excludeId) {
             $sql     .= " AND id_usuario != ?";
             $params[] = $excludeId;

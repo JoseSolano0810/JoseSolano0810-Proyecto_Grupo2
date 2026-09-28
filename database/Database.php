@@ -8,8 +8,9 @@ class Database
     private function __construct()
     {
         $dsn = sprintf(
-            'mysql:host=%s;dbname=%s;charset=%s',
+            'mysql:host=%s;port=%s;dbname=%s;charset=%s',
             DB_HOST,
+            DB_PORT,
             DB_NAME,
             DB_CHARSET
         );
@@ -23,9 +24,17 @@ class Database
         try {
             $this->connection = new PDO($dsn, DB_USER, DB_PASS, $opciones);
         } catch (PDOException $e) {
-
             error_log('Error de conexión BD: ' . $e->getMessage());
-            die(json_encode(['error' => 'No se pudo conectar a la base de datos.']));
+
+            $mensaje = APP_ENV === 'local'
+                ? 'No se pudo conectar a la base de datos: ' . $e->getMessage()
+                : 'No se pudo conectar a la base de datos.';
+
+            http_response_code(500);
+            if (!headers_sent()) {
+                header('Content-Type: application/json; charset=utf-8');
+            }
+            die(json_encode(['ok' => false, 'error' => $mensaje], JSON_UNESCAPED_UNICODE));
         }
     }
 
@@ -43,5 +52,9 @@ class Database
     }
 
     private function __clone() {}
-    public function __wakeup() {}
+
+    public function __wakeup()
+    {
+        throw new \Exception('No se puede deserializar un Singleton.');
+    }
 }

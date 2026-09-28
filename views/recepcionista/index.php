@@ -10,43 +10,44 @@
 <body>
 
 <?php
+// $rol y $usuario vienen de la sesión (index.php → cargarPanel)
+$rol           = $rol           ?? 'recepcionista';
+$usuario       = $usuario       ?? ['nombre' => '', 'iniciales' => ''];
+$pagina_activa = $pagina_activa ?? 'inicio';
 
-$rol = 'recepcionista';
-$usuario = ['nombre' => 'Laura Jiménez', 'iniciales' => 'LJ'];
-$pagina_activa = 'inicio';
-
-$citas = [
+// Demo hasta que se implemente el backend de citas/pacientes/cotizaciones/pagos
+$citas = $citas ?? [
     ['id'=>1,'hora'=>'08:00','paciente'=>'Ana Rojas',    'odontologo'=>'Dr. Méndez', 'tratamiento'=>'Limpieza',        'estado'=>'confirmada'],
     ['id'=>2,'hora'=>'09:30','paciente'=>'Luis Vargas',  'odontologo'=>'Dr. Méndez', 'tratamiento'=>'Extracción molar','estado'=>'confirmada'],
-    ['id'=>3,'hora'=>'10:00','paciente'=>'Pedro Gómez',  'odontologo'=>'Dra. Flores', 'tratamiento'=>'Ortodoncia',      'estado'=>'pendiente'],
+    ['id'=>3,'hora'=>'10:00','paciente'=>'Pedro Gómez',  'odontologo'=>'Dra. Flores','tratamiento'=>'Ortodoncia',      'estado'=>'pendiente'],
     ['id'=>4,'hora'=>'11:00','paciente'=>'María Solís',  'odontologo'=>'Dr. Méndez', 'tratamiento'=>'Ortodoncia',      'estado'=>'pendiente'],
-    ['id'=>5,'hora'=>'13:00','paciente'=>'Carlos Castro','odontologo'=>'Dra. Flores', 'tratamiento'=>'Blanqueamiento',  'estado'=>'cancelada'],
+    ['id'=>5,'hora'=>'13:00','paciente'=>'Carlos Castro','odontologo'=>'Dra. Flores','tratamiento'=>'Blanqueamiento',  'estado'=>'cancelada'],
     ['id'=>6,'hora'=>'14:00','paciente'=>'Jorge Pérez',  'odontologo'=>'Dr. Méndez', 'tratamiento'=>'Blanqueamiento',  'estado'=>'confirmada'],
-    ['id'=>7,'hora'=>'15:30','paciente'=>'Sofía Torres', 'odontologo'=>'Dra. Flores', 'tratamiento'=>'Revisión',        'estado'=>'confirmada'],
+    ['id'=>7,'hora'=>'15:30','paciente'=>'Sofía Torres', 'odontologo'=>'Dra. Flores','tratamiento'=>'Revisión',        'estado'=>'confirmada'],
 ];
 
-$pacientes = [
-    ['id'=>1,'nombre'=>'Ana Rojas',     'cedula'=>'1-0234-5678','telefono'=>'8888-1111','correo'=>'ana.rojas@mail.com',    'estado'=>'activo'],
-    ['id'=>2,'nombre'=>'Luis Vargas',   'cedula'=>'2-0345-6789','telefono'=>'8888-2222','correo'=>'luis.vargas@mail.com',   'estado'=>'activo'],
-    ['id'=>3,'nombre'=>'Pedro Gómez',   'cedula'=>'1-0901-2345','telefono'=>'8888-3333','correo'=>'pedro.gomez@mail.com',   'estado'=>'activo'],
-    ['id'=>4,'nombre'=>'María Solís',   'cedula'=>'1-0456-7890','telefono'=>'8888-4444','correo'=>'maria.solis@mail.com',   'estado'=>'activo'],
-    ['id'=>5,'nombre'=>'Carlos Castro', 'cedula'=>'3-0123-4567','telefono'=>'8888-5555','correo'=>'carlos.castro@mail.com', 'estado'=>'inactivo'],
-    ['id'=>6,'nombre'=>'Jorge Pérez',   'cedula'=>'3-0567-8901','telefono'=>'8888-6666','correo'=>'jorge.perez@mail.com',   'estado'=>'inactivo'],
-    ['id'=>7,'nombre'=>'Sofía Torres',  'cedula'=>'1-0678-9012','telefono'=>'8888-7777','correo'=>'sofia.torres@mail.com',  'estado'=>'activo'],
+$pacientes = $pacientes ?? [
+    ['id'=>1,'nombre'=>'Ana Rojas',    'cedula'=>'1-0234-5678','telefono'=>'8888-1111','correo'=>'ana.rojas@mail.com',   'estado'=>'activo'],
+    ['id'=>2,'nombre'=>'Luis Vargas',  'cedula'=>'2-0345-6789','telefono'=>'8888-2222','correo'=>'luis.vargas@mail.com',  'estado'=>'activo'],
+    ['id'=>3,'nombre'=>'Pedro Gómez',  'cedula'=>'1-0901-2345','telefono'=>'8888-3333','correo'=>'pedro.gomez@mail.com',  'estado'=>'activo'],
+    ['id'=>4,'nombre'=>'María Solís',  'cedula'=>'1-0456-7890','telefono'=>'8888-4444','correo'=>'maria.solis@mail.com',  'estado'=>'activo'],
+    ['id'=>5,'nombre'=>'Carlos Castro','cedula'=>'3-0123-4567','telefono'=>'8888-5555','correo'=>'carlos.castro@mail.com','estado'=>'inactivo'],
+    ['id'=>6,'nombre'=>'Jorge Pérez',  'cedula'=>'3-0567-8901','telefono'=>'8888-6666','correo'=>'jorge.perez@mail.com',  'estado'=>'inactivo'],
+    ['id'=>7,'nombre'=>'Sofía Torres', 'cedula'=>'1-0678-9012','telefono'=>'8888-7777','correo'=>'sofia.torres@mail.com', 'estado'=>'activo'],
 ];
 
-$cotizaciones = [
-    ['id'=>'COT-001','paciente'=>'Ana Rojas',   'fecha'=>'28/07/2026','total'=>95000,'estado'=>'aprobada'],
+$cotizaciones = $cotizaciones ?? [
+    ['id'=>'COT-001','paciente'=>'Ana Rojas',   'fecha'=>'28/07/2026','total'=>95000, 'estado'=>'aprobada'],
     ['id'=>'COT-002','paciente'=>'Luis Vargas',  'fecha'=>'29/07/2026','total'=>120000,'estado'=>'pendiente'],
-    ['id'=>'COT-003','paciente'=>'Pedro Gómez',  'fecha'=>'30/07/2026','total'=>45000,'estado'=>'pendiente'],
+    ['id'=>'COT-003','paciente'=>'Pedro Gómez',  'fecha'=>'30/07/2026','total'=>45000, 'estado'=>'pendiente'],
     ['id'=>'COT-004','paciente'=>'María Solís',  'fecha'=>'01/08/2026','total'=>200000,'estado'=>'aprobada'],
-    ['id'=>'COT-005','paciente'=>'Carlos Castro','fecha'=>'02/08/2026','total'=>75000,'estado'=>'rechazada'],
+    ['id'=>'COT-005','paciente'=>'Carlos Castro','fecha'=>'02/08/2026','total'=>75000, 'estado'=>'rechazada'],
 ];
 
-$pagos = [
-    ['id'=>'PAG-001','paciente'=>'Ana Rojas',  'fecha'=>'28/07/2026','monto'=>50000,'metodo'=>'Tarjeta','cotizacion'=>'COT-001','estado'=>'completada'],
-    ['id'=>'PAG-002','paciente'=>'María Solís', 'fecha'=>'01/08/2026','monto'=>100000,'metodo'=>'Efectivo','cotizacion'=>'COT-004','estado'=>'completada'],
-    ['id'=>'PAG-003','paciente'=>'Luis Vargas', 'fecha'=>'03/08/2026','monto'=>60000,'metodo'=>'Sinpe','cotizacion'=>'COT-002','estado'=>'pendiente'],
+$pagos = $pagos ?? [
+    ['id'=>'PAG-001','paciente'=>'Ana Rojas', 'fecha'=>'28/07/2026','monto'=>50000, 'metodo'=>'Tarjeta', 'cotizacion'=>'COT-001','estado'=>'completada'],
+    ['id'=>'PAG-002','paciente'=>'María Solís','fecha'=>'01/08/2026','monto'=>100000,'metodo'=>'Efectivo','cotizacion'=>'COT-004','estado'=>'completada'],
+    ['id'=>'PAG-003','paciente'=>'Luis Vargas','fecha'=>'03/08/2026','monto'=>60000, 'metodo'=>'Sinpe',  'cotizacion'=>'COT-002','estado'=>'pendiente'],
 ];
 ?>
 
