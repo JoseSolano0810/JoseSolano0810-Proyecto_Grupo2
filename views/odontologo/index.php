@@ -187,6 +187,11 @@ $pagos            = $pagos            ?? [];
                                     <button class="btn-outline-odent"
                                             style="font-size:12px;padding:4px 10px;" title="Editar">
                                         <i class="bi bi-pencil"></i>
+                                        <button class="btn-outline-odent"
+        onclick='abrirEditarUsuario(<?= json_encode($u, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG) ?>)'
+        style="font-size:12px;padding:4px 10px;" title="Editar">
+    <i class="bi bi-pencil"></i>
+</button>
                                     </button>
                                     <button class="<?= $u['estado'] === 'activo' ? 'btn-peligro' : 'btn-odent' ?>"
                                             onclick="confirmarCambioEstado(<?= $u['id'] ?>, '<?= $u['estado'] ?>', '<?= htmlspecialchars($u['nombre'], ENT_QUOTES) ?>')"
