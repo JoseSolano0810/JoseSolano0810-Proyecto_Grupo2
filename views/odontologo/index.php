@@ -10,33 +10,10 @@
 <body>
 
 <?php
-$usuarios_sistema = [
-    ['id'=>1,'nombre'=>'Melissa Salguero Zárate', 'usuario'=>'melissa.salguero','correo'=>'melissa@odent.com','rol'=>'administrador',   'estado'=>'activo'],
-    ['id'=>2,'nombre'=>'Sofia Salguero Zárate',   'usuario'=>'sofia.salguero',  'correo'=>'sofia@odent.com',  'rol'=>'asistente_dental','estado'=>'activo'],
-    ['id'=>3,'nombre'=>'Jose David Solano Zamora', 'usuario'=>'jose.solano',    'correo'=>'jose@odent.com',   'rol'=>'paciente',        'estado'=>'activo'],
-];
-
-$roles = [
-    ['id'=>1,'nombre'=>'administrador'],
-    ['id'=>2,'nombre'=>'odontologo'],
-    ['id'=>3,'nombre'=>'recepcionista'],
-    ['id'=>4,'nombre'=>'asistente_dental'],
-    ['id'=>5,'nombre'=>'paciente'],
-];
-
-$cotizaciones = [
-    ['id'=>'COT-001','paciente'=>'Ana Rojas',   'fecha'=>'28/07/2026','total'=>95000, 'estado'=>'aprobada'],
-    ['id'=>'COT-002','paciente'=>'Luis Vargas',  'fecha'=>'29/07/2026','total'=>120000,'estado'=>'pendiente'],
-    ['id'=>'COT-003','paciente'=>'Pedro Gómez',  'fecha'=>'30/07/2026','total'=>45000, 'estado'=>'pendiente'],
-    ['id'=>'COT-004','paciente'=>'María Solís',  'fecha'=>'01/08/2026','total'=>200000,'estado'=>'aprobada'],
-    ['id'=>'COT-005','paciente'=>'Carlos Castro','fecha'=>'02/08/2026','total'=>75000, 'estado'=>'rechazada'],
-];
-
-$pagos = [
-    ['id'=>'PAG-001','paciente'=>'Ana Rojas',  'fecha'=>'28/07/2026','monto'=>50000, 'metodo'=>'Tarjeta','cotizacion'=>'COT-001','estado'=>'completada'],
-    ['id'=>'PAG-002','paciente'=>'María Solís','fecha'=>'01/08/2026','monto'=>100000,'metodo'=>'Efectivo','cotizacion'=>'COT-004','estado'=>'completada'],
-    ['id'=>'PAG-003','paciente'=>'Luis Vargas','fecha'=>'03/08/2026','monto'=>60000, 'metodo'=>'Sinpe',  'cotizacion'=>'COT-002','estado'=>'pendiente'],
-];
+$usuarios_sistema = $usuarios_sistema ?? [];
+$roles            = $roles            ?? [];
+$cotizaciones     = $cotizaciones     ?? [];
+$pagos            = $pagos            ?? [];
 ?>
 
 <div class="layout-app">
@@ -156,9 +133,12 @@ $pagos = [
 
             <div class="tarjeta">
                 <div style="display:flex;gap:10px;margin-bottom:18px;">
-                    <input type="text" placeholder="Buscar usuario..."
-                           style="border:1.5px solid var(--borde);border-radius:8px;padding:8px 14px;font-size:14px;flex:1;">
-                    <button class="btn-odent"><i class="bi bi-search"></i> Buscar</button>
+                    <input type="text" id="buscar-usuario" placeholder="Buscar usuario..."
+                           style="border:1.5px solid var(--borde);border-radius:8px;padding:8px 14px;font-size:14px;flex:1;"
+                           oninput="filtrarUsuarios(this.value)">
+                    <button class="btn-odent" onclick="filtrarUsuarios(document.getElementById('buscar-usuario').value)">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
                 </div>
                 <table class="tabla-odent">
                     <thead>
@@ -178,15 +158,15 @@ $pagos = [
                             <td>
                                 <div style="display:flex;align-items:center;gap:10px;">
                                     <div class="sidebar-perfil-avatar" style="width:34px;height:34px;font-size:12px;flex-shrink:0;">
-                                        <?= strtoupper(substr($u['nombre'], 0, 1) . substr(strrchr($u['nombre'], ' '), 1, 1)) ?>
+                                        <?= mb_strtoupper(mb_substr($u['nombre'], 0, 1)) . mb_strtoupper(mb_substr(strrchr($u['nombre'], ' ') ?: ' ', 1, 1)) ?>
                                     </div>
                                     <div>
                                         <div style="font-weight:600;font-size:14px;"><?= htmlspecialchars($u['nombre']) ?></div>
-                                        <div style="font-size:12px;color:var(--gris-azulado);"><?= $u['correo'] ?></div>
+                                        <div style="font-size:12px;color:var(--gris-azulado);"><?= htmlspecialchars($u['correo']) ?></div>
                                     </div>
                                 </div>
                             </td>
-                            <td style="color:var(--gris-azulado);">@<?= $u['usuario'] ?></td>
+                            <td style="color:var(--gris-azulado);">@<?= htmlspecialchars($u['usuario']) ?></td>
                             <td>
                                 <span class="badge-estado <?= $u['rol'] === 'administrador' ? 'badge-completada' : 'badge-confirmada' ?>">
                                     <?= ucfirst(str_replace('_', ' ', $u['rol'])) ?>
@@ -200,7 +180,7 @@ $pagos = [
                             <td>
                                 <div style="display:flex;gap:6px;">
                                     <button class="btn-outline-odent"
-                                            onclick="abrirRestablecerContrasena(<?= $u['id'] ?>, '<?= htmlspecialchars($u['nombre']) ?>')"
+                                            onclick="abrirRestablecerContrasena(<?= $u['id'] ?>, '<?= htmlspecialchars($u['nombre'], ENT_QUOTES) ?>')"
                                             style="font-size:12px;padding:4px 10px;" title="Restablecer contraseña">
                                         <i class="bi bi-key"></i>
                                     </button>
@@ -208,8 +188,8 @@ $pagos = [
                                             style="font-size:12px;padding:4px 10px;" title="Editar">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button class="btn-peligro"
-                                            onclick="confirmarCambioEstado(<?= $u['id'] ?>, '<?= $u['estado'] ?>', '<?= htmlspecialchars($u['nombre']) ?>')"
+                                    <button class="<?= $u['estado'] === 'activo' ? 'btn-peligro' : 'btn-odent' ?>"
+                                            onclick="confirmarCambioEstado(<?= $u['id'] ?>, '<?= $u['estado'] ?>', '<?= htmlspecialchars($u['nombre'], ENT_QUOTES) ?>')"
                                             style="font-size:12px;padding:4px 10px;"
                                             title="<?= $u['estado'] === 'activo' ? 'Inactivar' : 'Activar' ?>">
                                         <i class="bi bi-<?= $u['estado'] === 'activo' ? 'person-dash' : 'person-check' ?>"></i>
@@ -692,7 +672,7 @@ $pagos = [
         <p id="confirmar-mensaje" style="font-size:14px;color:var(--gris-texto);margin-bottom:20px;"></p>
         <div class="modal-footer">
             <button class="btn-outline-odent" onclick="cerrarModal('modal-confirmar-estado')">Cancelar</button>
-            <button class="btn-peligro" onclick="ejecutarCambioEstado()">Confirmar</button>
+            <button id="btn-confirmar-estado" class="btn-peligro" onclick="ejecutarCambioEstado()">Confirmar</button>
         </div>
     </div>
 </div>
@@ -728,6 +708,18 @@ $pagos = [
 const BASE = '<?= BASE_URL ?>';
 let usuarioIdSeleccionado    = null;
 let estadoActualSeleccionado = null;
+
+/* ── Filtrar usuarios ───────────────────────────────────── */
+function filtrarUsuarios(texto) {
+    const filtro = texto.toLowerCase().trim();
+    document.querySelectorAll('#pagina-usuarios tbody tr').forEach(fila => {
+        const nombre  = fila.cells[1]?.textContent.toLowerCase() ?? '';
+        const usuario = fila.cells[2]?.textContent.toLowerCase() ?? '';
+        const rol     = fila.cells[3]?.textContent.toLowerCase() ?? '';
+        fila.style.display = (!filtro || nombre.includes(filtro) || usuario.includes(filtro) || rol.includes(filtro))
+            ? '' : 'none';
+    });
+}
 
 /* ── Restablecer contraseña ─────────────────────────────── */
 function abrirRestablecerContrasena(id, nombre) {
@@ -790,13 +782,19 @@ async function guardarNuevoUsuario() {
     }
 }
 
-/* ── Cambiar estado  ───────────────── */
+/* ── Cambiar estado ─────────────────────────────────────── */
 function confirmarCambioEstado(id, estadoActual, nombre) {
     usuarioIdSeleccionado    = id;
     estadoActualSeleccionado = estadoActual;
     const accion = estadoActual === 'activo' ? 'inactivar' : 'activar';
     document.getElementById('confirmar-titulo').textContent  = accion === 'inactivar' ? 'Inactivar usuario' : 'Activar usuario';
     document.getElementById('confirmar-mensaje').textContent = `¿Está seguro que desea ${accion} a ${nombre}?`;
+
+    // Cambiar color del botón según acción
+    const btnConfirmar = document.getElementById('btn-confirmar-estado');
+    btnConfirmar.className = accion === 'inactivar' ? 'btn-peligro' : 'btn-odent';
+    btnConfirmar.textContent = accion === 'inactivar' ? 'Inactivar' : 'Activar';
+
     abrirModal('modal-confirmar-estado');
 }
 
@@ -816,16 +814,6 @@ async function ejecutarCambioEstado() {
     } else {
         alert(data.error ?? 'Error al cambiar el estado.');
     }
-}
-
-/* ── Toast de confirmación ──────────────────────────────── */
-function mostrarToast(mensaje, tipo = 'exito') {
-    const t = document.createElement('div');
-    t.className = `alerta ${tipo === 'exito' ? 'exito' : 'peligro'}`;
-    t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;min-width:280px;box-shadow:0 4px 16px rgba(0,0,0,.15);';
-    t.innerHTML = `<i class="bi bi-${tipo === 'exito' ? 'check-circle' : 'exclamation-circle'}"></i> ${mensaje}`;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
 }
 </script>
 </body>
