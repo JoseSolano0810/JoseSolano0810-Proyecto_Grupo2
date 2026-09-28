@@ -2,16 +2,16 @@
 define('ROOT_PATH', str_replace('\\', '/', __DIR__));
 
 require_once __DIR__ . '/config/config.php';
-
-require_once __DIR__ . '/config/config.php';
-
+require_once ROOT_PATH . '/database/Database.php';
+require_once ROOT_PATH . '/models/Usuario.php';
+require_once ROOT_PATH . '/services/AuthService.php';
 require_once ROOT_PATH . '/controllers/LoginController.php';
+require_once ROOT_PATH . '/controllers/UsuarioController.php';
 require_once ROOT_PATH . '/controllers/CitaController.php';
 require_once ROOT_PATH . '/controllers/PacienteController.php';
 require_once ROOT_PATH . '/controllers/TratamientoController.php';
 require_once ROOT_PATH . '/controllers/CotizacionController.php';
 require_once ROOT_PATH . '/controllers/PagoController.php';
-require_once ROOT_PATH . '/services/AuthService.php';
 
 $accion = $_GET['accion'] ?? 'inicio';
 $metodo = $_SERVER['REQUEST_METHOD'];
@@ -29,7 +29,7 @@ switch ($accion) {
         break;
 
     case 'logout':
-        AuthService::cerrarSesion();
+        AuthService::logout();
         break;
 
     case 'demo':
@@ -37,6 +37,33 @@ switch ($accion) {
         cargarDashboardDemo($rol);
         break;
 
+    // ── Usuarios ──────────────────────────────────────────────
+    case 'usuarios.listar':
+        $ctrl = new UsuarioController();
+        echo json_encode($ctrl->listar());
+        break;
+
+    case 'usuarios.roles':
+        $ctrl = new UsuarioController();
+        echo json_encode($ctrl->roles());
+        break;
+
+    case 'usuarios.crear':
+        $ctrl = new UsuarioController();
+        $ctrl->crear();
+        break;
+
+    case 'usuarios.restablecer':
+        $ctrl = new UsuarioController();
+        $ctrl->restablecerContrasena();
+        break;
+
+    case 'usuarios.estado':
+        $ctrl = new UsuarioController();
+        $ctrl->cambiarEstado();
+        break;
+
+    // ── Citas ─────────────────────────────────────────────────
     case 'citas.listar':
         $ctrl = new CitaController();
         echo json_encode($ctrl->listar());
@@ -52,6 +79,7 @@ switch ($accion) {
         $ctrl->cancelar();
         break;
 
+    // ── Pacientes ─────────────────────────────────────────────
     case 'pacientes.listar':
         $ctrl = new PacienteController();
         echo json_encode($ctrl->listar());
@@ -62,6 +90,7 @@ switch ($accion) {
         $ctrl->crear();
         break;
 
+    // ── Cotizaciones ──────────────────────────────────────────
     case 'cotizaciones.listar':
         $ctrl = new CotizacionController();
         echo json_encode($ctrl->listar());
@@ -72,6 +101,7 @@ switch ($accion) {
         $ctrl->crear();
         break;
 
+    // ── Pagos ─────────────────────────────────────────────────
     case 'pagos.listar':
         $ctrl = new PagoController();
         echo json_encode($ctrl->listar());
@@ -82,6 +112,7 @@ switch ($accion) {
         $ctrl->registrar();
         break;
 
+    // ── Tratamientos ──────────────────────────────────────────
     case 'tratamientos.listar':
         $ctrl = new TratamientoController();
         echo json_encode($ctrl->listar());
@@ -110,7 +141,6 @@ function cargarDashboardDemo(string $rol): void
     switch ($rol) {
 
         case 'odontologo':
-
             $usuario       = ['nombre' => 'Dra. Melissa Salguero', 'iniciales' => 'MS'];
             $pagina_activa = 'inicio';
             $citas         = $citaCtrl->listar();
@@ -140,15 +170,18 @@ function cargarDashboardDemo(string $rol): void
             break;
 
         case 'paciente':
-            $usuario         = ['nombre' => 'Ana Rojas', 'iniciales' => 'AR'];
-            $pagina_activa   = 'inicio';
-            $mis_citas       = $citaCtrl->listar();
+            $usuario          = ['nombre' => 'Ana Rojas', 'iniciales' => 'AR'];
+            $pagina_activa    = 'inicio';
+            $mis_citas        = $citaCtrl->listar();
             $mis_tratamientos = $tratamientoCtrl->listar();
-            $mis_pagos       = $pagoCtrl->listar();
-            $saldo_pendiente = 60000;
-            $proxima_cita    = [
-                'mes'=>'AGO','dia'=>'14','hora'=>'09:00 a.m.',
-                'odontologo'=>'Dra. Melissa Salguero','tratamiento'=>'Control de ortodoncia',
+            $mis_pagos        = $pagoCtrl->listar();
+            $saldo_pendiente  = 60000;
+            $proxima_cita     = [
+                'mes'         => 'AGO',
+                'dia'         => '14',
+                'hora'        => '09:00 a.m.',
+                'odontologo'  => 'Dra. Melissa Salguero',
+                'tratamiento' => 'Control de ortodoncia',
             ];
             require_once ROOT_PATH . '/views/paciente/index.php';
             break;
