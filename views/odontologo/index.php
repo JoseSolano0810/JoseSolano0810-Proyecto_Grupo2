@@ -830,6 +830,46 @@ async function guardarNuevoUsuario() {
     }
 }
 
+/* ── Editar usuario ─────────────────────────────────────── */
+function abrirEditarUsuario(u) {
+    document.getElementById('eu-id').value       = u.id;
+    document.getElementById('eu-nombre').value   = u.nombre   ?? '';
+    document.getElementById('eu-cedula').value   = u.cedula   ?? '';
+    document.getElementById('eu-telefono').value = u.telefono ?? '';
+    document.getElementById('eu-correo').value   = u.correo   ?? '';
+    document.getElementById('eu-usuario').value  = u.usuario  ?? '';
+    document.getElementById('eu-rol').value      = u.rol_id;
+    abrirModal('modal-editar-usuario');
+}
+
+async function guardarEdicionUsuario() {
+    const id       = document.getElementById('eu-id').value;
+    const nombre   = document.getElementById('eu-nombre').value.trim();
+    const cedula   = document.getElementById('eu-cedula').value.trim();
+    const telefono = document.getElementById('eu-telefono').value.trim();
+    const correo   = document.getElementById('eu-correo').value.trim();
+    const usuario  = document.getElementById('eu-usuario').value.trim();
+    const rol_id   = document.getElementById('eu-rol').value;
+
+    if (!nombre || !cedula || !correo || !usuario || !rol_id) {
+        alert('Complete todos los campos obligatorios.'); return;
+    }
+
+    const res  = await fetch(`${BASE}/index.php?accion=usuarios.editar`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify({ id, nombre, cedula, telefono, correo, usuario, rol_id })
+    });
+    const data = await res.json();
+    if (data.ok) {
+        cerrarModal('modal-editar-usuario');
+        mostrarToast('Usuario actualizado correctamente.', 'exito');
+        setTimeout(() => location.reload(), 1200);
+    } else {
+        alert(data.error ?? 'Error al actualizar el usuario.');
+    }
+}
+
 /* ── Cambiar estado ─────────────────────────────────────── */
 function confirmarCambioEstado(id, estadoActual, nombre) {
     usuarioIdSeleccionado    = id;
