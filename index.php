@@ -16,6 +16,10 @@ require_once ROOT_PATH . '/controllers/PagoController.php';
 $accion = $_GET['accion'] ?? 'inicio';
 $metodo = $_SERVER['REQUEST_METHOD'];
 
+if (str_contains($accion, '.')) {
+    header('Content-Type: application/json; charset=utf-8');
+}
+
 switch ($accion) {
 
     case 'inicio':
@@ -32,20 +36,20 @@ switch ($accion) {
         AuthService::logout();
         break;
 
+    // panel * rol
+    case 'panel':
     case 'demo':
-        $rol = $_GET['rol'] ?? 'odontologo';
-        cargarDashboardDemo($rol);
+        AuthService::requerir(AuthService::ROLES);
+        cargarPanel(AuthService::usuarioActual());
         break;
 
     // ── Usuarios ──────────────────────────────────────────────
     case 'usuarios.listar':
-        $ctrl = new UsuarioController();
-        echo json_encode($ctrl->listar());
+        (new UsuarioController())->listar();
         break;
 
     case 'usuarios.roles':
-        $ctrl = new UsuarioController();
-        echo json_encode($ctrl->roles());
+        (new UsuarioController())->roles();
         break;
 
     case 'usuarios.crear':
@@ -130,22 +134,31 @@ switch ($accion) {
         break;
 }
 
-function cargarDashboardDemo(string $rol): void
+/**
+ * 
+ * Panel * rol
+ */
+function cargarPanel(array $sesion): void
 {
-    $citaCtrl        = new CitaController();
-    $pacienteCtrl    = new PacienteController();
-    $tratamientoCtrl = new TratamientoController();
-    $cotizacionCtrl  = new CotizacionController();
-    $pagoCtrl        = new PagoController();
+    $usuario       = ['nombre' => $sesion['nombre'], 'iniciales' => $sesion['iniciales']];
+    $rol           = $sesion['rol'];
+    $pagina_activa = 'inicio';
 
     switch ($rol) {
 
+        case 'administrador':
         case 'odontologo':
-            $usuario       = ['nombre' => 'Dra. Melissa Salguero', 'iniciales' => 'MS'];
-            $pagina_activa = 'inicio';
-            $citas         = $citaCtrl->listar();
-            $pacientes     = $pacienteCtrl->listar();
-            $tratamientos  = $tratamientoCtrl->listar();
+            $citas        = (new CitaController())->listar();
+            $pacientes    = (new PacienteController())->listar();
+            $tratamientos = (new TratamientoController())->listar();
+            $usuarios_sistema = [];
+            $roles            = [];
+            if ($rol === 'administrador') {
+                $datos            = (new UsuarioController())->datosVista();
+                $usuarios_sistema = $datos['usuarios'];
+                $roles            = $datos['roles'];
+            }
+
             $estado_dientes = [
                 11=>'sano',  12=>'sano',  13=>'sano',  14=>'corona', 15=>'sano',
                 16=>'sano',  17=>'caries',18=>'sano',
@@ -156,25 +169,22 @@ function cargarDashboardDemo(string $rol): void
                 41=>'sano',  42=>'sano',  43=>'sano',  44=>'sano',   45=>'sano',
                 46=>'corona',47=>'sano',  48=>'sano',
             ];
-            require_once ROOT_PATH . '/views/odontologo/index.php';
+            require ROOT_PATH . '/views/odontologo/index.php';
             break;
 
         case 'recepcionista':
-            $usuario       = ['nombre' => 'Laura Jiménez', 'iniciales' => 'LJ'];
-            $pagina_activa = 'inicio';
-            $citas         = $citaCtrl->listar();
-            $pacientes     = $pacienteCtrl->listar();
-            $cotizaciones  = $cotizacionCtrl->listar();
-            $pagos         = $pagoCtrl->listar();
-            require_once ROOT_PATH . '/views/recepcionista/index.php';
+        case 'asistente_dental':
+            $citas        = (new CitaController())->listar();
+            $pacientes    = (new PacienteController())->listar();
+            $cotizaciones = (new CotizacionController())->listar();
+            $pagos        = (new PagoController())->listar();
+            require ROOT_PATH . '/views/recepcionista/index.php';
             break;
 
         case 'paciente':
-            $usuario          = ['nombre' => 'Ana Rojas', 'iniciales' => 'AR'];
-            $pagina_activa    = 'inicio';
-            $mis_citas        = $citaCtrl->listar();
-            $mis_tratamientos = $tratamientoCtrl->listar();
-            $mis_pagos        = $pagoCtrl->listar();
+            $mis_citas        = (new CitaController())->listar();
+            $mis_tratamientos = (new TratamientoController())->listar();
+            $mis_pagos        = (new PagoController())->listar();
             $saldo_pendiente  = 60000;
             $proxima_cita     = [
                 'mes'         => 'AGO',
@@ -183,11 +193,10 @@ function cargarDashboardDemo(string $rol): void
                 'odontologo'  => 'Dra. Melissa Salguero',
                 'tratamiento' => 'Control de ortodoncia',
             ];
-            require_once ROOT_PATH . '/views/paciente/index.php';
+            require ROOT_PATH . '/views/paciente/index.php';
             break;
 
         default:
-            header('Location: ' . BASE_URL . '/index.php');
-            exit;
+            AuthService::logout();
     }
 }

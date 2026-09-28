@@ -60,30 +60,6 @@
 
             </form>
 
-            <div class="divisor-acceso">Acceso rápido</div>
-
-            <div class="acceso-rapido">
-                <p>Seleccione un perfil para ingresar:</p>
-
-                <a href="<?= BASE_URL ?>/index.php?accion=demo&rol=odontologo" class="btn-acceso odontologo">
-                    <i class="bi bi-person-badge"></i>
-                    <span>Odontólogo</span>
-                    <i class="bi bi-chevron-right flecha"></i>
-                </a>
-
-                <a href="<?= BASE_URL ?>/index.php?accion=demo&rol=recepcionista" class="btn-acceso recepcionista">
-                    <i class="bi bi-headset"></i>
-                    <span>Recepcionista</span>
-                    <i class="bi bi-chevron-right flecha"></i>
-                </a>
-
-                <a href="<?= BASE_URL ?>/index.php?accion=demo&rol=paciente" class="btn-acceso paciente">
-                    <i class="bi bi-person-heart"></i>
-                    <span>Paciente</span>
-                    <i class="bi bi-chevron-right flecha"></i>
-                </a>
-            </div>
-
         </div>
     </div>
 

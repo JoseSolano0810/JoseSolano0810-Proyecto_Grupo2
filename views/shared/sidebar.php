@@ -1,6 +1,4 @@
-<?php
-
-?>
+<?php ?>
 <aside class="sidebar" id="sidebar">
 
     <div class="sidebar-logo">
@@ -15,53 +13,55 @@
             </div>
             <div class="sidebar-perfil-info">
                 <div class="sidebar-perfil-nombre"><?= htmlspecialchars($usuario['nombre']) ?></div>
-                <div class="sidebar-perfil-rol"><?= ucfirst($rol) ?></div>
+                <div class="sidebar-perfil-rol"><?= ucfirst(str_replace('_', ' ', $rol)) ?></div>
             </div>
         </div>
     </div>
 
     <nav class="sidebar-nav">
 
- <?php if ($rol === 'odontologo' || $rol === 'administrador'): ?>
+        <?php if ($rol === 'odontologo' || $rol === 'administrador'): ?>
 
-    <a class="sidebar-enlace <?= $pagina_activa === 'inicio' ? 'activo' : '' ?>" onclick="mostrarPagina('inicio')">
-        <i class="bi bi-speedometer2"></i> Inicio
-    </a>
-    <a class="sidebar-enlace <?= $pagina_activa === 'usuarios' ? 'activo' : '' ?>" onclick="mostrarPagina('usuarios')">
-        <i class="bi bi-people"></i> Usuarios
-    </a>
-    <a class="sidebar-enlace <?= $pagina_activa === 'agenda' ? 'activo' : '' ?>" onclick="mostrarPagina('agenda')">
-        <i class="bi bi-calendar3"></i> Agenda
-    </a>
-    <a class="sidebar-enlace <?= $pagina_activa === 'pacientes' ? 'activo' : '' ?>" onclick="mostrarPagina('pacientes')">
-        <i class="bi bi-person-vcard"></i> Pacientes
-    </a>
-    <a class="sidebar-enlace <?= $pagina_activa === 'expedientes' ? 'activo' : '' ?>" onclick="mostrarPagina('expedientes')">
-        <i class="bi bi-folder2-open"></i> Expedientes
-    </a>
-    <a class="sidebar-enlace <?= $pagina_activa === 'odontograma' ? 'activo' : '' ?>" onclick="mostrarPagina('odontograma')">
-        <i class="bi bi-clipboard2-pulse"></i> Odontograma
-    </a>
-    <a class="sidebar-enlace <?= $pagina_activa === 'tratamientos' ? 'activo' : '' ?>" onclick="mostrarPagina('tratamientos')">
-        <i class="bi bi-bandaid"></i> Tratamientos
-    </a>
-    <a class="sidebar-enlace <?= $pagina_activa === 'cotizaciones' ? 'activo' : '' ?>" onclick="mostrarPagina('cotizaciones')">
-        <i class="bi bi-receipt"></i> Cotizaciones
-    </a>
-    <a class="sidebar-enlace <?= $pagina_activa === 'pagos' ? 'activo' : '' ?>" onclick="mostrarPagina('pagos')">
-        <i class="bi bi-cash-coin"></i> Pagos
-    </a>
-    <a class="sidebar-enlace <?= $pagina_activa === 'inventario' ? 'activo' : '' ?>" onclick="mostrarPagina('inventario')">
-        <i class="bi bi-box-seam"></i> Inventario
-    </a>
-    <a class="sidebar-enlace <?= $pagina_activa === 'reportes' ? 'activo' : '' ?>" onclick="mostrarPagina('reportes')">
-        <i class="bi bi-bar-chart-line"></i> Reportes
-    </a>
-    <a class="sidebar-enlace <?= $pagina_activa === 'bitacora' ? 'activo' : '' ?>" onclick="mostrarPagina('bitacora')">
-        <i class="bi bi-journal-text"></i> Bitácora
-    </a>
+            <a class="sidebar-enlace <?= $pagina_activa === 'inicio'       ? 'activo' : '' ?>" onclick="mostrarPagina('inicio')">
+                <i class="bi bi-speedometer2"></i> Inicio
+            </a>
+            <?php if ($rol === 'administrador'): ?>
+            <a class="sidebar-enlace <?= $pagina_activa === 'usuarios'     ? 'activo' : '' ?>" onclick="mostrarPagina('usuarios')">
+                <i class="bi bi-people"></i> Usuarios
+            </a>
+            <?php endif; ?>
+            <a class="sidebar-enlace <?= $pagina_activa === 'agenda'       ? 'activo' : '' ?>" onclick="mostrarPagina('agenda')">
+                <i class="bi bi-calendar3"></i> Agenda
+            </a>
+            <a class="sidebar-enlace <?= $pagina_activa === 'pacientes'    ? 'activo' : '' ?>" onclick="mostrarPagina('pacientes')">
+                <i class="bi bi-person-vcard"></i> Pacientes
+            </a>
+            <a class="sidebar-enlace <?= $pagina_activa === 'expedientes'  ? 'activo' : '' ?>" onclick="mostrarPagina('expedientes')">
+                <i class="bi bi-folder2-open"></i> Expedientes
+            </a>
+            <a class="sidebar-enlace <?= $pagina_activa === 'odontograma'  ? 'activo' : '' ?>" onclick="mostrarPagina('odontograma')">
+                <i class="bi bi-clipboard2-pulse"></i> Odontograma
+            </a>
+            <a class="sidebar-enlace <?= $pagina_activa === 'tratamientos' ? 'activo' : '' ?>" onclick="mostrarPagina('tratamientos')">
+                <i class="bi bi-bandaid"></i> Tratamientos
+            </a>
+            <a class="sidebar-enlace <?= $pagina_activa === 'cotizaciones' ? 'activo' : '' ?>" onclick="mostrarPagina('cotizaciones')">
+                <i class="bi bi-receipt"></i> Cotizaciones
+            </a>
+            <a class="sidebar-enlace <?= $pagina_activa === 'pagos'        ? 'activo' : '' ?>" onclick="mostrarPagina('pagos')">
+                <i class="bi bi-cash-coin"></i> Pagos
+            </a>
+            <a class="sidebar-enlace <?= $pagina_activa === 'inventario'   ? 'activo' : '' ?>" onclick="mostrarPagina('inventario')">
+                <i class="bi bi-box-seam"></i> Inventario
+            </a>
+            <a class="sidebar-enlace <?= $pagina_activa === 'reportes'     ? 'activo' : '' ?>" onclick="mostrarPagina('reportes')">
+                <i class="bi bi-bar-chart-line"></i> Reportes
+            </a>
+            <a class="sidebar-enlace <?= $pagina_activa === 'bitacora'     ? 'activo' : '' ?>" onclick="mostrarPagina('bitacora')">
+                <i class="bi bi-journal-text"></i> Bitácora
+            </a>
 
-        <?php elseif ($rol === 'recepcionista'): ?>
+        <?php elseif ($rol === 'recepcionista' || $rol === 'asistente_dental'): ?>
 
             <div class="sidebar-seccion-titulo">Principal</div>
             <a class="sidebar-enlace <?= $pagina_activa === 'inicio'       ? 'activo' : '' ?>" onclick="mostrarPagina('inicio')">
