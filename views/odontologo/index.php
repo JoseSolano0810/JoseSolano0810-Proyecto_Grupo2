@@ -56,7 +56,7 @@ $pagos = [
             </div>
         </header>
 
-        <!-- ══════════ INICIO ══════════ -->
+        <!-- ───────────────── INICIO ───────────────── -->
         <div class="pagina activa" id="pagina-inicio">
 
             <div class="kpi-grid">
@@ -115,7 +115,7 @@ $pagos = [
 
         </div>
 
-        <!-- ══════════ USUARIOS ══════════ -->
+        <!-- ───────────────── USUARIOS ───────────────── -->
         <div class="pagina" id="pagina-usuarios">
 
             <div class="panel-titulo" style="margin-bottom:20px;">
@@ -223,7 +223,7 @@ $pagos = [
             </div>
         </div>
 
-        <!-- ══════════ AGENDA ══════════ -->
+        <!-- ───────────────── AGENDA ───────────────── -->
         <div class="pagina" id="pagina-agenda">
             <div class="panel-titulo" style="margin-bottom:20px;">
                 <h2>Mi agenda</h2>
@@ -253,7 +253,7 @@ $pagos = [
             </div>
         </div>
 
-        <!-- ══════════ PACIENTES ══════════ -->
+        <!-- ───────────────── PACIENTES ───────────────── -->
         <div class="pagina" id="pagina-pacientes">
             <div class="panel-titulo" style="margin-bottom:20px;">
                 <h2>Registro de pacientes</h2>
@@ -292,7 +292,7 @@ $pagos = [
             </div>
         </div>
 
-        <!-- ══════════ EXPEDIENTES ══════════ -->
+        <!-- ───────────────── EXPEDIENTES ───────────────── -->
         <div class="pagina" id="pagina-expedientes">
             <div class="panel-titulo" style="margin-bottom:20px;">
                 <h2>Expedientes clínicos</h2>
@@ -326,7 +326,7 @@ $pagos = [
             </div>
         </div>
 
-        <!-- ══════════ ODONTOGRAMA ══════════ -->
+        <!-- ───────────────── ODONTOGRAMA ───────────────── -->
         <div class="pagina" id="pagina-odontograma">
             <h2 style="margin-bottom:6px;">Odontograma</h2>
             <p style="font-size:14px;color:var(--gris-azulado);margin-bottom:20px;">
@@ -386,7 +386,7 @@ $pagos = [
             </div>
         </div>
 
-        <!-- ══════════ TRATAMIENTOS ══════════ -->
+        <!-- ───────────────── TRATAMIENTOS ───────────────── -->
         <div class="pagina" id="pagina-tratamientos">
             <div class="panel-titulo" style="margin-bottom:20px;">
                 <h2>Planes de tratamiento</h2>
@@ -415,7 +415,7 @@ $pagos = [
             </div>
         </div>
 
-        <!-- ══════════ COTIZACIONES ══════════ -->
+        <!-- ───────────────── COTIZACIONES ───────────────── -->
         <div class="pagina" id="pagina-cotizaciones">
             <div class="panel-titulo" style="margin-bottom:20px;">
                 <h2>Cotizaciones</h2>
@@ -450,7 +450,7 @@ $pagos = [
             </div>
         </div>
 
-        <!-- ══════════ PAGOS ══════════ -->
+        <!-- ───────────────── PAGOS ───────────────── -->
         <div class="pagina" id="pagina-pagos">
             <div class="panel-titulo" style="margin-bottom:20px;">
                 <h2>Registro de pagos</h2>
@@ -487,7 +487,7 @@ $pagos = [
             </div>
         </div>
 
-        <!-- ══════════ INVENTARIO ══════════ -->
+        <!-- ───────────────── INVENTARIO ───────────────── -->
         <div class="pagina" id="pagina-inventario">
             <div class="panel-titulo" style="margin-bottom:20px;">
                 <h2>Inventario</h2>
@@ -500,7 +500,7 @@ $pagos = [
             </div>
         </div>
 
-        <!-- ══════════ REPORTES ══════════ -->
+        <!-- ───────────────── REPORTES ───────────────── -->
         <div class="pagina" id="pagina-reportes">
             <div class="panel-titulo" style="margin-bottom:20px;">
                 <h2>Reportes</h2>
@@ -513,7 +513,7 @@ $pagos = [
             </div>
         </div>
 
-        <!-- ══════════ BITÁCORA ══════════ -->
+        <!-- ───────────────── BITÁCORA ───────────────── -->
         <div class="pagina" id="pagina-bitacora">
             <div class="panel-titulo" style="margin-bottom:20px;">
                 <h2>Bitácora de auditoría</h2>
@@ -601,7 +601,7 @@ $pagos = [
     </div>
 </div>
 
-<!-- Modal nuevo usuario  -->
+<!-- Modal nuevo usuario -->
 <div class="modal-overlay" id="modal-nuevo-usuario">
     <div class="modal-caja">
         <div class="modal-header">
@@ -650,7 +650,7 @@ $pagos = [
     </div>
 </div>
 
-<!-- Modal restablecer contraseña  -->
+<!-- Modal restablecer contraseña -->
 <div class="modal-overlay" id="modal-restablecer">
     <div class="modal-caja">
         <div class="modal-header">
@@ -725,9 +725,11 @@ $pagos = [
 
 <script src="<?= BASE_URL ?>/public/js/app.js"></script>
 <script>
-let usuarioIdSeleccionado  = null;
+const BASE = '<?= BASE_URL ?>';
+let usuarioIdSeleccionado    = null;
 let estadoActualSeleccionado = null;
 
+/* ── Restablecer contraseña ─────────────────────────────── */
 function abrirRestablecerContrasena(id, nombre) {
     usuarioIdSeleccionado = id;
     document.getElementById('restablecer-nombre-usuario').textContent = nombre;
@@ -736,29 +738,59 @@ function abrirRestablecerContrasena(id, nombre) {
     abrirModal('modal-restablecer');
 }
 
-function guardarNuevaContrasena() {
+async function guardarNuevaContrasena() {
     const nueva     = document.getElementById('nueva-contrasena').value;
     const confirmar = document.getElementById('confirmar-contrasena').value;
-    if (nueva.length < 8) { alert('La contraseña debe tener al menos 8 caracteres.'); return; }
+    if (nueva.length < 8)   { alert('La contraseña debe tener al menos 8 caracteres.'); return; }
     if (nueva !== confirmar) { alert('Las contraseñas no coinciden.'); return; }
-    // TODO: fetch al backend
-    alert('Contraseña restablecida correctamente (demo).');
-    cerrarModal('modal-restablecer');
+
+    const res  = await fetch(`${BASE}/index.php?accion=usuarios.restablecer`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify({ id: usuarioIdSeleccionado, contrasena: nueva })
+    });
+    const data = await res.json();
+    if (data.ok) {
+        cerrarModal('modal-restablecer');
+        mostrarToast('Contraseña restablecida correctamente.', 'exito');
+    } else {
+        alert(data.error ?? 'Error al restablecer la contraseña.');
+    }
 }
 
-function guardarNuevoUsuario() {
-    const nombre    = document.getElementById('nu-nombre').value.trim();
-    const correo    = document.getElementById('nu-correo').value.trim();
-    const usuario   = document.getElementById('nu-usuario').value.trim();
+/* ── Crear usuario ──────────────────────────────────────── */
+async function guardarNuevoUsuario() {
+    const nombre     = document.getElementById('nu-nombre').value.trim();
+    const cedula     = document.getElementById('nu-cedula').value.trim();
+    const telefono   = document.getElementById('nu-telefono').value.trim();
+    const correo     = document.getElementById('nu-correo').value.trim();
+    const usuario    = document.getElementById('nu-usuario').value.trim();
     const contrasena = document.getElementById('nu-contrasena').value;
-    const rol       = document.getElementById('nu-rol').value;
-    if (!nombre || !correo || !usuario || !contrasena || !rol) { alert('Complete todos los campos obligatorios.'); return; }
-    if (contrasena.length < 8) { alert('La contraseña debe tener al menos 8 caracteres.'); return; }
-    // TODO: fetch al backend
-    alert('Usuario registrado correctamente (demo).');
-    cerrarModal('modal-nuevo-usuario');
+    const rol_id     = document.getElementById('nu-rol').value;
+
+    if (!nombre || !correo || !usuario || !contrasena || !rol_id) {
+        alert('Complete todos los campos obligatorios.'); return;
+    }
+    if (contrasena.length < 8) {
+        alert('La contraseña debe tener al menos 8 caracteres.'); return;
+    }
+
+    const res  = await fetch(`${BASE}/index.php?accion=usuarios.crear`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify({ nombre, cedula, telefono, correo, usuario, contrasena, rol_id })
+    });
+    const data = await res.json();
+    if (data.ok) {
+        cerrarModal('modal-nuevo-usuario');
+        mostrarToast('Usuario registrado correctamente.', 'exito');
+        setTimeout(() => location.reload(), 1200);
+    } else {
+        alert(data.error ?? 'Error al registrar el usuario.');
+    }
 }
 
+/* ── Cambiar estado  ───────────────── */
 function confirmarCambioEstado(id, estadoActual, nombre) {
     usuarioIdSeleccionado    = id;
     estadoActualSeleccionado = estadoActual;
@@ -768,10 +800,32 @@ function confirmarCambioEstado(id, estadoActual, nombre) {
     abrirModal('modal-confirmar-estado');
 }
 
-function ejecutarCambioEstado() {
-    // TODO: fetch al backend
-    alert('Estado actualizado correctamente (demo).');
-    cerrarModal('modal-confirmar-estado');
+async function ejecutarCambioEstado() {
+    const nuevoEstado = estadoActualSeleccionado === 'activo' ? 'inactivo' : 'activo';
+
+    const res  = await fetch(`${BASE}/index.php?accion=usuarios.estado`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify({ id: usuarioIdSeleccionado, estado: nuevoEstado })
+    });
+    const data = await res.json();
+    if (data.ok) {
+        cerrarModal('modal-confirmar-estado');
+        mostrarToast('Estado actualizado correctamente.', 'exito');
+        setTimeout(() => location.reload(), 1200);
+    } else {
+        alert(data.error ?? 'Error al cambiar el estado.');
+    }
+}
+
+/* ── Toast de confirmación ──────────────────────────────── */
+function mostrarToast(mensaje, tipo = 'exito') {
+    const t = document.createElement('div');
+    t.className = `alerta ${tipo === 'exito' ? 'exito' : 'peligro'}`;
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;min-width:280px;box-shadow:0 4px 16px rgba(0,0,0,.15);';
+    t.innerHTML = `<i class="bi bi-${tipo === 'exito' ? 'check-circle' : 'exclamation-circle'}"></i> ${mensaje}`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
 }
 </script>
 </body>

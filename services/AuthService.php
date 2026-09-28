@@ -2,7 +2,9 @@
 
 class AuthService
 {
-    /** Iniciar sesión  */
+    /** Iniciar sesión  
+     * 
+    */
     public static function iniciar(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -12,7 +14,7 @@ class AuthService
     }
 
     /** 
-     * Verifica que el usuario 
+     * verifica usuario
      */
     public static function requerir(array $rolesPermitidos): void
     {
@@ -27,7 +29,9 @@ class AuthService
         }
     }
 
-    /** login exitoso */
+    /** 
+     * login exitoso 
+    */
     public static function login(array $usuario): void
     {
         self::iniciar();
@@ -44,7 +48,9 @@ class AuthService
         ];
     }
 
-    /** Cerrar sesión */
+    /** Cerrar sesión 
+     * 
+    */
     public static function logout(): void
     {
         self::iniciar();
