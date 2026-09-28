@@ -1,5 +1,5 @@
 <?php
-define('DB_HOST', 'srv1780.hstgr.io');
+define('DB_HOST', 'localhost');
 define('DB_NAME',    'u546222637_odent_db');
 define('DB_USER',    'u546222637_odent_db');
 define('DB_PASS',    '1342JoZa$');
