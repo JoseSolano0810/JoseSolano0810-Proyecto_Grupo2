@@ -17,7 +17,7 @@
             </div>
         </div>
 
-        <?php if (count($roles_sesion ?? []) > 1): ?>
+        <?php if (count($roles_sesion ?? []) > 1 && !in_array('administrador', $roles_sesion, true)): ?>
             <select class="sidebar-select-rol" style="margin-top:10px;width:100%;"
                 onchange="location.href='<?= BASE_URL ?>/index.php?accion=cambiar_rol&rol=' + encodeURIComponent(this.value)">
                 <?php foreach ($roles_sesion as $r): ?>
