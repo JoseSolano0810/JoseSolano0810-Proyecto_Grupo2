@@ -1,4 +1,3 @@
-
 'use strict';
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -7,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
     iniciarFechaTopbar();
     iniciarCalculoIVA();
     iniciarValidacionLogin();
+    iniciarControlInactividad();
 });
 
 function iniciarFechaTopbar() {
@@ -260,3 +260,82 @@ document.querySelectorAll('.barra-relleno').forEach(barra => {
     barra.style.width = '0%';
     observador.observe(barra);
 });
+
+/* ── USU-04: sesión, inactividad y botón "Atrás" ───────────── */
+
+// Si la página vuelve desde la caché del navegador (botón Atrás), se recarga
+// para que el servidor decida si la sesión sigue vigente.
+window.addEventListener('pageshow', function (e) {
+    if (e.persisted) location.reload();
+});
+
+function iniciarControlInactividad() {
+    if (!window.ODENT) return; // solo en pantallas con sesión iniciada
+
+    const limiteMs = window.ODENT.minutosInactividad * 60 * 1000;
+    let temporizador;
+    let ultimoPing = Date.now();
+
+    const expirar = () => {
+        window.location.href = window.ODENT.base + '/index.php?accion=logout&motivo=inactividad';
+    };
+
+    const reiniciar = () => {
+        clearTimeout(temporizador);
+        temporizador = setTimeout(expirar, limiteMs);
+        // Avisa al servidor como máximo cada 60 s para no vencer la sesión con el usuario activo
+        if (Date.now() - ultimoPing > 60000) {
+            ultimoPing = Date.now();
+            fetch(window.ODENT.base + '/index.php?accion=ping', { headers: { 'Accept': 'application/json' } })
+                .then(r => { if (r.status === 401) expirar(); })
+                .catch(() => {});
+        }
+    };
+
+    ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'].forEach(ev =>
+        document.addEventListener(ev, reiniciar, { passive: true })
+    );
+    reiniciar();
+}
+
+/* ── USU-05: política de contraseñas y cambio propio ───────── */
+
+function validarPoliticaContrasena(c) {
+    if (c.length < 8 || !/[A-Z]/.test(c) || !/[a-z]/.test(c) || !/\d/.test(c)) {
+        return 'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.';
+    }
+    return null;
+}
+
+function abrirCambiarContrasena() {
+    ['cc-actual', 'cc-nueva', 'cc-confirmar'].forEach(id => document.getElementById(id).value = '');
+    abrirModal('modal-cambiar-contrasena');
+}
+
+async function guardarCambioContrasena() {
+    const actual    = document.getElementById('cc-actual').value;
+    const nueva     = document.getElementById('cc-nueva').value;
+    const confirmar = document.getElementById('cc-confirmar').value;
+
+    if (!actual || !nueva || !confirmar) { alert('Complete todos los campos.'); return; }
+    const errPolitica = validarPoliticaContrasena(nueva);
+    if (errPolitica) { alert(errPolitica); return; }
+    if (nueva !== confirmar) { alert('La confirmación no coincide con la nueva contraseña.'); return; }
+
+    try {
+        const res  = await fetch(window.ODENT.base + '/index.php?accion=perfil.contrasena', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ actual, nueva, confirmar })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            cerrarModal('modal-cambiar-contrasena');
+            mostrarToast('Contraseña actualizada correctamente.', 'exito');
+        } else {
+            alert(data.error ?? 'No se pudo cambiar la contraseña.');
+        }
+    } catch (e) {
+        alert('Ocurrió un error al cambiar la contraseña.');
+    }
+}

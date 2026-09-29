@@ -118,7 +118,7 @@
                             Administre el acceso y roles del personal de Odent
                         </p>
                     </div>
-                    <button class="btn-odent" onclick="abrirModal('modal-nuevo-usuario')">
+                    <button class="btn-odent" onclick="abrirNuevoUsuario()">
                         <i class="bi bi-person-plus"></i> Nuevo usuario
                     </button>
                 </div>
@@ -587,17 +587,43 @@
             </div>
 
             <!-- ───────────────── BITÁCORA ───────────────── -->
+            <?php if ($rol === 'administrador'): ?>
             <div class="pagina" id="pagina-bitacora">
                 <div class="panel-titulo" style="margin-bottom:20px;">
                     <h2>Bitácora de auditoría</h2>
                 </div>
                 <div class="tarjeta">
-                    <div class="alerta info">
-                        <i class="bi bi-info-circle"></i>
-                        El módulo de bitácora está siendo desarrollado por el equipo.
+                    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;align-items:flex-end;">
+                        <div class="campo-grupo" style="margin:0;flex:1;min-width:160px;">
+                            <label>Usuario</label>
+                            <input type="text" id="bit-usuario" placeholder="Nombre de usuario">
+                        </div>
+                           <div class="campo-grupo" style="margin:0;min-width:180px;">
+                            <label>Acción</label>
+                            <select id="bit-accion"><option value="">Todas</option></select>
+                        </div>
+                        <div class="campo-grupo" style="margin:0;">
+                            <label>Desde</label>
+                            <input type="date" id="bit-desde">
+                        </div>
+                        <div class="campo-grupo" style="margin:0;">
+                            <label>Hasta</label>
+                            <input type="date" id="bit-hasta">
+                        </div>
+                        <button class="btn-odent" onclick="cargarBitacora()"><i class="bi bi-funnel"></i> Filtrar</button>
+                        <button class="btn-outline-odent" onclick="limpiarFiltrosBitacora()">Limpiar</button>
                     </div>
+                    <table class="tabla-odent">
+                        <thead>
+                            <tr><th>Fecha y hora</th><th>Responsable</th><th>Acción</th><th>Detalle</th><th>IP</th></tr>
+                        </thead>
+                        <tbody id="bit-tbody">
+                            <tr><td colspan="5" style="text-align:center;color:var(--gris-azulado);">Cargando...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
+            <?php endif; ?>
 
         </div>
     </div>
@@ -717,7 +743,7 @@
             <div class="campo-grupo"><label>Contraseña inicial *</label>
                 <div class="input-icono">
                     <i class="bi bi-lock"></i>
-                    <input type="password" id="nu-contrasena" placeholder="Mínimo 8 caracteres">
+                    <input type="password" id="nu-contrasena" placeholder="Mín. 8 caracteres, mayúscula, minúscula y número">
                 </div>
             </div>
             <div class="modal-footer">
@@ -845,7 +871,7 @@
             <div class="campo-grupo"><label>Nueva contraseña *</label>
                 <div class="input-icono">
                     <i class="bi bi-lock"></i>
-                    <input type="password" id="nueva-contrasena" placeholder="Mínimo 8 caracteres">
+                    <input type="password" id="nueva-contrasena" placeholder="Mín. 8 caracteres, mayúscula, minúscula y número">
                 </div>
             </div>
             <div class="campo-grupo"><label>Confirmar contraseña *</label>
@@ -872,7 +898,7 @@
             </div>
             <p id="confirmar-mensaje" style="font-size:14px;color:var(--gris-texto);margin-bottom:20px;"></p>
             <div class="modal-footer">
-                <button class="btn-outline-odent" onclick="cerrarModal('modal-confirmar-estado')">Cancelar</button>
+            <button class="btn-outline-odent" onclick="cerrarModal('modal-confirmar-estado')">Cancelar</button>
                 <button id="btn-confirmar-estado" class="btn-peligro" onclick="ejecutarCambioEstado()">Confirmar</button>
             </div>
         </div>
@@ -910,6 +936,63 @@
         let usuarioIdSeleccionado = null;
         let estadoActualSeleccionado = null;
 
+
+        /* ── USU-01 esc. 3: cancelar descarta lo digitado ───────── */
+        function abrirNuevoUsuario() {
+            ['nu-nombre', 'nu-cedula', 'nu-telefono', 'nu-correo', 'nu-usuario', 'nu-contrasena', 'nu-rol']
+                .forEach(id => document.getElementById(id).value = '');
+            abrirModal('modal-nuevo-usuario');
+        }
+
+        /* ── USU-06: bitácora ───────────────────────────────────── */
+        const escapar = t => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+        async function cargarBitacora() {
+            const tbody = document.getElementById('bit-tbody');
+            if (!tbody) return;
+            const params = new URLSearchParams({
+                accion: 'bitacora.listar',
+                usuario: document.getElementById('bit-usuario').value.trim(),
+                accion_f: document.getElementById('bit-accion').value,
+                desde: document.getElementById('bit-desde').value,
+                hasta: document.getElementById('bit-hasta').value
+            });
+            try {
+                const res = await fetch(`${BASE}/index.php?${params}`, { headers: { 'Accept': 'application/json' } });
+                const data = await res.json();
+                if (!data.ok) throw new Error(data.error);
+
+                const select = document.getElementById('bit-accion');
+                if (select.options.length === 1) {
+                    data.acciones.forEach(a => select.add(new Option(a.replaceAll('_', ' '), a)));
+                }
+
+                tbody.innerHTML = data.data.length ? data.data.map(r => `
+                    <tr>
+                        <td>${escapar(r.created_at)}</td>
+                        <td>@${escapar(r.usuario_nombre)}</td>
+                        <td><span class="badge-estado badge-confirmada">${escapar(r.accion.replaceAll('_', ' '))}</span></td>
+                        <td>${escapar(r.descripcion)}</td>
+                        <td style="color:var(--gris-azulado);">${escapar(r.ip)}</td>
+                    </tr>`).join('')
+                    : '<tr><td colspan="5" style="text-align:center;color:var(--gris-azulado);">No hay registros que cumplan los criterios.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No se pudo cargar la bitácora.</td></tr>';
+            }
+        }
+
+        function limpiarFiltrosBitacora() {
+            ['bit-usuario', 'bit-accion', 'bit-desde', 'bit-hasta'].forEach(id => document.getElementById(id).value = '');
+            cargarBitacora();
+        }
+
+        // Carga la bitácora al abrir la sección
+        const mostrarPaginaOriginal = window.mostrarPagina;
+        window.mostrarPagina = function (slug) {
+            mostrarPaginaOriginal(slug);
+            if (slug === 'bitacora') cargarBitacora();
+        };
+
         /* ── Filtrar usuarios ───────────────────────────────────── */
         function filtrarUsuarios(texto) {
             const filtro = texto.toLowerCase().trim();
@@ -934,8 +1017,9 @@
         async function guardarNuevaContrasena() {
             const nueva = document.getElementById('nueva-contrasena').value;
             const confirmar = document.getElementById('confirmar-contrasena').value;
-            if (nueva.length < 8) {
-                alert('La contraseña debe tener al menos 8 caracteres.');
+            const errPolitica = validarPoliticaContrasena(nueva);
+            if (errPolitica) {
+                alert(errPolitica);
                 return;
             }
             if (nueva !== confirmar) {
@@ -972,12 +1056,13 @@
             const contrasena = document.getElementById('nu-contrasena').value;
             const rol_id = document.getElementById('nu-rol').value;
 
-            if (!nombre || !correo || !usuario || !contrasena || !rol_id) {
+            if (!nombre || !cedula || !correo || !usuario || !contrasena || !rol_id) {
                 alert('Complete todos los campos obligatorios.');
                 return;
             }
-            if (contrasena.length < 8) {
-                alert('La contraseña debe tener al menos 8 caracteres.');
+            const errPolitica = validarPoliticaContrasena(contrasena);
+            if (errPolitica) {
+                alert(errPolitica);
                 return;
             }
 

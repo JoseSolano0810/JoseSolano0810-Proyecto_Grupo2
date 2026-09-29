@@ -3,6 +3,7 @@
 require_once ROOT_PATH . '/database/Database.php';
 require_once ROOT_PATH . '/models/Usuario.php';
 require_once ROOT_PATH . '/services/AuthService.php';
+require_once ROOT_PATH . '/models/Bitacora.php';
 
 class UsuarioController
 {
@@ -14,41 +15,35 @@ class UsuarioController
         $this->model = new Usuario();
     }
 
-    /**
-     * Lista usuarios 
-     */
+    /** Lista usuarios */
     public function listar(): void
     {
         echo json_encode(['ok' => true, 'data' => $this->model->obtenerTodos()]);
     }
 
-    /**
-     * Lista roles 
-     */
+    /** Lista roles */
     public function roles(): void
     {
         echo json_encode(['ok' => true, 'data' => $this->model->obtenerRoles()]);
     }
 
-    /**
-     * Datos para la vista del panel 
-     */
+    /** Datos para la vista del panel */
     public function datosVista(): array
     {
         $rolesPorUsuario = $this->model->obtenerRolesPorUsuario();
 
         $usuarios = array_map(fn($u) => [
-            'id'       => (int) $u['id_usuario'],
-            'nombre'   => $u['nombre_completo'],
-            'usuario'  => $u['nombre_usuario'],
-            'cedula'   => $u['identificacion'],
-            'telefono' => $u['telefono'] ?? '',
-            'correo'   => $u['correo'],
-            'rol'      => $u['rol'],
-            'rol_id'   => (int) $u['id_rol'],   // rol inicial
-            'roles'    => $rolesPorUsuario[(int) $u['id_usuario']] ?? [],
+            'id'        => (int) $u['id_usuario'],
+            'nombre'    => $u['nombre_completo'],
+            'usuario'   => $u['nombre_usuario'],
+            'cedula'    => $u['identificacion'],
+            'telefono'  => $u['telefono'] ?? '',
+            'correo'    => $u['correo'],
+            'rol'       => $u['rol'],
+            'rol_id'    => (int) $u['id_rol'],   // rol inicial
+            'roles'     => $rolesPorUsuario[(int) $u['id_usuario']] ?? [],
             'roles_ids' => array_column($rolesPorUsuario[(int) $u['id_usuario']] ?? [], 'id'),
-            'estado'   => $u['estado'],
+            'estado'    => $u['estado'],
         ], $this->model->obtenerTodos());
 
         $roles = array_map(fn($r) => [
@@ -59,9 +54,7 @@ class UsuarioController
         return ['usuarios' => $usuarios, 'roles' => $roles];
     }
 
-    /**
-     * Registra usuario
-     */
+    /** Registra usuario */
     public function crear(): void
     {
         $datos = json_decode(file_get_contents('php://input'), true);
@@ -81,9 +74,10 @@ class UsuarioController
             return;
         }
 
-        if (strlen($datos['contrasena']) < 8) {
+        // USU-05: política de contraseñas
+        if ($errorPolitica = AuthService::validarPoliticaContrasena((string) $datos['contrasena'])) {
             http_response_code(400);
-            echo json_encode(['ok' => false, 'error' => 'La contraseña debe tener al menos 8 caracteres']);
+            echo json_encode(['ok' => false, 'error' => $errorPolitica]);
             return;
         }
 
@@ -118,6 +112,7 @@ class UsuarioController
             $id      = $this->model->crear($datos);
             $usuario = $this->model->obtenerPorId($id);
             unset($usuario['contrasena_hash']);
+            Bitacora::registrar('USUARIO_CREADO', "Creó al usuario {$usuario['nombre_usuario']} con rol {$usuario['rol']}");
 
             echo json_encode([
                 'ok'      => true,
@@ -131,9 +126,7 @@ class UsuarioController
         }
     }
 
-        /**
-     * Edita los datos de un usuario existente
-     */
+    /** Edita los datos de un usuario existente */
     public function editar(): void
     {
         $datos = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -193,6 +186,7 @@ class UsuarioController
 
         try {
             $this->model->actualizar($id, $datos);
+            Bitacora::registrar('USUARIO_EDITADO', "Editó los datos del usuario {$datos['usuario']} (ID $id)");
 
             // Si se editó a sí mismo, refrescar la sesión
             if ($esUsuarioActual) {
@@ -208,7 +202,6 @@ class UsuarioController
             echo json_encode(['ok' => false, 'error' => 'No se pudo actualizar el usuario']);
         }
     }
-
 
     /**
      * Asigna uno o varios roles a un usuario y define el rol inicial
@@ -256,6 +249,7 @@ class UsuarioController
 
         try {
             $this->model->asignarRoles($id, $roles, $principal);
+            Bitacora::registrar('ROLES_ASIGNADOS', "Actualizó los roles del usuario ID $id (IDs de rol: " . implode(',', $roles) . "; inicial: $principal)");
             echo json_encode(['ok' => true, 'mensaje' => 'Roles actualizados correctamente']);
         } catch (PDOException $e) {
             error_log('USU-02 asignar roles: ' . $e->getMessage());
@@ -264,9 +258,7 @@ class UsuarioController
         }
     }
 
-    /**
-     *  Restablece contraseña
-     */
+    /** Restablece contraseña */
     public function restablecerContrasena(): void
     {
         $datos = json_decode(file_get_contents('php://input'), true);
@@ -279,9 +271,9 @@ class UsuarioController
             return;
         }
 
-        if (strlen($nueva) < 8) {
+        if ($errorPolitica = AuthService::validarPoliticaContrasena($nueva)) {
             http_response_code(400);
-            echo json_encode(['ok' => false, 'error' => 'La contraseña debe tener al menos 8 caracteres']);
+            echo json_encode(['ok' => false, 'error' => $errorPolitica]);
             return;
         }
 
@@ -292,13 +284,12 @@ class UsuarioController
         }
 
         $this->model->restablecerContrasena($id, $nueva);
+        Bitacora::registrar('CONTRASENA_RESTABLECIDA', "Restableció la contraseña del usuario ID $id");
 
         echo json_encode(['ok' => true, 'mensaje' => 'Contraseña restablecida exitosamente']);
     }
 
-    /**
-     * Activa / inactiva usuario
-     */
+    /** Activa / inactiva usuario */
     public function cambiarEstado(): void
     {
         $datos  = json_decode(file_get_contents('php://input'), true);
@@ -324,6 +315,7 @@ class UsuarioController
         }
 
         $this->model->cambiarEstado($id, $estado);
+        Bitacora::registrar('ESTADO_CAMBIADO', "Cambió el estado del usuario ID $id a $estado");
 
         echo json_encode(['ok' => true, 'mensaje' => "Usuario $estado exitosamente"]);
     }
