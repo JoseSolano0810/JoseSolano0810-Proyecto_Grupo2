@@ -31,7 +31,7 @@ class Bitacora
         self::$tablaLista = true;
     }
 
-    /** USU-06 esc. 3: registro automático. Nunca rompe la operación principal. */
+    /** USU-06 esc. 3: registro automático.*/
     public static function registrar(string $accion, string $descripcion, ?int $idUsuario = null, ?string $usuarioNombre = null): void
     {
         try {

@@ -166,8 +166,6 @@ class UsuarioController
         }
 
         $esUsuarioActual = $id === (int) AuthService::usuarioActual()['id'];
-
-        // Duplicados: el tercer parámetro ($id) excluye al propio usuario
         if ($this->model->existeNombreUsuario($datos['usuario'], $id)) {
             http_response_code(400);
             echo json_encode(['ok' => false, 'error' => 'El nombre de usuario ya está en uso']);
@@ -188,7 +186,6 @@ class UsuarioController
             $this->model->actualizar($id, $datos);
             Bitacora::registrar('USUARIO_EDITADO', "Editó los datos del usuario {$datos['usuario']} (ID $id)");
 
-            // Si se editó a sí mismo, refrescar la sesión
             if ($esUsuarioActual) {
                 $_SESSION['usuario']['nombre']    = $datos['nombre'];
                 $_SESSION['usuario']['iniciales'] = AuthService::iniciales($datos['nombre']);
@@ -240,7 +237,6 @@ class UsuarioController
             }
         }
 
-        // Evita que el administrador modifique sus propios roles
         if ($id === (int) AuthService::usuarioActual()['id']) {
             http_response_code(400);
             echo json_encode(['ok' => false, 'error' => 'No puede cambiar sus propios roles']);
