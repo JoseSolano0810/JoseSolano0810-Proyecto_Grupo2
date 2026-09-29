@@ -40,7 +40,7 @@ class UsuarioController
             'telefono'  => $u['telefono'] ?? '',
             'correo'    => $u['correo'],
             'rol'       => $u['rol'],
-            'rol_id'    => (int) $u['id_rol'],   // rol inicial
+            'rol_id'    => (int) $u['id_rol'],  
             'roles'     => $rolesPorUsuario[(int) $u['id_usuario']] ?? [],
             'roles_ids' => array_column($rolesPorUsuario[(int) $u['id_usuario']] ?? [], 'id'),
             'estado'    => $u['estado'],
