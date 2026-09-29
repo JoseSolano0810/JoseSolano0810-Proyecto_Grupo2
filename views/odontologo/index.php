@@ -162,7 +162,7 @@
                                 <th>#</th>
                                 <th>Usuario</th>
                                 <th>Nombre de usuario</th>
-                                <th>Rol</th>
+                                <th>Roles</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -184,9 +184,15 @@
                                     </td>
                                     <td style="color:var(--gris-azulado);">@<?= htmlspecialchars($u['usuario']) ?></td>
                                     <td>
-                                        <span class="badge-estado <?= $u['rol'] === 'administrador' ? 'badge-completada' : 'badge-confirmada' ?>">
-                                            <?= ucfirst(str_replace('_', ' ', $u['rol'])) ?>
-                                        </span>
+                                        <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                                            <?php foreach ($u['roles'] as $r): ?>
+                                                <span class="badge-estado <?= $r['nombre'] === 'administrador' ? 'badge-completada' : 'badge-confirmada' ?>"
+                                                      title="<?= $r['principal'] ? 'Rol inicial' : 'Rol adicional' ?>">
+                                                    <?= $r['principal'] ? '<i class="bi bi-star-fill" style="font-size:10px;"></i> ' : '' ?>
+                                                    <?= ucfirst(str_replace('_', ' ', $r['nombre'])) ?>
+                                                </span>
+                                            <?php endforeach; ?>
+                                        </div>
                                     </td>
                                     <td>
                                         <span class="badge-estado badge-<?= $u['estado'] === 'activo' ? 'confirmada' : 'cancelada' ?>">
@@ -699,7 +705,7 @@
                 <div class="campo-grupo"><label>Nombre de usuario *</label>
                     <input type="text" id="nu-usuario" placeholder="nombre.apellido">
                 </div>
-                <div class="campo-grupo"><label>Rol *</label>
+                <div class="campo-grupo"><label>Rol inicial *</label>
                     <select id="nu-rol">
                         <option value="">Seleccione un rol</option>
                         <?php foreach ($roles as $r): ?>
@@ -728,7 +734,7 @@
     <div class="modal-overlay" id="modal-asignar-rol">
         <div class="modal-caja">
             <div class="modal-header">
-                <h3>Asignar rol</h3>
+                <h3>Asignar roles</h3>
 
                 <button
                     class="modal-cerrar"
@@ -747,17 +753,25 @@
             </div>
 
             <div class="campo-grupo">
-                <label for="ar-rol">Nuevo rol *</label>
+                <label>Roles del usuario *</label>
+                <p style="font-size:12px;color:var(--gris-azulado);margin:0 0 8px;">
+                    Marque todos los roles que tendrá. Con la estrella defina el rol inicial.
+                </p>
 
-                <select id="ar-rol">
-                    <option value="">Seleccione un rol</option>
-
-                    <?php foreach ($roles as $r): ?>
-                        <option value="<?= $r['id'] ?>">
+                <?php foreach ($roles as $r): ?>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;">
+                        <label style="display:flex;align-items:center;gap:8px;margin:0;font-weight:500;">
+                            <input type="checkbox" class="ar-check" value="<?= $r['id'] ?>"
+                                   onchange="alCambiarRolCheck(this)">
                             <?= ucfirst(str_replace('_', ' ', $r['nombre'])) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;margin:0;font-size:12px;">
+                            <input type="radio" name="ar-principal" class="ar-radio" value="<?= $r['id'] ?>"
+                                   onchange="alCambiarRolRadio(this)">
+                            Inicial
+                        </label>
+                    </div>
+                <?php endforeach; ?>
             </div>
 
             <div class="modal-footer">
@@ -807,7 +821,7 @@
                 <div class="campo-grupo"><label>Nombre de usuario *</label>
                     <input type="text" id="eu-usuario" placeholder="nombre.apellido">
                 </div>
-                <div class="campo-grupo"><label>Rol *</label>
+                <div class="campo-grupo"><label>Rol inicial *</label>
                     <select id="eu-rol">
                         <?php foreach ($roles as $r): ?>
                             <option value="<?= $r['id'] ?>"><?= ucfirst(str_replace('_', ' ', $r['nombre'])) ?></option>
@@ -1001,21 +1015,47 @@
             }
         }
 
-        /* ── Asignar rol ────────────────────────────────────────── */
+        /* ── Asignar roles (varios) ─────────────────────────────── */
         function abrirAsignarRol(u) {
             document.getElementById('ar-usuario-id').value = u.id;
             document.getElementById('ar-usuario-nombre').textContent = u.nombre;
-            document.getElementById('ar-rol').value = u.rol_id;
+
+            const asignados = (u.roles_ids ?? [u.rol_id]).map(String);
+            document.querySelectorAll('.ar-check').forEach(c => {
+                c.checked = asignados.includes(c.value);
+            });
+            document.querySelectorAll('.ar-radio').forEach(r => {
+                r.checked = String(u.rol_id) === r.value;
+            });
 
             abrirModal('modal-asignar-rol');
         }
 
+        // Al elegir un rol como inicial, se marca automáticamente como asignado
+        function alCambiarRolRadio(radio) {
+            const check = document.querySelector(`.ar-check[value="${radio.value}"]`);
+            if (check) check.checked = true;
+        }
+
+        // Si se desmarca el rol que era el inicial, se quita como inicial
+        function alCambiarRolCheck(check) {
+            if (!check.checked) {
+                const radio = document.querySelector(`.ar-radio[value="${check.value}"]`);
+                if (radio && radio.checked) radio.checked = false;
+            }
+        }
+
         async function guardarAsignacionRol() {
             const id = document.getElementById('ar-usuario-id').value;
-            const rol_id = document.getElementById('ar-rol').value;
+            const roles = [...document.querySelectorAll('.ar-check:checked')].map(c => Number(c.value));
+            const principal = document.querySelector('.ar-radio:checked');
 
-            if (!rol_id) {
-                alert('Seleccione un rol.');
+            if (roles.length === 0) {
+                alert('Seleccione al menos un rol.');
+                return;
+            }
+            if (!principal) {
+                alert('Seleccione cuál será el rol inicial.');
                 return;
             }
 
@@ -1028,7 +1068,8 @@
                         },
                         body: JSON.stringify({
                             id,
-                            rol_id
+                            roles,
+                            rol_principal: Number(principal.value)
                         })
                     }
                 );
@@ -1037,17 +1078,14 @@
 
                 if (data.ok) {
                     cerrarModal('modal-asignar-rol');
-                    mostrarToast('Rol actualizado correctamente.', 'exito');
-
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1200);
+                    mostrarToast('Roles actualizados correctamente.', 'exito');
+                    setTimeout(() => location.reload(), 1200);
                 } else {
-                    alert(data.error ?? 'No se pudo actualizar el rol.');
+                    alert(data.error ?? 'No se pudieron actualizar los roles.');
                 }
             } catch (error) {
                 console.error(error);
-                alert('Ocurrió un error al actualizar el rol.');
+                alert('Ocurrió un error al actualizar los roles.');
             }
         }
 

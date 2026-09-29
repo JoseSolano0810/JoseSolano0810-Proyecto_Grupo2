@@ -58,70 +58,146 @@ class Usuario
     }
 
     /**
-     * Crea usuario 
+     * Crea usuario
      */
     public function crear(array $datos): int
     {
         $hash = password_hash($datos['contrasena'], PASSWORD_BCRYPT);
 
-        $stmt = $this->db->prepare(
-            "INSERT INTO usuario
-             (id_rol, identificacion, nombre_completo, telefono,
-              correo, nombre_usuario, contrasena_hash, estado)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'activo')"
-        );
-        $stmt->execute([
-            $datos['rol_id'],
-            $datos['cedula'],
-            $datos['nombre'],
-            ($datos['telefono'] ?? '') !== '' ? $datos['telefono'] : null,
-            $datos['correo'],
-            $datos['usuario'],
-            $hash,
-        ]);
-        return (int) $this->db->lastInsertId();
+        $this->db->beginTransaction();
+        try {
+            $stmt = $this->db->prepare(
+                "INSERT INTO usuario
+                 (id_rol, identificacion, nombre_completo, telefono,
+                  correo, nombre_usuario, contrasena_hash, estado)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, 'activo')"
+            );
+            $stmt->execute([
+                $datos['rol_id'],
+                $datos['cedula'],
+                $datos['nombre'],
+                ($datos['telefono'] ?? '') !== '' ? $datos['telefono'] : null,
+                $datos['correo'],
+                $datos['usuario'],
+                $hash,
+            ]);
+            $id = (int) $this->db->lastInsertId();
+
+            $this->db->prepare(
+                "INSERT INTO usuario_rol (id_usuario, id_rol, es_principal) VALUES (?, ?, 1)"
+            )->execute([$id, $datos['rol_id']]);
+
+            $this->db->commit();
+            return $id;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
 
-        /**
-     * Actualiza los datos de un usuario (sin contraseña ni estado)
+    /**
+     * Actualiza los datos de un usuario.
+     * rol_id = rol inicial.
      */
     public function actualizar(int $id, array $datos): void
     {
-        $stmt = $this->db->prepare(
-            "UPDATE usuario
-             SET id_rol = ?, identificacion = ?, nombre_completo = ?,
-                 telefono = ?, correo = ?, nombre_usuario = ?
-             WHERE id_usuario = ?"
-        );
-        $stmt->execute([
-            $datos['rol_id'],
-            $datos['cedula'],
-            $datos['nombre'],
-            ($datos['telefono'] ?? '') !== '' ? $datos['telefono'] : null,
-            $datos['correo'],
-            $datos['usuario'],
-            $id,
-        ]);
+        $this->db->beginTransaction();
+        try {
+            $stmt = $this->db->prepare(
+                "UPDATE usuario
+                 SET identificacion = ?, nombre_completo = ?,
+                     telefono = ?, correo = ?, nombre_usuario = ?
+                 WHERE id_usuario = ?"
+            );
+            $stmt->execute([
+                $datos['cedula'],
+                $datos['nombre'],
+                ($datos['telefono'] ?? '') !== '' ? $datos['telefono'] : null,
+                $datos['correo'],
+                $datos['usuario'],
+                $id,
+            ]);
+
+            $this->establecerRolPrincipal($id, (int) $datos['rol_id']);
+            $this->db->commit();
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
 
-
-     /**
-     * Asigna un rol a un usuario
+    /**
+     * Define el rol inicial (principal). Si no lo tenía, se agrega a sus roles.
+     * Los demás roles del usuario se conservan.
      */
-    public function asignarRol(int $id, int $rolId): void
+    public function establecerRolPrincipal(int $id, int $rolId): void
     {
-        $stmt = $this->db->prepare(
-            "UPDATE usuario
-             SET id_rol = ?
-             WHERE id_usuario = ?"
-        );
+        $this->db->prepare(
+            "UPDATE usuario_rol SET es_principal = 0 WHERE id_usuario = ?"
+        )->execute([$id]);
 
-        $stmt->execute([
-            $rolId,
-            $id,
-        ]);
+        $this->db->prepare(
+            "INSERT INTO usuario_rol (id_usuario, id_rol, es_principal)
+             VALUES (?, ?, 1)
+             ON DUPLICATE KEY UPDATE es_principal = 1"
+        )->execute([$id, $rolId]);
+
+        $this->db->prepare(
+            "UPDATE usuario SET id_rol = ? WHERE id_usuario = ?"
+        )->execute([$rolId, $id]);
     }
 
+    /**
+     * Reemplaza TODOS los roles del usuario y define cuál es el inicial.
+     * $rolIds debe incluir a $rolPrincipal.
+     */
+    public function asignarRoles(int $id, array $rolIds, int $rolPrincipal): void
+    {
+        $this->db->beginTransaction();
+        try {
+            $this->db->prepare("DELETE FROM usuario_rol WHERE id_usuario = ?")
+                     ->execute([$id]);
+
+            $ins = $this->db->prepare(
+                "INSERT INTO usuario_rol (id_usuario, id_rol, es_principal) VALUES (?, ?, ?)"
+            );
+            foreach ($rolIds as $rolId) {
+                $ins->execute([$id, $rolId, $rolId === $rolPrincipal ? 1 : 0]);
+            }
+
+            $this->db->prepare("UPDATE usuario SET id_rol = ? WHERE id_usuario = ?")
+                     ->execute([$rolPrincipal, $id]);
+
+            $this->db->commit();
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Roles de todos los usuarios: [id_usuario => [ ['id','nombre','principal'], ... ]]
+     * (el principal siempre primero)
+     */
+    public function obtenerRolesPorUsuario(): array
+    {
+        $stmt = $this->db->query(
+            "SELECT ur.id_usuario, r.id_rol, r.nombre, ur.es_principal
+             FROM usuario_rol ur
+             JOIN rol r ON r.id_rol = ur.id_rol
+             ORDER BY ur.es_principal DESC, r.id_rol ASC"
+        );
+
+        $mapa = [];
+        foreach ($stmt->fetchAll() as $f) {
+            $mapa[(int) $f['id_usuario']][] = [
+                'id'        => (int) $f['id_rol'],
+                'nombre'    => $f['nombre'],
+                'principal' => (bool) $f['es_principal'],
+            ];
+        }
+        return $mapa;
+    }
 
     /**
      * Restablece contraseña

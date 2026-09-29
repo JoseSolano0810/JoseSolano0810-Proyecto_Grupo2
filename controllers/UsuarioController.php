@@ -35,7 +35,9 @@ class UsuarioController
      */
     public function datosVista(): array
     {
-            $usuarios = array_map(fn($u) => [
+        $rolesPorUsuario = $this->model->obtenerRolesPorUsuario();
+
+        $usuarios = array_map(fn($u) => [
             'id'       => (int) $u['id_usuario'],
             'nombre'   => $u['nombre_completo'],
             'usuario'  => $u['nombre_usuario'],
@@ -43,7 +45,9 @@ class UsuarioController
             'telefono' => $u['telefono'] ?? '',
             'correo'   => $u['correo'],
             'rol'      => $u['rol'],
-            'rol_id'   => (int) $u['id_rol'],
+            'rol_id'   => (int) $u['id_rol'],   // rol inicial
+            'roles'    => $rolesPorUsuario[(int) $u['id_usuario']] ?? [],
+            'roles_ids' => array_column($rolesPorUsuario[(int) $u['id_usuario']] ?? [], 'id'),
             'estado'   => $u['estado'],
         ], $this->model->obtenerTodos());
 
@@ -219,69 +223,57 @@ class UsuarioController
     }
 
 
-        /**
-     * Asigna un rol específico a un usuario
+    /**
+     * Asigna uno o varios roles a un usuario y define el rol inicial
+     * Body: { id, roles: [ids], rol_principal: id }
      */
     public function asignarRol(): void
     {
-        $datos  = json_decode(file_get_contents('php://input'), true) ?? [];
-        $id     = (int) ($datos['id'] ?? 0);
-        $rol_id = (int) ($datos['rol_id'] ?? 0);
+        $datos     = json_decode(file_get_contents('php://input'), true) ?? [];
+        $id        = (int) ($datos['id'] ?? 0);
+        $roles     = array_values(array_unique(array_map('intval', (array) ($datos['roles'] ?? []))));
+        $principal = (int) ($datos['rol_principal'] ?? 0);
 
-        if (!$id || !$rol_id) {
+        if (!$id || !$roles) {
             http_response_code(400);
-            echo json_encode([
-                'ok'    => false,
-                'error' => 'El usuario y el rol son requeridos'
-            ]);
+            echo json_encode(['ok' => false, 'error' => 'Seleccione al menos un rol']);
             return;
         }
 
-        $usuario = $this->model->obtenerPorId($id);
+        if (!$principal || !in_array($principal, $roles, true)) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'El rol inicial debe estar entre los roles seleccionados']);
+            return;
+        }
 
-        if (!$usuario) {
+        if (!$this->model->obtenerPorId($id)) {
             http_response_code(404);
-            echo json_encode([
-                'ok'    => false,
-                'error' => 'Usuario no encontrado'
-            ]);
+            echo json_encode(['ok' => false, 'error' => 'Usuario no encontrado']);
             return;
         }
 
-        if (!$this->model->existeRol($rol_id)) {
-            http_response_code(400);
-            echo json_encode([
-                'ok'    => false,
-                'error' => 'El rol seleccionado no existe'
-            ]);
-            return;
+        foreach ($roles as $rolId) {
+            if (!$this->model->existeRol($rolId)) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Uno de los roles seleccionados no existe']);
+                return;
+            }
         }
 
-        // Evita que el administrador cambie su propio rol
+        // Evita que el administrador modifique sus propios roles
         if ($id === (int) AuthService::usuarioActual()['id']) {
             http_response_code(400);
-            echo json_encode([
-                'ok'    => false,
-                'error' => 'No puede cambiar su propio rol'
-            ]);
+            echo json_encode(['ok' => false, 'error' => 'No puede cambiar sus propios roles']);
             return;
         }
 
         try {
-            $this->model->asignarRol($id, $rol_id);
-
-            echo json_encode([
-                'ok'      => true,
-                'mensaje' => 'Rol actualizado correctamente'
-            ]);
+            $this->model->asignarRoles($id, $roles, $principal);
+            echo json_encode(['ok' => true, 'mensaje' => 'Roles actualizados correctamente']);
         } catch (PDOException $e) {
-            error_log('USU-02 asignar rol: ' . $e->getMessage());
-
+            error_log('USU-02 asignar roles: ' . $e->getMessage());
             http_response_code(500);
-            echo json_encode([
-                'ok'    => false,
-                'error' => 'No se pudo actualizar el rol'
-            ]);
+            echo json_encode(['ok' => false, 'error' => 'No se pudieron actualizar los roles']);
         }
     }
 
