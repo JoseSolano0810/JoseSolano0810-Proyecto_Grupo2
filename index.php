@@ -12,6 +12,8 @@ require_once ROOT_PATH . '/controllers/PacienteController.php';
 require_once ROOT_PATH . '/controllers/TratamientoController.php';
 require_once ROOT_PATH . '/controllers/CotizacionController.php';
 require_once ROOT_PATH . '/controllers/PagoController.php';
+require_once ROOT_PATH . '/controllers/BitacoraController.php';
+require_once ROOT_PATH . '/models/Bitacora.php';
 
 $accion = $_GET['accion'] ?? 'inicio';
 $metodo = $_SERVER['REQUEST_METHOD'];
@@ -33,7 +35,25 @@ switch ($accion) {
         break;
 
     case 'logout':
-        AuthService::logout();
+        AuthService::logout($_GET['motivo'] ?? '');
+        break;
+
+    // mantiene viva la sesión mientras el usuario interactúa (USU-04)
+    case 'ping':
+        AuthService::requerir(AuthService::ROLES);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => true]);
+        break;
+
+    // USU-05: el usuario cambia su propia contraseña
+    case 'perfil.contrasena':
+        header('Content-Type: application/json; charset=utf-8');
+        (new LoginController())->cambiarContrasena();
+        break;
+
+    // USU-06: bitácora
+    case 'bitacora.listar':
+        (new BitacoraController())->listar();
         break;
 
     // panel * rol
@@ -79,10 +99,10 @@ switch ($accion) {
         $ctrl->editar();
         break;
 
-     case 'usuarios.asignarRol':
+    case 'usuarios.asignarRol':
         $ctrl = new UsuarioController();
         $ctrl->asignarRol();
-        break;    
+        break;
 
     // ── Citas ─────────────────────────────────────────────────
     case 'citas.listar':
@@ -152,7 +172,6 @@ switch ($accion) {
 }
 
 /**
- * 
  * Panel * rol
  */
 function cargarPanel(array $sesion): void

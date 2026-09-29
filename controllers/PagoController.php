@@ -9,13 +9,12 @@ class PagoController
 
     public function __construct()
     {
-        AuthService::requerir(['asistente_dental', 'administrador']);
+        AuthService::requerir(['asistente_dental', 'recepcionista', 'paciente', 'administrador']);
         $this->model = new Pago();
     }
 
     public function listar(): array
     {
-
         return [
             ['id'=>'PAG-001','paciente'=>'Ana Rojas',  'fecha'=>'28/07/2026','monto'=>50000, 'metodo'=>'Tarjeta','cotizacion'=>'COT-001','estado'=>'completada'],
             ['id'=>'PAG-002','paciente'=>'María Solís', 'fecha'=>'01/08/2026','monto'=>100000,'metodo'=>'Efectivo','cotizacion'=>'COT-004','estado'=>'completada'],
@@ -25,7 +24,6 @@ class PagoController
 
     public function registrar(): void
     {
-
         echo json_encode(['ok' => true, 'demo' => true]);
     }
 }

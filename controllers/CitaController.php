@@ -9,14 +9,12 @@ class CitaController
 
     public function __construct()
     {
-
-        AuthService::requerir(['odontologo', 'asistente_dental', 'administrador']);
+        AuthService::requerir(['odontologo', 'asistente_dental', 'recepcionista', 'paciente', 'administrador']);
         $this->model = new Cita();
     }
 
     public function listar(): array
     {
-
         return [
             ['id'=>1,'hora'=>'08:00','paciente'=>'Ana Rojas',    'odontologo'=>'Dr. Méndez', 'tratamiento'=>'Limpieza dental',  'estado'=>'confirmada'],
             ['id'=>2,'hora'=>'09:30','paciente'=>'Luis Vargas',  'odontologo'=>'Dr. Méndez', 'tratamiento'=>'Extracción molar', 'estado'=>'confirmada'],
@@ -28,19 +26,16 @@ class CitaController
 
     public function crear(): void
     {
-
         echo json_encode(['ok' => true, 'demo' => true]);
     }
 
     public function editar(): void
     {
-
         echo json_encode(['ok' => true, 'demo' => true]);
     }
 
     public function cancelar(): void
     {
-
         echo json_encode(['ok' => true, 'demo' => true]);
     }
 }

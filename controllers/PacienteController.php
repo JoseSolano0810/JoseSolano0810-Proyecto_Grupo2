@@ -9,13 +9,12 @@ class PacienteController
 
     public function __construct()
     {
-        AuthService::requerir(['asistente_dental', 'odontologo', 'administrador']);
+        AuthService::requerir(['asistente_dental', 'recepcionista', 'odontologo', 'administrador']);
         $this->model = new Paciente();
     }
 
     public function listar(): array
     {
-
         return [
             ['id'=>1,'nombre'=>'Ana Rojas',     'cedula'=>'1-0234-5678','telefono'=>'8888-1111','correo'=>'ana.rojas@mail.com',     'edad'=>34,'ultima_visita'=>'15/07/2026','estado'=>'activo'],
             ['id'=>2,'nombre'=>'Luis Vargas',   'cedula'=>'2-0345-6789','telefono'=>'8888-2222','correo'=>'luis.vargas@mail.com',    'edad'=>45,'ultima_visita'=>'20/07/2026','estado'=>'activo'],
@@ -29,19 +28,16 @@ class PacienteController
 
     public function crear(): void
     {
-
         echo json_encode(['ok' => true, 'demo' => true]);
     }
 
     public function editar(): void
     {
-
         echo json_encode(['ok' => true, 'demo' => true]);
     }
 
     public function inactivar(): void
     {
-
         echo json_encode(['ok' => true, 'demo' => true]);
     }
 }
