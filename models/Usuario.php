@@ -58,7 +58,7 @@ class Usuario
     }
 
     /**
-     * Crea usuario
+     * Crea usuario (el rol elegido queda como rol inicial/principal)
      */
     public function crear(array $datos): int
     {
@@ -96,34 +96,25 @@ class Usuario
     }
 
     /**
-     * Actualiza los datos de un usuario.
-     * rol_id = rol inicial.
+     * Actualiza los datos de un usuario (sin contraseña, estado ni roles;
+     * los roles se manejan solo desde asignarRoles)
      */
     public function actualizar(int $id, array $datos): void
     {
-        $this->db->beginTransaction();
-        try {
-            $stmt = $this->db->prepare(
-                "UPDATE usuario
-                 SET identificacion = ?, nombre_completo = ?,
-                     telefono = ?, correo = ?, nombre_usuario = ?
-                 WHERE id_usuario = ?"
-            );
-            $stmt->execute([
-                $datos['cedula'],
-                $datos['nombre'],
-                ($datos['telefono'] ?? '') !== '' ? $datos['telefono'] : null,
-                $datos['correo'],
-                $datos['usuario'],
-                $id,
-            ]);
-
-            $this->establecerRolPrincipal($id, (int) $datos['rol_id']);
-            $this->db->commit();
-        } catch (Throwable $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
+        $stmt = $this->db->prepare(
+            "UPDATE usuario
+             SET identificacion = ?, nombre_completo = ?,
+                 telefono = ?, correo = ?, nombre_usuario = ?
+             WHERE id_usuario = ?"
+        );
+        $stmt->execute([
+            $datos['cedula'],
+            $datos['nombre'],
+            ($datos['telefono'] ?? '') !== '' ? $datos['telefono'] : null,
+            $datos['correo'],
+            $datos['usuario'],
+            $id,
+        ]);
     }
 
     /**

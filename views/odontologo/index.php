@@ -817,17 +817,8 @@
             <div class="campo-grupo"><label>Correo electrónico *</label>
                 <input type="email" id="eu-correo" placeholder="correo@ejemplo.com">
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-                <div class="campo-grupo"><label>Nombre de usuario *</label>
-                    <input type="text" id="eu-usuario" placeholder="nombre.apellido">
-                </div>
-                <div class="campo-grupo"><label>Rol inicial *</label>
-                    <select id="eu-rol">
-                        <?php foreach ($roles as $r): ?>
-                            <option value="<?= $r['id'] ?>"><?= ucfirst(str_replace('_', ' ', $r['nombre'])) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+            <div class="campo-grupo"><label>Nombre de usuario *</label>
+                <input type="text" id="eu-usuario" placeholder="nombre.apellido">
             </div>
             <div class="modal-footer">
                 <button class="btn-outline-odent" onclick="cerrarModal('modal-editar-usuario')">Cancelar</button>
@@ -1097,7 +1088,6 @@
             document.getElementById('eu-telefono').value = u.telefono ?? '';
             document.getElementById('eu-correo').value = u.correo ?? '';
             document.getElementById('eu-usuario').value = u.usuario ?? '';
-            document.getElementById('eu-rol').value = u.rol_id;
             abrirModal('modal-editar-usuario');
         }
 
@@ -1108,9 +1098,8 @@
             const telefono = document.getElementById('eu-telefono').value.trim();
             const correo = document.getElementById('eu-correo').value.trim();
             const usuario = document.getElementById('eu-usuario').value.trim();
-            const rol_id = document.getElementById('eu-rol').value;
 
-            if (!nombre || !cedula || !correo || !usuario || !rol_id) {
+            if (!nombre || !cedula || !correo || !usuario) {
                 alert('Complete todos los campos obligatorios.');
                 return;
             }
@@ -1126,8 +1115,7 @@
                     cedula,
                     telefono,
                     correo,
-                    usuario,
-                    rol_id
+                    usuario
                 })
             });
             const data = await res.json();

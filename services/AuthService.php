@@ -49,14 +49,16 @@ class AuthService
     {
         self::iniciar();
         session_regenerate_id(true);
+        $roles = self::rolesDeUsuario((int) $usuario['id_usuario'], $usuario['rol']);
+
         $_SESSION['usuario'] = [
             'id'        => (int) $usuario['id_usuario'],
             'nombre'    => $usuario['nombre_completo'],
             'iniciales' => self::iniciales($usuario['nombre_completo']),
             'usuario'   => $usuario['nombre_usuario'],
-            'rol'           => $usuario['rol'],   // rol ACTIVO (arranca con el inicial)
-            'rol_principal' => $usuario['rol'],   // rol inicial
-            'roles'         => self::rolesDeUsuario((int) $usuario['id_usuario'], $usuario['rol']),
+            'rol'           => self::rolActivoPorDefecto($roles, $usuario['rol']),
+            'rol_principal' => $usuario['rol'],
+            'roles'         => $roles,
         ];
     }
 
@@ -68,11 +70,25 @@ class AuthService
         self::iniciar();
         $roles = $_SESSION['usuario']['roles'] ?? [];
 
+        // El administrador no puede cambiar de rol: siempre opera como administrador
+        if (in_array('administrador', $roles, true)) {
+            return false;
+        }
+
         if (!in_array($rol, $roles, true)) {
             return false;
         }
         $_SESSION['usuario']['rol'] = $rol;
         return true;
+    }
+
+    /**
+     * Rol con el que arranca/opera el usuario:
+     * administrador si lo tiene; si no, su rol inicial.
+     */
+    private static function rolActivoPorDefecto(array $roles, string $rolPrincipal): string
+    {
+        return in_array('administrador', $roles, true) ? 'administrador' : $rolPrincipal;
     }
 
     /**
@@ -165,8 +181,11 @@ class AuthService
         $_SESSION['usuario']['rol_principal'] = $usuario['rol'];
         $_SESSION['usuario']['roles']         = $roles;
 
-        // Si el rol activo ya no está asignado, volver al inicial
-        if (!in_array($_SESSION['usuario']['rol'] ?? '', $roles, true)) {
+        // Administrador: siempre como administrador. Los demás conservan el rol
+        // activo elegido; si ya no lo tienen asignado, vuelven al inicial.
+        if (in_array('administrador', $roles, true)) {
+            $_SESSION['usuario']['rol'] = 'administrador';
+        } elseif (!in_array($_SESSION['usuario']['rol'] ?? '', $roles, true)) {
             $_SESSION['usuario']['rol'] = $usuario['rol'];
         }
     }

@@ -152,7 +152,7 @@ class UsuarioController
             return;
         }
 
-        foreach (['nombre', 'cedula', 'correo', 'usuario', 'rol_id'] as $campo) {
+        foreach (['nombre', 'cedula', 'correo', 'usuario'] as $campo) {
             if (empty(trim((string) ($datos[$campo] ?? '')))) {
                 http_response_code(400);
                 echo json_encode(['ok' => false, 'error' => "El campo $campo es requerido"]);
@@ -165,7 +165,6 @@ class UsuarioController
         $datos['correo']   = trim($datos['correo']);
         $datos['usuario']  = trim($datos['usuario']);
         $datos['telefono'] = trim($datos['telefono'] ?? '');
-        $datos['rol_id']   = (int) $datos['rol_id'];
 
         if (!filter_var($datos['correo'], FILTER_VALIDATE_EMAIL)) {
             http_response_code(400);
@@ -173,19 +172,7 @@ class UsuarioController
             return;
         }
 
-        if (!$this->model->existeRol($datos['rol_id'])) {
-            http_response_code(400);
-            echo json_encode(['ok' => false, 'error' => 'El rol seleccionado no existe']);
-            return;
-        }
-
-        // El admin no puede quitarse a sí mismo el rol
         $esUsuarioActual = $id === (int) AuthService::usuarioActual()['id'];
-        if ($esUsuarioActual && $datos['rol_id'] !== (int) $actual['id_rol']) {
-            http_response_code(400);
-            echo json_encode(['ok' => false, 'error' => 'No puede cambiar su propio rol']);
-            return;
-        }
 
         // Duplicados: el tercer parámetro ($id) excluye al propio usuario
         if ($this->model->existeNombreUsuario($datos['usuario'], $id)) {
