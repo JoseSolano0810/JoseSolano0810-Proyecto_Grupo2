@@ -72,6 +72,11 @@ switch ($accion) {
         $ctrl->editar();
         break;
 
+     case 'usuarios.asignarRol':
+        $ctrl = new UsuarioController();
+        $ctrl->asignarRol();
+        break;    
+
     // ── Citas ─────────────────────────────────────────────────
     case 'citas.listar':
         $ctrl = new CitaController();

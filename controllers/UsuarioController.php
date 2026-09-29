@@ -218,6 +218,73 @@ class UsuarioController
         }
     }
 
+
+        /**
+     * Asigna un rol específico a un usuario
+     */
+    public function asignarRol(): void
+    {
+        $datos  = json_decode(file_get_contents('php://input'), true) ?? [];
+        $id     = (int) ($datos['id'] ?? 0);
+        $rol_id = (int) ($datos['rol_id'] ?? 0);
+
+        if (!$id || !$rol_id) {
+            http_response_code(400);
+            echo json_encode([
+                'ok'    => false,
+                'error' => 'El usuario y el rol son requeridos'
+            ]);
+            return;
+        }
+
+        $usuario = $this->model->obtenerPorId($id);
+
+        if (!$usuario) {
+            http_response_code(404);
+            echo json_encode([
+                'ok'    => false,
+                'error' => 'Usuario no encontrado'
+            ]);
+            return;
+        }
+
+        if (!$this->model->existeRol($rol_id)) {
+            http_response_code(400);
+            echo json_encode([
+                'ok'    => false,
+                'error' => 'El rol seleccionado no existe'
+            ]);
+            return;
+        }
+
+        // Evita que el administrador cambie su propio rol
+        if ($id === (int) AuthService::usuarioActual()['id']) {
+            http_response_code(400);
+            echo json_encode([
+                'ok'    => false,
+                'error' => 'No puede cambiar su propio rol'
+            ]);
+            return;
+        }
+
+        try {
+            $this->model->asignarRol($id, $rol_id);
+
+            echo json_encode([
+                'ok'      => true,
+                'mensaje' => 'Rol actualizado correctamente'
+            ]);
+        } catch (PDOException $e) {
+            error_log('USU-02 asignar rol: ' . $e->getMessage());
+
+            http_response_code(500);
+            echo json_encode([
+                'ok'    => false,
+                'error' => 'No se pudo actualizar el rol'
+            ]);
+        }
+    }
+
     /**
      *  Restablece contraseña
      */
