@@ -32,7 +32,9 @@ class AuthService
 
         self::refrescarSesionDesdeBaseDatos();
 
-        if (!in_array($_SESSION['usuario']['rol'], $rolesPermitidos, true)) {
+        // Basta con que el usuario tenga AL MENOS uno de los roles permitidos
+        $rolesUsuario = $_SESSION['usuario']['roles'] ?? [$_SESSION['usuario']['rol']];
+        if (!array_intersect($rolesUsuario, $rolesPermitidos)) {
             self::responderNoAutorizado(
                 'No cuenta con los permisos necesarios.',
                 'acceso'
@@ -52,8 +54,44 @@ class AuthService
             'nombre'    => $usuario['nombre_completo'],
             'iniciales' => self::iniciales($usuario['nombre_completo']),
             'usuario'   => $usuario['nombre_usuario'],
-            'rol'       => $usuario['rol'],
+            'rol'           => $usuario['rol'],   // rol ACTIVO (arranca con el inicial)
+            'rol_principal' => $usuario['rol'],   // rol inicial
+            'roles'         => self::rolesDeUsuario((int) $usuario['id_usuario'], $usuario['rol']),
         ];
+    }
+
+    /**
+     * Cambia el rol activo del panel (debe ser uno de los roles del usuario)
+     */
+    public static function cambiarRolActivo(string $rol): bool
+    {
+        self::iniciar();
+        $roles = $_SESSION['usuario']['roles'] ?? [];
+
+        if (!in_array($rol, $roles, true)) {
+            return false;
+        }
+        $_SESSION['usuario']['rol'] = $rol;
+        return true;
+    }
+
+    /**
+     * Todos los roles del usuario (el inicial primero)
+     */
+    private static function rolesDeUsuario(int $idUsuario, string $rolPrincipal): array
+    {
+        $db   = Database::getInstance()->getConnection();
+        $stmt = $db->prepare(
+            "SELECT r.nombre
+             FROM usuario_rol ur
+             JOIN rol r ON r.id_rol = ur.id_rol
+             WHERE ur.id_usuario = ?
+             ORDER BY ur.es_principal DESC, r.id_rol ASC"
+        );
+        $stmt->execute([$idUsuario]);
+        $roles = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        return $roles ?: [$rolPrincipal];
     }
 
     /** 
@@ -121,7 +159,16 @@ class AuthService
             $usuario['nombre_completo']
         );
         $_SESSION['usuario']['usuario'] = $usuario['nombre_usuario'];
-        $_SESSION['usuario']['rol'] = $usuario['rol'];
+
+        // Rol inicial y lista de roles siempre frescos desde la BD
+        $roles = self::rolesDeUsuario($idUsuario, $usuario['rol']);
+        $_SESSION['usuario']['rol_principal'] = $usuario['rol'];
+        $_SESSION['usuario']['roles']         = $roles;
+
+        // Si el rol activo ya no está asignado, volver al inicial
+        if (!in_array($_SESSION['usuario']['rol'] ?? '', $roles, true)) {
+            $_SESSION['usuario']['rol'] = $usuario['rol'];
+        }
     }
 
 

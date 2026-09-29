@@ -16,6 +16,17 @@
                 <div class="sidebar-perfil-rol"><?= ucfirst(str_replace('_', ' ', $rol)) ?></div>
             </div>
         </div>
+
+        <?php if (count($roles_sesion ?? []) > 1): ?>
+            <select class="sidebar-select-rol" style="margin-top:10px;width:100%;"
+                onchange="location.href='<?= BASE_URL ?>/index.php?accion=cambiar_rol&rol=' + encodeURIComponent(this.value)">
+                <?php foreach ($roles_sesion as $r): ?>
+                    <option value="<?= htmlspecialchars($r) ?>" <?= $r === $rol ? 'selected' : '' ?>>
+                        <?= ucfirst(str_replace('_', ' ', $r)) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        <?php endif; ?>
     </div>
 
     <nav class="sidebar-nav">

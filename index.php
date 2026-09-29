@@ -43,6 +43,13 @@ switch ($accion) {
         cargarPanel(AuthService::usuarioActual());
         break;
 
+    // cambiar rol activo (usuarios con más de un rol)
+    case 'cambiar_rol':
+        AuthService::requerir(AuthService::ROLES);
+        AuthService::cambiarRolActivo($_GET['rol'] ?? '');
+        header('Location: ' . BASE_URL . '/index.php?accion=panel');
+        exit;
+
     // ── Usuarios ──────────────────────────────────────────────
     case 'usuarios.listar':
         (new UsuarioController())->listar();
@@ -151,7 +158,8 @@ switch ($accion) {
 function cargarPanel(array $sesion): void
 {
     $usuario       = ['nombre' => $sesion['nombre'], 'iniciales' => $sesion['iniciales']];
-    $rol           = $sesion['rol'];
+    $rol           = $sesion['rol'];                 // rol activo
+    $roles_sesion  = $sesion['roles'] ?? [$rol];     // todos sus roles
     $pagina_activa = 'inicio';
 
     switch ($rol) {
