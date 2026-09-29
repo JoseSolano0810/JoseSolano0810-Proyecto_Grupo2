@@ -1035,6 +1035,8 @@ h4 { font-size: 18px; font-weight: 600; }
     *, *::before, *::after { transition: none !important; animation: none !important; }
 }
 
+
+/* ══ Avisos (toasts) apilables ═══════════════════════════════ */
 #toast-contenedor {
     position: fixed; bottom: 24px; right: 24px; z-index: 2000;
     display: flex; flex-direction: column; gap: 10px;
@@ -1073,6 +1075,7 @@ h4 { font-size: 18px; font-weight: 600; }
 @keyframes toastSalir  { to   { opacity: 0; transform: translateX(40px); } }
 @keyframes toastBarra  { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
+/* Botón guardando */
 .spinner-mini {
     display: inline-block; width: 14px; height: 14px; vertical-align: -2px;
     border: 2px solid rgba(255,255,255,.4); border-top-color: currentColor;
@@ -1081,9 +1084,11 @@ h4 { font-size: 18px; font-weight: 600; }
 @keyframes girar { to { transform: rotate(360deg); } }
 button:disabled { opacity: .7; cursor: not-allowed; }
 
+/* Campos inválidos */
 .campo-invalido { border-color: #C0392B !important; background: #fff6f5 !important; animation: sacudir .3s; }
 @keyframes sacudir { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 
+/* Destello al refrescar una sección sin recargar */
 .pagina.recien-actualizada { animation: destello .9s ease; }
 @keyframes destello { from { background: rgba(47,127,122,.10); } to { background: transparent; } }
 

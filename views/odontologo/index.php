@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Odent | Administrador</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="<?= BASE_URL ?>/public/css/estilos.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/public/css/estilos.css?v=<?= @filemtime(ROOT_PATH . '/public/css/estilos.css') ?>">
 </head>
 
 <body>
@@ -930,7 +930,7 @@
         </div>
     </div>
 
-    <script src="<?= BASE_URL ?>/public/js/app.js"></script>
+    <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
     <script>
         const BASE = '<?= BASE_URL ?>';
         let usuarioIdSeleccionado = null;
@@ -1017,78 +1017,47 @@
         async function guardarNuevaContrasena() {
             const nueva = document.getElementById('nueva-contrasena').value;
             const confirmar = document.getElementById('confirmar-contrasena').value;
+            if (!validarCampos(['nueva-contrasena', 'confirmar-contrasena'], 'Complete ambos campos de contraseña.')) return;
             const errPolitica = validarPoliticaContrasena(nueva);
-            if (errPolitica) {
-                alert(errPolitica);
-                return;
-            }
-            if (nueva !== confirmar) {
-                alert('Las contraseñas no coinciden.');
-                return;
-            }
+            if (errPolitica) return mostrarToast(errPolitica, 'aviso', 6000);
+            if (nueva !== confirmar) return mostrarToast('Las contraseñas no coinciden.', 'aviso');
 
-            const res = await fetch(`${BASE}/index.php?accion=usuarios.restablecer`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    id: usuarioIdSeleccionado,
-                    contrasena: nueva
-                })
+            await guardarJSON('usuarios.restablecer', { id: usuarioIdSeleccionado, contrasena: nueva }, {
+                boton: document.querySelector('#modal-restablecer .modal-footer .btn-odent'),
+                cerrarModal: 'modal-restablecer',
+                exito: 'Contraseña restablecida con éxito.'
             });
-            const data = await res.json();
-            if (data.ok) {
-                cerrarModal('modal-restablecer');
-                mostrarToast('Contraseña restablecida correctamente.', 'exito');
-            } else {
-                alert(data.error ?? 'Error al restablecer la contraseña.');
-            }
         }
 
         /* ── Crear usuario ──────────────────────────────────────── */
         async function guardarNuevoUsuario() {
-            const nombre = document.getElementById('nu-nombre').value.trim();
-            const cedula = document.getElementById('nu-cedula').value.trim();
-            const telefono = document.getElementById('nu-telefono').value.trim();
-            const correo = document.getElementById('nu-correo').value.trim();
-            const usuario = document.getElementById('nu-usuario').value.trim();
+            if (!validarCampos(['nu-nombre', 'nu-cedula', 'nu-correo', 'nu-usuario', 'nu-contrasena', 'nu-rol'])) return;
+
             const contrasena = document.getElementById('nu-contrasena').value;
-            const rol_id = document.getElementById('nu-rol').value;
-
-            if (!nombre || !cedula || !correo || !usuario || !contrasena || !rol_id) {
-                alert('Complete todos los campos obligatorios.');
-                return;
-            }
             const errPolitica = validarPoliticaContrasena(contrasena);
-            if (errPolitica) {
-                alert(errPolitica);
-                return;
+            if (errPolitica) return mostrarToast(errPolitica, 'aviso', 6000);
+
+            const correo = document.getElementById('nu-correo').value.trim();
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+                document.getElementById('nu-correo').classList.add('campo-invalido');
+                return mostrarToast('Ingrese un correo electrónico válido.', 'aviso');
             }
 
-            const res = await fetch(`${BASE}/index.php?accion=usuarios.crear`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    nombre,
-                    cedula,
-                    telefono,
-                    correo,
-                    usuario,
-                    contrasena,
-                    rol_id
-                })
+            const usuario = document.getElementById('nu-usuario').value.trim();
+            await guardarJSON('usuarios.crear', {
+                nombre: document.getElementById('nu-nombre').value.trim(),
+                cedula: document.getElementById('nu-cedula').value.trim(),
+                telefono: document.getElementById('nu-telefono').value.trim(),
+                correo,
+                usuario,
+                contrasena,
+                rol_id: document.getElementById('nu-rol').value
+            }, {
+                boton: document.querySelector('#modal-nuevo-usuario .modal-footer .btn-odent'),
+                cerrarModal: 'modal-nuevo-usuario',
+                exito: `Usuario @${usuario} registrado con éxito.`,
+                recargar: ['usuarios', 'inicio']
             });
-            const data = await res.json();
-            if (data.ok) {
-                cerrarModal('modal-nuevo-usuario');
-                mostrarToast('Usuario registrado correctamente.', 'exito');
-                setTimeout(() => location.reload(), 1200);
-            } else {
-                alert(data.error ?? 'Error al registrar el usuario.');
-            }
         }
 
         /* ── Asignar roles (varios) ─────────────────────────────── */
@@ -1126,43 +1095,15 @@
             const roles = [...document.querySelectorAll('.ar-check:checked')].map(c => Number(c.value));
             const principal = document.querySelector('.ar-radio:checked');
 
-            if (roles.length === 0) {
-                alert('Seleccione al menos un rol.');
-                return;
-            }
-            if (!principal) {
-                alert('Seleccione cuál será el rol inicial.');
-                return;
-            }
+            if (roles.length === 0) return mostrarToast('Seleccione al menos un rol.', 'aviso');
+            if (!principal) return mostrarToast('Seleccione cuál será el rol inicial.', 'aviso');
 
-            try {
-                const res = await fetch(
-                    `${BASE}/index.php?accion=usuarios.asignarRol`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            id,
-                            roles,
-                            rol_principal: Number(principal.value)
-                        })
-                    }
-                );
-
-                const data = await res.json();
-
-                if (data.ok) {
-                    cerrarModal('modal-asignar-rol');
-                    mostrarToast('Roles actualizados correctamente.', 'exito');
-                    setTimeout(() => location.reload(), 1200);
-                } else {
-                    alert(data.error ?? 'No se pudieron actualizar los roles.');
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Ocurrió un error al actualizar los roles.');
-            }
+            await guardarJSON('usuarios.asignarRol', { id, roles, rol_principal: Number(principal.value) }, {
+                boton: document.querySelector('#modal-asignar-rol .modal-footer .btn-odent'),
+                cerrarModal: 'modal-asignar-rol',
+                exito: 'Roles actualizados con éxito.',
+                recargar: ['usuarios']
+            });
         }
 
         /* ── Editar usuario ─────────────────────────────────────── */
@@ -1177,40 +1118,21 @@
         }
 
         async function guardarEdicionUsuario() {
-            const id = document.getElementById('eu-id').value;
-            const nombre = document.getElementById('eu-nombre').value.trim();
-            const cedula = document.getElementById('eu-cedula').value.trim();
-            const telefono = document.getElementById('eu-telefono').value.trim();
-            const correo = document.getElementById('eu-correo').value.trim();
-            const usuario = document.getElementById('eu-usuario').value.trim();
+            if (!validarCampos(['eu-nombre', 'eu-cedula', 'eu-correo', 'eu-usuario'])) return;
 
-            if (!nombre || !cedula || !correo || !usuario) {
-                alert('Complete todos los campos obligatorios.');
-                return;
-            }
-
-            const res = await fetch(`${BASE}/index.php?accion=usuarios.editar`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    id,
-                    nombre,
-                    cedula,
-                    telefono,
-                    correo,
-                    usuario
-                })
+            await guardarJSON('usuarios.editar', {
+                id: document.getElementById('eu-id').value,
+                nombre: document.getElementById('eu-nombre').value.trim(),
+                cedula: document.getElementById('eu-cedula').value.trim(),
+                telefono: document.getElementById('eu-telefono').value.trim(),
+                correo: document.getElementById('eu-correo').value.trim(),
+                usuario: document.getElementById('eu-usuario').value.trim()
+            }, {
+                boton: document.querySelector('#modal-editar-usuario .modal-footer .btn-odent'),
+                cerrarModal: 'modal-editar-usuario',
+                exito: 'Usuario actualizado con éxito.',
+                recargar: ['usuarios']
             });
-            const data = await res.json();
-            if (data.ok) {
-                cerrarModal('modal-editar-usuario');
-                mostrarToast('Usuario actualizado correctamente.', 'exito');
-                setTimeout(() => location.reload(), 1200);
-            } else {
-                alert(data.error ?? 'Error al actualizar el usuario.');
-            }
         }
 
         /* ── Cambiar estado ─────────────────────────────────────── */
@@ -1232,24 +1154,12 @@
         async function ejecutarCambioEstado() {
             const nuevoEstado = estadoActualSeleccionado === 'activo' ? 'inactivo' : 'activo';
 
-            const res = await fetch(`${BASE}/index.php?accion=usuarios.estado`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    id: usuarioIdSeleccionado,
-                    estado: nuevoEstado
-                })
+            await guardarJSON('usuarios.estado', { id: usuarioIdSeleccionado, estado: nuevoEstado }, {
+                boton: document.getElementById('btn-confirmar-estado'),
+                cerrarModal: 'modal-confirmar-estado',
+                exito: nuevoEstado === 'activo' ? 'Usuario activado con éxito.' : 'Usuario inactivado con éxito.',
+                recargar: ['usuarios', 'inicio']
             });
-            const data = await res.json();
-            if (data.ok) {
-                cerrarModal('modal-confirmar-estado');
-                mostrarToast('Estado actualizado correctamente.', 'exito');
-                setTimeout(() => location.reload(), 1200);
-            } else {
-                alert(data.error ?? 'Error al cambiar el estado.');
-            }
         }
     </script>
 </body>
