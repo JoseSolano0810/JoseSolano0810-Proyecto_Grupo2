@@ -221,7 +221,6 @@ function chatEnter(e) {
 
 /* ── Toasts apilables (éxito / error / aviso / info) ───────── */
 function mostrarToast(mensaje, tipo = 'exito', duracion = 4000) {
-    // compatibilidad: 'aviso' y 'advertencia' son lo mismo
     if (tipo === 'advertencia') tipo = 'aviso';
     const iconos = { exito: 'check-circle-fill', peligro: 'exclamation-octagon-fill', aviso: 'exclamation-triangle-fill', info: 'info-circle-fill' };
 
@@ -241,7 +240,7 @@ function mostrarToast(mensaje, tipo = 'exito', duracion = 4000) {
     icono.className = 'bi bi-' + (iconos[tipo] || iconos.info);
     const texto = document.createElement('span');
     texto.className = 'toast-texto';
-    texto.textContent = mensaje;               // textContent: sin riesgo de XSS
+    texto.textContent = mensaje;             
     const cerrar = document.createElement('button');
     cerrar.className = 'toast-cerrar';
     cerrar.setAttribute('aria-label', 'Cerrar aviso');
@@ -253,7 +252,6 @@ function mostrarToast(mensaje, tipo = 'exito', duracion = 4000) {
     toast.append(icono, texto, cerrar, barra);
     cont.appendChild(toast);
 
-    // máximo 4 avisos a la vez
     while (cont.children.length > 4) cont.firstElementChild.remove();
 
     let cerrado = false;
@@ -265,7 +263,6 @@ function mostrarToast(mensaje, tipo = 'exito', duracion = 4000) {
     };
     let t = setTimeout(quitar, duracion);
     cerrar.addEventListener('click', quitar);
-    // al pasar el mouse se pausa el cierre automático
     toast.addEventListener('mouseenter', () => { clearTimeout(t); barra.style.animationPlayState = 'paused'; });
     toast.addEventListener('mouseleave', () => { barra.style.animationPlayState = 'running'; t = setTimeout(quitar, 1500); });
 }
@@ -276,12 +273,10 @@ function olvidarPaginaActiva() {
 }
 
 function prepararCierreDeSesion() {
-    // Al pulsar "Cerrar sesión" se olvida la sección: el próximo ingreso empieza en el Panel principal
     document.addEventListener('click', function (e) {
         if (e.target.closest?.('a[href*="accion=logout"]')) olvidarPaginaActiva();
     });
 
-    // En la pantalla de login (no hay secciones) se limpia todo rastro de la sesión anterior
     if (!document.querySelector('.pagina')) {
         olvidarPaginaActiva();
         if (location.hash) history.replaceState(null, '', location.pathname + location.search);
@@ -297,21 +292,18 @@ function guardarPaginaActiva(slug) {
 }
 
 function restaurarPaginaActiva() {
-    if (!document.querySelector('.pagina')) return;          // login, etc.
+    if (!document.querySelector('.pagina')) return;        
     let slug = location.hash.replace('#', '');
     if (!slug) { try { slug = sessionStorage.getItem(CLAVE_PAGINA) || ''; } catch (e) {} }
     if (slug && document.getElementById('pagina-' + slug)) mostrarPagina(slug);
 }
 
-// Si cambia el hash (adelante/atrás del navegador) se muestra esa sección
 window.addEventListener('hashchange', function () {
     const slug = location.hash.replace('#', '');
     if (slug && document.getElementById('pagina-' + slug)) mostrarPagina(slug);
 });
 
 /* ── Refrescar secciones SIN recargar la página ────────────── */
-// Pide el panel al servidor y reemplaza solo el contenido de las secciones indicadas.
-// El usuario se queda donde está, con el buscador y el scroll intactos.
 async function refrescarSecciones(slugs = []) {
     try {
         const res = await fetch(window.ODENT.base + '/index.php?accion=panel', { headers: { 'Accept': 'text/html' }, cache: 'no-store' });
@@ -330,7 +322,6 @@ async function refrescarSecciones(slugs = []) {
 
             actual.innerHTML = nueva.innerHTML;
 
-            // restaurar filtro de búsqueda si había uno
             const nuevoBuscador = actual.querySelector('input[type="text"][oninput]');
             if (nuevoBuscador && filtro) {
                 nuevoBuscador.value = filtro;
@@ -338,25 +329,22 @@ async function refrescarSecciones(slugs = []) {
             }
             window.scrollTo(0, scroll);
 
-            // resaltar brevemente para que se note qué cambió
             actual.classList.add('recien-actualizada');
             setTimeout(() => actual.classList.remove('recien-actualizada'), 900);
         });
         return true;
     } catch (e) {
-        // último recurso: recarga completa, pero ya recuerda la sección
         location.reload();
         return false;
     }
 }
 
 /* ── Helper para guardar: POST JSON + botón "Guardando…" + avisos ── */
-// opciones: { boton, exito, error, recargar: ['usuarios','inicio'], cerrarModal: 'id', alExito: fn }
 async function guardarJSON(accion, payload, opciones = {}) {
     const btn = opciones.boton || null;
     let htmlOriginal = '';
     if (btn) {
-        if (btn.disabled) return null;                      // evita doble clic
+        if (btn.disabled) return null;                     
         htmlOriginal = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-mini"></span> Guardando…';
@@ -408,7 +396,6 @@ function validarCampos(ids, mensaje = 'Complete todos los campos obligatorios.')
     return true;
 }
 
-// Enter dentro de un modal = pulsar el botón principal
 document.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON') return;
     const modal = e.target.closest?.('.modal-overlay.abierto');
@@ -448,14 +435,12 @@ document.querySelectorAll('.barra-relleno').forEach(barra => {
 
 /* ── USU-04: sesión, inactividad y botón "Atrás" ───────────── */
 
-// Si la página vuelve desde la caché del navegador (botón Atrás), se recarga
-// para que el servidor decida si la sesión sigue vigente.
 window.addEventListener('pageshow', function (e) {
     if (e.persisted) location.reload();
 });
 
 function iniciarControlInactividad() {
-    if (!window.ODENT) return; // solo en pantallas con sesión iniciada
+    if (!window.ODENT) return; 
 
     const limiteMs = window.ODENT.minutosInactividad * 60 * 1000;
     let temporizador;
@@ -469,7 +454,6 @@ function iniciarControlInactividad() {
     const reiniciar = () => {
         clearTimeout(temporizador);
         temporizador = setTimeout(expirar, limiteMs);
-        // Avisa al servidor como máximo cada 60 s para no vencer la sesión con el usuario activo
         if (Date.now() - ultimoPing > 60000) {
             ultimoPing = Date.now();
             fetch(window.ODENT.base + '/index.php?accion=ping', { headers: { 'Accept': 'application/json' } })

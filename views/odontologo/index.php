@@ -986,7 +986,6 @@
             cargarBitacora();
         }
 
-        // Carga la bitácora al abrir la sección
         const mostrarPaginaOriginal = window.mostrarPagina;
         window.mostrarPagina = function (slug) {
             mostrarPaginaOriginal(slug);
@@ -1075,14 +1074,11 @@
 
             abrirModal('modal-asignar-rol');
         }
-
-        // Al elegir un rol como inicial, se marca automáticamente como asignado
         function alCambiarRolRadio(radio) {
             const check = document.querySelector(`.ar-check[value="${radio.value}"]`);
             if (check) check.checked = true;
         }
 
-        // Si se desmarca el rol que era el inicial, se quita como inicial
         function alCambiarRolCheck(check) {
             if (!check.checked) {
                 const radio = document.querySelector(`.ar-radio[value="${check.value}"]`);
@@ -1143,7 +1139,6 @@
             document.getElementById('confirmar-titulo').textContent = accion === 'inactivar' ? 'Inactivar usuario' : 'Activar usuario';
             document.getElementById('confirmar-mensaje').textContent = `¿Está seguro que desea ${accion} a ${nombre}?`;
 
-            // Cambiar color del botón según acción
             const btnConfirmar = document.getElementById('btn-confirmar-estado');
             btnConfirmar.className = accion === 'inactivar' ? 'btn-peligro' : 'btn-odent';
             btnConfirmar.textContent = accion === 'inactivar' ? 'Inactivar' : 'Activar';

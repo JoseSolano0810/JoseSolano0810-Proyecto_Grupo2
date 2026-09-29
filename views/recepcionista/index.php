@@ -10,12 +10,10 @@
 <body>
 
 <?php
-// $rol y $usuario vienen de la sesión (index.php → cargarPanel)
 $rol           = $rol           ?? 'recepcionista';
 $usuario       = $usuario       ?? ['nombre' => '', 'iniciales' => ''];
 $pagina_activa = $pagina_activa ?? 'inicio';
 
-// Demo hasta que se implemente el backend de citas/pacientes/cotizaciones/pagos
 $citas = $citas ?? [
     ['id'=>1,'hora'=>'08:00','paciente'=>'Ana Rojas',    'odontologo'=>'Dr. Méndez', 'tratamiento'=>'Limpieza',        'estado'=>'confirmada'],
     ['id'=>2,'hora'=>'09:30','paciente'=>'Luis Vargas',  'odontologo'=>'Dr. Méndez', 'tratamiento'=>'Extracción molar','estado'=>'confirmada'],
