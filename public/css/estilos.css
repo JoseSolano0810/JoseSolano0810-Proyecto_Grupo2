@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@500;600;700&display=swap');
 
 :root {
@@ -1034,4 +1033,60 @@ h4 { font-size: 18px; font-weight: 600; }
 }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+#toast-contenedor {
+    position: fixed; bottom: 24px; right: 24px; z-index: 2000;
+    display: flex; flex-direction: column; gap: 10px;
+    width: min(380px, calc(100vw - 32px)); pointer-events: none;
+}
+.toast-odent {
+    position: relative; overflow: hidden; pointer-events: auto;
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px 16px; border-radius: 10px;
+    background: #fff; color: #17324D; font-size: 14px; line-height: 1.4;
+    box-shadow: 0 8px 28px rgba(23,50,77,.18);
+    border-left: 5px solid var(--azul-odent);
+    animation: toastEntrar .3s cubic-bezier(.2,.8,.2,1);
+}
+.toast-odent > i { font-size: 20px; line-height: 1; margin-top: 1px; }
+.toast-odent .toast-texto { flex: 1; }
+.toast-odent .toast-cerrar {
+    background: none; border: 0; cursor: pointer; font-size: 20px; line-height: 1;
+    color: #8a99a8; padding: 0 2px;
+}
+.toast-odent .toast-cerrar:hover { color: #17324D; }
+.toast-odent.exito   { border-left-color: var(--verde-odent); } .toast-odent.exito   > i { color: var(--verde-odent); }
+.toast-odent.peligro { border-left-color: #C0392B; }            .toast-odent.peligro > i { color: #C0392B; }
+.toast-odent.aviso   { border-left-color: #f0ad00; }            .toast-odent.aviso   > i { color: #f0ad00; }
+.toast-odent.info    > i { color: var(--azul-odent); }
+.toast-odent.saliendo { animation: toastSalir .3s ease forwards; }
+.toast-barra {
+    position: absolute; left: 0; bottom: 0; height: 3px; width: 100%;
+    background: currentColor; opacity: .25; transform-origin: left;
+    animation: toastBarra linear forwards;
+}
+.toast-odent.exito .toast-barra { color: var(--verde-odent); }
+.toast-odent.peligro .toast-barra { color: #C0392B; }
+.toast-odent.aviso .toast-barra { color: #f0ad00; }
+@keyframes toastEntrar { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
+@keyframes toastSalir  { to   { opacity: 0; transform: translateX(40px); } }
+@keyframes toastBarra  { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+.spinner-mini {
+    display: inline-block; width: 14px; height: 14px; vertical-align: -2px;
+    border: 2px solid rgba(255,255,255,.4); border-top-color: currentColor;
+    border-radius: 50%; animation: girar .7s linear infinite;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
+button:disabled { opacity: .7; cursor: not-allowed; }
+
+.campo-invalido { border-color: #C0392B !important; background: #fff6f5 !important; animation: sacudir .3s; }
+@keyframes sacudir { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+.pagina.recien-actualizada { animation: destello .9s ease; }
+@keyframes destello { from { background: rgba(47,127,122,.10); } to { background: transparent; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .toast-odent, .toast-barra, .pagina.recien-actualizada, .campo-invalido { animation: none; }
 }
