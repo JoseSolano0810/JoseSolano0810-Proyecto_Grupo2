@@ -104,6 +104,25 @@ class Usuario
         ]);
     }
 
+
+     /**
+     * Asigna un rol a un usuario
+     */
+    public function asignarRol(int $id, int $rolId): void
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE usuario
+             SET id_rol = ?
+             WHERE id_usuario = ?"
+        );
+
+        $stmt->execute([
+            $rolId,
+            $id,
+        ]);
+    }
+
+
     /**
      * Restablece contraseña
      */
