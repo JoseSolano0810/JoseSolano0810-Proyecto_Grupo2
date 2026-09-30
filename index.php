@@ -12,6 +12,8 @@ require_once ROOT_PATH . '/controllers/PacienteController.php';
 require_once ROOT_PATH . '/controllers/TratamientoController.php';
 require_once ROOT_PATH . '/controllers/CotizacionController.php';
 require_once ROOT_PATH . '/controllers/PagoController.php';
+require_once ROOT_PATH . '/controllers/BitacoraController.php';
+require_once ROOT_PATH . '/models/Bitacora.php';
 
 $accion = $_GET['accion'] ?? 'inicio';
 $metodo = $_SERVER['REQUEST_METHOD'];
@@ -33,7 +35,25 @@ switch ($accion) {
         break;
 
     case 'logout':
-        AuthService::logout();
+        AuthService::logout($_GET['motivo'] ?? '');
+        break;
+
+    // mantiene viva la sesión mientras el usuario interactúa (USU-04)
+    case 'ping':
+        AuthService::requerir(AuthService::ROLES);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => true]);
+        break;
+
+    // USU-05: el usuario cambia su propia contraseña
+    case 'perfil.contrasena':
+        header('Content-Type: application/json; charset=utf-8');
+        (new LoginController())->cambiarContrasena();
+        break;
+
+    // USU-06: bitácora
+    case 'bitacora.listar':
+        (new BitacoraController())->listar();
         break;
 
     // panel * rol
@@ -42,6 +62,13 @@ switch ($accion) {
         AuthService::requerir(AuthService::ROLES);
         cargarPanel(AuthService::usuarioActual());
         break;
+
+    // cambiar rol activo (usuarios con más de un rol)
+    case 'cambiar_rol':
+        AuthService::requerir(AuthService::ROLES);
+        AuthService::cambiarRolActivo($_GET['rol'] ?? '');
+        header('Location: ' . BASE_URL . '/index.php?accion=panel');
+        exit;
 
     // ── Usuarios ──────────────────────────────────────────────
     case 'usuarios.listar':
@@ -70,6 +97,11 @@ switch ($accion) {
     case 'usuarios.editar':
         $ctrl = new UsuarioController();
         $ctrl->editar();
+        break;
+
+    case 'usuarios.asignarRol':
+        $ctrl = new UsuarioController();
+        $ctrl->asignarRol();
         break;
 
     // ── Citas ─────────────────────────────────────────────────
@@ -140,13 +172,13 @@ switch ($accion) {
 }
 
 /**
- * 
  * Panel * rol
  */
 function cargarPanel(array $sesion): void
 {
     $usuario       = ['nombre' => $sesion['nombre'], 'iniciales' => $sesion['iniciales']];
-    $rol           = $sesion['rol'];
+    $rol           = $sesion['rol'];                 // rol activo
+    $roles_sesion  = $sesion['roles'] ?? [$rol];     // todos sus roles
     $pagina_activa = 'inicio';
 
     switch ($rol) {

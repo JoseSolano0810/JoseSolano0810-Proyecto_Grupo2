@@ -16,6 +16,17 @@
                 <div class="sidebar-perfil-rol"><?= ucfirst(str_replace('_', ' ', $rol)) ?></div>
             </div>
         </div>
+
+        <?php if (count($roles_sesion ?? []) > 1 && !in_array('administrador', $roles_sesion, true)): ?>
+            <select class="sidebar-select-rol" style="margin-top:10px;width:100%;"
+                onchange="location.href='<?= BASE_URL ?>/index.php?accion=cambiar_rol&rol=' + encodeURIComponent(this.value)">
+                <?php foreach ($roles_sesion as $r): ?>
+                    <option value="<?= htmlspecialchars($r) ?>" <?= $r === $rol ? 'selected' : '' ?>>
+                        <?= ucfirst(str_replace('_', ' ', $r)) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        <?php endif; ?>
     </div>
 
     <nav class="sidebar-nav">
@@ -57,9 +68,11 @@
             <a class="sidebar-enlace <?= $pagina_activa === 'reportes'     ? 'activo' : '' ?>" onclick="mostrarPagina('reportes')">
                 <i class="bi bi-bar-chart-line"></i> Reportes
             </a>
+            <?php if ($rol === 'administrador'): ?>
             <a class="sidebar-enlace <?= $pagina_activa === 'bitacora'     ? 'activo' : '' ?>" onclick="mostrarPagina('bitacora')">
                 <i class="bi bi-journal-text"></i> Bitácora
             </a>
+            <?php endif; ?>
 
         <?php elseif ($rol === 'recepcionista' || $rol === 'asistente_dental'): ?>
 
@@ -106,9 +119,49 @@
     </nav>
 
     <div class="sidebar-pie">
+        <a class="sidebar-enlace" onclick="abrirCambiarContrasena()" style="cursor:pointer;">
+            <i class="bi bi-key"></i> Cambiar contraseña
+        </a>
         <a class="sidebar-enlace" href="<?= BASE_URL ?>/index.php?accion=logout">
             <i class="bi bi-box-arrow-right"></i> Cerrar sesión
         </a>
     </div>
 
 </aside>
+
+<!-- USU-05: modal cambiar mi contraseña -->
+<div class="modal-overlay" id="modal-cambiar-contrasena">
+    <div class="modal-caja" style="max-width:420px;">
+        <div class="modal-header">
+            <h3>Cambiar mi contraseña</h3>
+            <button class="modal-cerrar" onclick="cerrarModal('modal-cambiar-contrasena')"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="campo-grupo"><label>Contraseña actual *</label>
+            <div class="input-icono"><i class="bi bi-lock"></i>
+                <input type="password" id="cc-actual" autocomplete="current-password">
+            </div>
+        </div>
+        <div class="campo-grupo"><label>Nueva contraseña *</label>
+            <div class="input-icono"><i class="bi bi-key"></i>
+                <input type="password" id="cc-nueva" autocomplete="new-password"
+                       placeholder="Mín. 8 caracteres, mayúscula, minúscula y número">
+            </div>
+        </div>
+        <div class="campo-grupo"><label>Confirmar nueva contraseña *</label>
+            <div class="input-icono"><i class="bi bi-lock-fill"></i>
+                <input type="password" id="cc-confirmar" autocomplete="new-password">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-outline-odent" onclick="cerrarModal('modal-cambiar-contrasena')">Cancelar</button>
+            <button class="btn-odent" onclick="guardarCambioContrasena()"><i class="bi bi-check-lg"></i> Guardar cambios</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.ODENT = {
+        base: '<?= BASE_URL ?>',
+        minutosInactividad: <?= (int) AuthService::MINUTOS_INACTIVIDAD ?>
+    };
+</script>

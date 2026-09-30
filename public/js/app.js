@@ -1,12 +1,14 @@
-
 'use strict';
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log('Odent — Sistema iniciado');
+    prepararCierreDeSesion();
+    restaurarPaginaActiva();
     actualizarTopbarTitulo();
     iniciarFechaTopbar();
     iniciarCalculoIVA();
     iniciarValidacionLogin();
+    iniciarControlInactividad();
 });
 
 function iniciarFechaTopbar() {
@@ -29,6 +31,7 @@ function mostrarPagina(slug) {
     if (enlaceActivo) enlaceActivo.classList.add('activo');
 
     actualizarTopbarTitulo();
+    guardarPaginaActiva(slug);
 
     if (window.innerWidth < 768) {
         document.getElementById('sidebar')?.classList.remove('abierto');
@@ -216,21 +219,190 @@ function chatEnter(e) {
     if (e.key === 'Enter') enviarMensajeChat();
 }
 
-function mostrarToast(mensaje, tipo = 'exito') {
+/* ── Toasts apilables (éxito / error / aviso / info) ───────── */
+function mostrarToast(mensaje, tipo = 'exito', duracion = 4000) {
+    if (tipo === 'advertencia') tipo = 'aviso';
+    const iconos = { exito: 'check-circle-fill', peligro: 'exclamation-octagon-fill', aviso: 'exclamation-triangle-fill', info: 'info-circle-fill' };
+
+    let cont = document.getElementById('toast-contenedor');
+    if (!cont) {
+        cont = document.createElement('div');
+        cont.id = 'toast-contenedor';
+        cont.setAttribute('aria-live', 'polite');
+        document.body.appendChild(cont);
+    }
+
     const toast = document.createElement('div');
-    const icono = tipo === 'exito' ? 'check-circle' : tipo === 'peligro' ? 'exclamation-circle' : 'info-circle';
-    toast.className = 'alerta ' + tipo;
-    toast.innerHTML = `<i class="bi bi-${icono}"></i> ${mensaje}`;
-    toast.style.cssText = `
-        position:fixed; bottom:24px; right:24px; z-index:999;
-        min-width:280px; max-width:400px;
-        box-shadow: 0 4px 20px rgba(0,0,0,.15);
-        animation: fadeInUp .3s ease;
-    `;
-    document.body.appendChild(toast);
-    setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity .4s'; }, 3000);
-    setTimeout(() => toast.remove(), 3500);
+    toast.className = 'toast-odent ' + tipo;
+    toast.setAttribute('role', tipo === 'peligro' ? 'alert' : 'status');
+
+    const icono = document.createElement('i');
+    icono.className = 'bi bi-' + (iconos[tipo] || iconos.info);
+    const texto = document.createElement('span');
+    texto.className = 'toast-texto';
+    texto.textContent = mensaje;             
+    const cerrar = document.createElement('button');
+    cerrar.className = 'toast-cerrar';
+    cerrar.setAttribute('aria-label', 'Cerrar aviso');
+    cerrar.innerHTML = '&times;';
+    const barra = document.createElement('div');
+    barra.className = 'toast-barra';
+    barra.style.animationDuration = duracion + 'ms';
+
+    toast.append(icono, texto, cerrar, barra);
+    cont.appendChild(toast);
+
+    while (cont.children.length > 4) cont.firstElementChild.remove();
+
+    let cerrado = false;
+    const quitar = () => {
+        if (cerrado) return;
+        cerrado = true;
+        toast.classList.add('saliendo');
+        setTimeout(() => toast.remove(), 300);
+    };
+    let t = setTimeout(quitar, duracion);
+    cerrar.addEventListener('click', quitar);
+    toast.addEventListener('mouseenter', () => { clearTimeout(t); barra.style.animationPlayState = 'paused'; });
+    toast.addEventListener('mouseleave', () => { barra.style.animationPlayState = 'running'; t = setTimeout(quitar, 1500); });
 }
+
+/* ── Cierre de sesión: no dejar rastros de la sesión anterior ── */
+function olvidarPaginaActiva() {
+    try { sessionStorage.removeItem('odent_pagina_activa'); } catch (e) {}
+}
+
+function prepararCierreDeSesion() {
+    document.addEventListener('click', function (e) {
+        if (e.target.closest?.('a[href*="accion=logout"]')) olvidarPaginaActiva();
+    });
+
+    if (!document.querySelector('.pagina')) {
+        olvidarPaginaActiva();
+        if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    }
+}
+
+/* ── Recordar la sección activa (no volver a "Panel principal") ── */
+const CLAVE_PAGINA = 'odent_pagina_activa';
+
+function guardarPaginaActiva(slug) {
+    try { sessionStorage.setItem(CLAVE_PAGINA, slug); } catch (e) { /* modo privado */ }
+    if (history.replaceState) history.replaceState(null, '', '#' + slug);
+}
+
+function restaurarPaginaActiva() {
+    if (!document.querySelector('.pagina')) return;        
+    let slug = location.hash.replace('#', '');
+    if (!slug) { try { slug = sessionStorage.getItem(CLAVE_PAGINA) || ''; } catch (e) {} }
+    if (slug && document.getElementById('pagina-' + slug)) mostrarPagina(slug);
+}
+
+window.addEventListener('hashchange', function () {
+    const slug = location.hash.replace('#', '');
+    if (slug && document.getElementById('pagina-' + slug)) mostrarPagina(slug);
+});
+
+/* ── Refrescar secciones SIN recargar la página ────────────── */
+async function refrescarSecciones(slugs = []) {
+    try {
+        const res = await fetch(window.ODENT.base + '/index.php?accion=panel', { headers: { 'Accept': 'text/html' }, cache: 'no-store' });
+        if (res.status === 401 || res.redirected && res.url.includes('accion=login')) { location.reload(); return false; }
+        const html = await res.text();
+        const doc  = new DOMParser().parseFromString(html, 'text/html');
+
+        slugs.forEach(slug => {
+            const actual = document.getElementById('pagina-' + slug);
+            const nueva  = doc.getElementById('pagina-' + slug);
+            if (!actual || !nueva) return;
+
+            const scroll = window.scrollY;
+            const buscador = actual.querySelector('input[type="text"][oninput]');
+            const filtro   = buscador ? buscador.value : '';
+
+            actual.innerHTML = nueva.innerHTML;
+
+            const nuevoBuscador = actual.querySelector('input[type="text"][oninput]');
+            if (nuevoBuscador && filtro) {
+                nuevoBuscador.value = filtro;
+                nuevoBuscador.dispatchEvent(new Event('input'));
+            }
+            window.scrollTo(0, scroll);
+
+            actual.classList.add('recien-actualizada');
+            setTimeout(() => actual.classList.remove('recien-actualizada'), 900);
+        });
+        return true;
+    } catch (e) {
+        location.reload();
+        return false;
+    }
+}
+
+/* ── Helper para guardar: POST JSON + botón "Guardando…" + avisos ── */
+async function guardarJSON(accion, payload, opciones = {}) {
+    const btn = opciones.boton || null;
+    let htmlOriginal = '';
+    if (btn) {
+        if (btn.disabled) return null;                     
+        htmlOriginal = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-mini"></span> Guardando…';
+    }
+    try {
+        const res = await fetch(window.ODENT.base + '/index.php?accion=' + accion, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (res.status === 401) {
+            mostrarToast('Su sesión expiró. Inicie sesión nuevamente.', 'aviso');
+            setTimeout(() => location.href = window.ODENT.base + '/index.php?accion=logout&motivo=inactividad', 1500);
+            return null;
+        }
+        let data;
+        try { data = await res.json(); }
+        catch (e) { throw new Error('El servidor devolvió una respuesta inválida.'); }
+
+        if (data.ok) {
+            if (opciones.cerrarModal) cerrarModal(opciones.cerrarModal);
+            mostrarToast(opciones.exito || 'Guardado con éxito.', 'exito');
+            if (opciones.recargar?.length) await refrescarSecciones(opciones.recargar);
+            if (typeof opciones.alExito === 'function') opciones.alExito(data);
+        } else {
+            mostrarToast(data.error || opciones.error || 'No se pudo guardar.', 'peligro', 6000);
+        }
+        return data;
+    } catch (e) {
+        mostrarToast(navigator.onLine ? (e.message || 'Ocurrió un error inesperado.') : 'Sin conexión a internet. Intente de nuevo.', 'peligro', 6000);
+        return null;
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = htmlOriginal; }
+    }
+}
+
+/* ── Marcar campos inválidos (en vez de alert) ─────────────── */
+function validarCampos(ids, mensaje = 'Complete todos los campos obligatorios.') {
+    let primero = null;
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const vacio = !String(el.value ?? '').trim();
+        el.classList.toggle('campo-invalido', vacio);
+        if (vacio && !primero) primero = el;
+        if (vacio) el.addEventListener('input', () => el.classList.remove('campo-invalido'), { once: true });
+    });
+    if (primero) { primero.focus(); mostrarToast(mensaje, 'aviso'); return false; }
+    return true;
+}
+
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON') return;
+    const modal = e.target.closest?.('.modal-overlay.abierto');
+    if (!modal) return;
+    const principal = modal.querySelector('.modal-footer .btn-odent, .modal-footer .btn-peligro');
+    if (principal) { e.preventDefault(); principal.click(); }
+});
 
 function iniciarValidacionLogin() {
     const form = document.getElementById('form-login');
@@ -260,3 +432,69 @@ document.querySelectorAll('.barra-relleno').forEach(barra => {
     barra.style.width = '0%';
     observador.observe(barra);
 });
+
+/* ── USU-04: sesión, inactividad y botón "Atrás" ───────────── */
+
+window.addEventListener('pageshow', function (e) {
+    if (e.persisted) location.reload();
+});
+
+function iniciarControlInactividad() {
+    if (!window.ODENT) return; 
+
+    const limiteMs = window.ODENT.minutosInactividad * 60 * 1000;
+    let temporizador;
+    let ultimoPing = Date.now();
+
+    const expirar = () => {
+        olvidarPaginaActiva();
+        window.location.href = window.ODENT.base + '/index.php?accion=logout&motivo=inactividad';
+    };
+
+    const reiniciar = () => {
+        clearTimeout(temporizador);
+        temporizador = setTimeout(expirar, limiteMs);
+        if (Date.now() - ultimoPing > 60000) {
+            ultimoPing = Date.now();
+            fetch(window.ODENT.base + '/index.php?accion=ping', { headers: { 'Accept': 'application/json' } })
+                .then(r => { if (r.status === 401) expirar(); })
+                .catch(() => {});
+        }
+    };
+
+    ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'].forEach(ev =>
+        document.addEventListener(ev, reiniciar, { passive: true })
+    );
+    reiniciar();
+}
+
+/* ── USU-05: política de contraseñas y cambio propio ───────── */
+
+function validarPoliticaContrasena(c) {
+    if (c.length < 8 || !/[A-Z]/.test(c) || !/[a-z]/.test(c) || !/\d/.test(c)) {
+        return 'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número.';
+    }
+    return null;
+}
+
+function abrirCambiarContrasena() {
+    ['cc-actual', 'cc-nueva', 'cc-confirmar'].forEach(id => document.getElementById(id).value = '');
+    abrirModal('modal-cambiar-contrasena');
+}
+
+async function guardarCambioContrasena() {
+    const actual    = document.getElementById('cc-actual').value;
+    const nueva     = document.getElementById('cc-nueva').value;
+    const confirmar = document.getElementById('cc-confirmar').value;
+
+    if (!validarCampos(['cc-actual', 'cc-nueva', 'cc-confirmar'], 'Complete todos los campos.')) return;
+    const errPolitica = validarPoliticaContrasena(nueva);
+    if (errPolitica) { mostrarToast(errPolitica, 'aviso', 6000); return; }
+    if (nueva !== confirmar) { mostrarToast('La confirmación no coincide con la nueva contraseña.', 'aviso'); return; }
+
+    await guardarJSON('perfil.contrasena', { actual, nueva, confirmar }, {
+        boton: document.querySelector('#modal-cambiar-contrasena .modal-footer .btn-odent'),
+        cerrarModal: 'modal-cambiar-contrasena',
+        exito: 'Contraseña actualizada con éxito.'
+    });
+}
