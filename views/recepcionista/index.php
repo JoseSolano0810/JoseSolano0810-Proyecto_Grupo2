@@ -14,15 +14,8 @@ $rol           = $rol           ?? 'recepcionista';
 $usuario       = $usuario       ?? ['nombre' => '', 'iniciales' => ''];
 $pagina_activa = $pagina_activa ?? 'inicio';
 
-$citas = $citas ?? [
-    ['id'=>1,'hora'=>'08:00','paciente'=>'Ana Rojas',    'odontologo'=>'Dr. Méndez', 'tratamiento'=>'Limpieza',        'estado'=>'confirmada'],
-    ['id'=>2,'hora'=>'09:30','paciente'=>'Luis Vargas',  'odontologo'=>'Dr. Méndez', 'tratamiento'=>'Extracción molar','estado'=>'confirmada'],
-    ['id'=>3,'hora'=>'10:00','paciente'=>'Pedro Gómez',  'odontologo'=>'Dra. Flores','tratamiento'=>'Ortodoncia',      'estado'=>'pendiente'],
-    ['id'=>4,'hora'=>'11:00','paciente'=>'María Solís',  'odontologo'=>'Dr. Méndez', 'tratamiento'=>'Ortodoncia',      'estado'=>'pendiente'],
-    ['id'=>5,'hora'=>'13:00','paciente'=>'Carlos Castro','odontologo'=>'Dra. Flores','tratamiento'=>'Blanqueamiento',  'estado'=>'cancelada'],
-    ['id'=>6,'hora'=>'14:00','paciente'=>'Jorge Pérez',  'odontologo'=>'Dr. Méndez', 'tratamiento'=>'Blanqueamiento',  'estado'=>'confirmada'],
-    ['id'=>7,'hora'=>'15:30','paciente'=>'Sofía Torres', 'odontologo'=>'Dra. Flores','tratamiento'=>'Revisión',        'estado'=>'confirmada'],
-];
+// Las citas vienen de la BD (CitaController::listar); nunca se simulan aquí
+$citas = $citas ?? [];
 
 $pacientes = $pacientes ?? [
     ['id'=>1,'nombre'=>'Ana Rojas',    'cedula'=>'1-0234-5678','telefono'=>'8888-1111','correo'=>'ana.rojas@mail.com',   'estado'=>'activo'],

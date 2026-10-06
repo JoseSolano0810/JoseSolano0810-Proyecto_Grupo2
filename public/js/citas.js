@@ -344,6 +344,7 @@ window.Citas = (function () {
     function cerrarForm() {
         limpiarForm();
         cerrarModal('modal-cita');
+        if (typeof mostrarPagina === 'function') mostrarPagina('agenda');   // redirige a la agenda
     }
 
     async function guardar(btn) {
