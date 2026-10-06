@@ -8,7 +8,7 @@ if (PHP_SAPI !== 'cli') {
 }
 
 define('ROOT_PATH', str_replace('\\', '/', dirname(__DIR__)));
-$_SERVER['HTTP_HOST']     = $argv[1] ?? 'localhost';   // config.php decide local/producción según el host
+$_SERVER['HTTP_HOST']     = $argv[1] ?? 'localhost';   
 $_SERVER['DOCUMENT_ROOT'] = $_SERVER['DOCUMENT_ROOT'] ?? '';
 
 require_once ROOT_PATH . '/config/config.php';

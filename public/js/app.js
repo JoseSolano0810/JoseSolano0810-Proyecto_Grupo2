@@ -219,7 +219,6 @@ function chatEnter(e) {
     if (e.key === 'Enter') enviarMensajeChat();
 }
 
-/* ── Toasts apilables (éxito / error / aviso / info) ───────── */
 function mostrarToast(mensaje, tipo = 'exito', duracion = 4000) {
     if (tipo === 'advertencia') tipo = 'aviso';
     const iconos = { exito: 'check-circle-fill', peligro: 'exclamation-octagon-fill', aviso: 'exclamation-triangle-fill', info: 'info-circle-fill' };
@@ -339,7 +338,6 @@ async function refrescarSecciones(slugs = []) {
     }
 }
 
-/* ── Helper para guardar: POST JSON + botón "Guardando…" + avisos ── */
 async function guardarJSON(accion, payload, opciones = {}) {
     const btn = opciones.boton || null;
     let htmlOriginal = '';
@@ -381,7 +379,6 @@ async function guardarJSON(accion, payload, opciones = {}) {
     }
 }
 
-/* ── Marcar campos inválidos (en vez de alert) ─────────────── */
 function validarCampos(ids, mensaje = 'Complete todos los campos obligatorios.') {
     let primero = null;
     ids.forEach(id => {
