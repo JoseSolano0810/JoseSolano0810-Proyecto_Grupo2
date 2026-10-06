@@ -72,7 +72,7 @@ class CitaController
             'hora_fin'      => substr($c['hora_fin'], 0, 5),
             'duracion'      => (int) $c['duracion_min'],
             'tipo_consulta' => $c['tipo_consulta'],
-            'tratamiento'   => $c['tipo_consulta'],      // nombre que usan las vistas del panel
+            'tratamiento'   => $c['tipo_consulta'],     
             'observaciones' => $c['observaciones'] ?? '',
             'estado'        => $c['estado'],
         ];
@@ -308,7 +308,6 @@ class CitaController
 
         $this->exigirCampos($d, ['fecha' => 'Nueva fecha', 'hora' => 'Nueva hora']);
 
-        // Se conserva odontólogo, duración, tipo y observaciones: solo cambia la fecha y hora
         $datos = $this->validarCita([
             'id_odontologo' => $cita['id_odontologo'],
             'fecha'         => $d['fecha'],
@@ -454,10 +453,6 @@ class CitaController
         }
     }
 
-    /**
-     * Valida formato/negocio y devuelve los datos listos para el modelo.
-     * Corta la petición con 400 si algo es inválido.
-     */
     private function validarCita(array $d, ?string $fechaOriginal = null): array
     {
         $fecha = trim((string) $d['fecha']);

@@ -94,7 +94,7 @@ window.Citas = (function () {
                 llenarSelect($('cita-tipo'), d.tipos.map(t => ({ id: t, nombre: t })), 'Seleccione');
                 llenarSelect($('cita-duracion'), d.duraciones.map(m => ({ id: m, nombre: m + ' minutos' })), 'Seleccione');
             }
-        } catch (e) { /* los selects quedan vacíos; el servidor valida igual */ }
+        } catch (e) {}
     }
 
     function llenarSelect(sel, items, vacio) {
@@ -126,7 +126,7 @@ window.Citas = (function () {
             if (fecha) params.fecha = fecha;
             if (estado) params.estado = estado;
             S.hayFiltros = !!(q || fecha || estado || odon);
-            if (!S.hayFiltros) params.desde = hoy();    // sin criterios: próximas citas
+            if (!S.hayFiltros) params.desde = hoy();    
         } else {
             [params.desde, params.hasta] = rango();
         }
@@ -144,7 +144,6 @@ window.Citas = (function () {
         }
     }
 
-    /* ── Pintado ────────────────────────────────────────────── */
     function pintar() {
         cerrarMenu();
         const esLista = S.vista === 'lista';
@@ -200,7 +199,6 @@ window.Citas = (function () {
                 : 'Mostrando las próximas citas. Use los filtros para buscar en todo el historial.') + '</p>';
     }
 
-    /** Acciones disponibles para una cita según su estado y el rol (se muestran en el menú ⋮) */
     function itemsAccion(c) {
         const items = [['ver', 'eye', 'Ver detalle']];
         if (GESTION && activa(c)) {
@@ -373,7 +371,7 @@ window.Citas = (function () {
         $('cita-estado-grupo').style.display = 'none';
         $('cita-id').value = c.id;
         $('cita-paciente').value = c.id_paciente;
-        $('cita-paciente').disabled = true;               // la cita pertenece a ese paciente
+        $('cita-paciente').disabled = true;               
         $('cita-odontologo').value = c.id_odontologo;
         $('cita-fecha').min = c.fecha < hoy() ? c.fecha : hoy();
         $('cita-fecha').value = c.fecha;
@@ -388,7 +386,7 @@ window.Citas = (function () {
     function cerrarForm() {
         limpiarForm();
         cerrarModal('modal-cita');
-        if (typeof mostrarPagina === 'function') mostrarPagina('agenda');   // redirige a la agenda
+        if (typeof mostrarPagina === 'function') mostrarPagina('agenda');  
     }
 
     async function guardar(btn) {
@@ -520,10 +518,10 @@ window.Citas = (function () {
             const d = await get('citas.recordatorios');
             if (!d || !d.ok) { $('rec-contenido').innerHTML = '<div class="agenda-vacio">' + esc(d?.error || 'No se pudo cargar.') + '</div>'; return; }
             $('rec-info').innerHTML = '<i class="bi bi-info-circle"></i> Se envía un recordatorio por correo a los pacientes con citas en las próximas ' +
-                d.horas_antes + ' horas. El proceso corre automáticamente (cron) y también puede ejecutarse aquí.';
+                d.horas_antes + ' horas. El proceso corre automáticamente y también puede ejecutarse aquí.';
             $('rec-contenido').innerHTML = d.data.length
                 ? '<div class="tabla-scroll"><table class="tabla-odent"><thead><tr><th>Fecha y hora</th><th>Paciente</th><th>Cita</th><th>Medio</th><th>Estado</th><th>Detalle</th></tr></thead><tbody>' +
-                  d.data.map(r => '<tr><td>' + esc(r.envio) + '</td><td>' + esc(r.paciente) + '</td><td>' + esc(r.cita) + '</td><td>' + esc(r.medio) +
+                  d.data.map(r => '<tr><td>' + esc(r.envio) + '</td><td>' + esc(r.paciente) + '</td><td>' + esc(r.cita) + '</td><td>' + esc(cap(r.medio)) +
                       (r.destino ? '<br><small>' + esc(r.destino) + '</small>' : '') + '</td><td><span class="badge-estado badge-' + esc(r.estado) + '">' + esc(cap(r.estado)) +
                       '</span></td><td>' + esc(r.detalle) + '</td></tr>').join('') + '</tbody></table></div>'
                 : '<div class="agenda-vacio"><i class="bi bi-bell-slash"></i>Aún no hay recordatorios registrados.</div>';
