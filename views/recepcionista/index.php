@@ -72,7 +72,7 @@ $pagos = $pagos ?? [
                 <div class="kpi-card">
                     <div class="kpi-icono azul"><i class="bi bi-calendar3"></i></div>
                     <div>
-                        <div class="kpi-numero">7</div>
+                        <div class="kpi-numero"><?= count($citas) ?></div>
                         <div class="kpi-etiqueta">Citas hoy</div>
                     </div>
                 </div>
@@ -104,10 +104,13 @@ $pagos = $pagos ?? [
                 <div class="tarjeta">
                     <div class="panel-titulo">
                         <h3>Agenda del día</h3>
-                        <button class="btn-odent" onclick="abrirModal('modal-nueva-cita')" style="font-size:13px;padding:7px 14px;">
+                        <button class="btn-odent" onclick="Citas.nueva()" style="font-size:13px;padding:7px 14px;">
                             <i class="bi bi-plus-lg"></i> Nueva cita
                         </button>
                     </div>
+                    <?php if (!$citas): ?>
+                    <p style="color:var(--gris-azulado);font-size:14px;">No hay citas programadas para hoy.</p>
+                    <?php endif; ?>
                     <?php foreach (array_slice($citas,0,5) as $c): ?>
                     <div class="cita-item">
                         <div class="cita-hora"><?= $c['hora'] ?></div>
@@ -157,61 +160,7 @@ $pagos = $pagos ?? [
 
         </div>
 
-        <div class="pagina" id="pagina-agenda">
-            <div class="panel-titulo" style="margin-bottom:20px;">
-                <h2>Agenda general</h2>
-                <button class="btn-odent" onclick="abrirModal('modal-nueva-cita')">
-                    <i class="bi bi-plus-lg"></i> Nueva cita
-                </button>
-            </div>
-
-            <div class="tarjeta">
-                <div style="display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
-                    <input type="date" value="<?= date('Y-m-d') ?>" style="border:1.5px solid var(--borde);border-radius:8px;padding:8px 12px;font-size:14px;">
-                    <select style="border:1.5px solid var(--borde);border-radius:8px;padding:8px 12px;font-size:14px;">
-                        <option>Todos los odontólogos</option>
-                        <option>Dr. Méndez</option>
-                        <option>Dra. Flores</option>
-                    </select>
-                    <select style="border:1.5px solid var(--borde);border-radius:8px;padding:8px 12px;font-size:14px;">
-                        <option>Todos los estados</option>
-                        <option>Confirmada</option>
-                        <option>Pendiente</option>
-                        <option>Cancelada</option>
-                    </select>
-                </div>
-
-                <table class="tabla-odent">
-                    <thead>
-                        <tr>
-                            <th>#</th><th>Hora</th><th>Paciente</th>
-                            <th>Odontólogo</th><th>Tratamiento</th>
-                            <th>Estado</th><th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($citas as $c): ?>
-                        <tr>
-                            <td><?= $c['id'] ?></td>
-                            <td><strong><?= $c['hora'] ?></strong></td>
-                            <td><?= htmlspecialchars($c['paciente']) ?></td>
-                            <td><?= htmlspecialchars($c['odontologo']) ?></td>
-                            <td><?= htmlspecialchars($c['tratamiento']) ?></td>
-                            <td><span class="badge-estado badge-<?= $c['estado'] ?>"><?= ucfirst($c['estado']) ?></span></td>
-                            <td style="display:flex;gap:6px;">
-                                <button class="btn-outline-odent" style="font-size:12px;padding:4px 10px;">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn-peligro" style="font-size:12px;padding:4px 10px;">
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <?php include ROOT_PATH . '/views/shared/agenda_pagina.php'; ?>
 
         <div class="pagina" id="pagina-pacientes">
             <div class="panel-titulo" style="margin-bottom:20px;">
@@ -342,52 +291,7 @@ $pagos = $pagos ?? [
 
 </div>
 
-<div class="modal-overlay" id="modal-nueva-cita">
-    <div class="modal-caja">
-        <div class="modal-header">
-            <h3>Nueva cita</h3>
-            <button class="modal-cerrar" onclick="cerrarModal('modal-nueva-cita')"><i class="bi bi-x-lg"></i></button>
-        </div>
-        <div class="campo-grupo">
-            <label>Paciente</label>
-            <select>
-                <option value="">Seleccione un paciente</option>
-                <?php foreach ($pacientes as $p): ?>
-                <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nombre']) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="campo-grupo">
-            <label>Odontólogo</label>
-            <select>
-                <option>Dr. Méndez</option>
-                <option>Dra. Flores</option>
-            </select>
-        </div>
-        <div class="campo-grupo">
-            <label>Fecha</label>
-            <input type="date" value="<?= date('Y-m-d') ?>">
-        </div>
-        <div class="campo-grupo">
-            <label>Hora</label>
-            <input type="time">
-        </div>
-        <div class="campo-grupo">
-            <label>Tratamiento</label>
-            <select>
-                <option>Limpieza dental</option>
-                <option>Extracción</option>
-                <option>Ortodoncia</option>
-                <option>Blanqueamiento</option>
-                <option>Revisión general</option>
-            </select>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-outline-odent" onclick="cerrarModal('modal-nueva-cita')">Cancelar</button>
-            <button class="btn-odent"><i class="bi bi-check-lg"></i> Agendar</button>
-        </div>
-    </div>
-</div>
+<?php include ROOT_PATH . '/views/shared/agenda_modales.php'; ?>
 
 <div class="modal-overlay" id="modal-nuevo-paciente">
     <div class="modal-caja">
@@ -468,5 +372,6 @@ $pagos = $pagos ?? [
 </div>
 
 <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
+<script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
 </body>
 </html>

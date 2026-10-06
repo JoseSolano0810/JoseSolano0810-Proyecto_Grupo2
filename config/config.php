@@ -30,3 +30,9 @@ ini_set('display_errors', APP_ENV === 'local' ? '1' : '0');
 error_reporting(E_ALL);
 
 date_default_timezone_set('America/Costa_Rica');
+
+/* ── Módulo de Citas ─────────────────────────────────────────── */
+// CIT-05: horas de anticipación con que se envía el recordatorio al paciente
+define('RECORDATORIO_HORAS_ANTES', 24);
+define('CLINICA_NOMBRE', 'Odent Centro Odontológico');
+define('MAIL_REMITENTE', 'no-responder@' . (explode(':', $host)[0] ?: 'localhost'));

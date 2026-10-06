@@ -14,6 +14,7 @@ require_once ROOT_PATH . '/controllers/CotizacionController.php';
 require_once ROOT_PATH . '/controllers/PagoController.php';
 require_once ROOT_PATH . '/controllers/BitacoraController.php';
 require_once ROOT_PATH . '/models/Bitacora.php';
+require_once ROOT_PATH . '/services/RecordatorioService.php';
 
 $accion = $_GET['accion'] ?? 'inicio';
 $metodo = $_SERVER['REQUEST_METHOD'];
@@ -106,18 +107,43 @@ switch ($accion) {
 
     // ── Citas ─────────────────────────────────────────────────
     case 'citas.listar':
-        $ctrl = new CitaController();
-        echo json_encode($ctrl->listar());
+        (new CitaController())->consultar();
+        break;
+
+    case 'citas.catalogos':
+        (new CitaController())->catalogos();
+        break;
+
+    case 'citas.historial':
+        (new CitaController())->historial();
         break;
 
     case 'citas.crear':
-        $ctrl = new CitaController();
-        $ctrl->crear();
+        (new CitaController())->crear();
+        break;
+
+    case 'citas.editar':
+        (new CitaController())->editar();
+        break;
+
+    case 'citas.reprogramar':
+        (new CitaController())->reprogramar();
         break;
 
     case 'citas.cancelar':
-        $ctrl = new CitaController();
-        $ctrl->cancelar();
+        (new CitaController())->cancelar();
+        break;
+
+    case 'citas.estado':
+        (new CitaController())->cambiarEstado();
+        break;
+
+    case 'citas.recordatorios':
+        (new CitaController())->recordatorios();
+        break;
+
+    case 'citas.recordatorios.ejecutar':
+        (new CitaController())->ejecutarRecordatorios();
         break;
 
     // ── Pacientes ─────────────────────────────────────────────
@@ -219,17 +245,12 @@ function cargarPanel(array $sesion): void
             break;
 
         case 'paciente':
-            $mis_citas        = (new CitaController())->listar();
+            $citaCtrl         = new CitaController();
+            $mis_citas        = $citaCtrl->listarMisCitas();
+            $proxima_cita     = $citaCtrl->proximaCita();
             $mis_tratamientos = (new TratamientoController())->listar();
             $mis_pagos        = (new PagoController())->listar();
             $saldo_pendiente  = 60000;
-            $proxima_cita     = [
-                'mes'         => 'AGO',
-                'dia'         => '14',
-                'hora'        => '09:00 a.m.',
-                'odontologo'  => 'Dra. Melissa Salguero',
-                'tratamiento' => 'Control de ortodoncia',
-            ];
             require ROOT_PATH . '/views/paciente/index.php';
             break;
 
