@@ -146,6 +146,7 @@ window.Citas = (function () {
 
     /* ── Pintado ────────────────────────────────────────────── */
     function pintar() {
+        cerrarMenu();
         const esLista = S.vista === 'lista';
         $('agenda-filtros').style.display = esLista ? 'flex' : 'none';
         $('agenda-nav').style.display     = esLista ? 'none' : 'inline-flex';
@@ -199,20 +200,67 @@ window.Citas = (function () {
                 : 'Mostrando las próximas citas. Use los filtros para buscar en todo el historial.') + '</p>';
     }
 
-    function botonesAccion(c) {
-        const b = (acc, icono, titulo, extra = '') =>
-            '<button type="button" class="btn-icono ' + extra + '" data-cita-accion="' + acc + '" data-id="' + c.id + '" title="' + titulo + '"><i class="bi bi-' + icono + '"></i></button>';
-        let h = b('ver', 'eye', 'Ver detalle');
+    /** Acciones disponibles para una cita según su estado y el rol (se muestran en el menú ⋮) */
+    function itemsAccion(c) {
+        const items = [['ver', 'eye', 'Ver detalle']];
         if (GESTION && activa(c)) {
             const yaOcurrio = c.fecha <= hoy();
-            if (c.estado === 'programada') h += b('confirmar', 'check2', 'Confirmar cita');
-            h += b('editar', 'pencil', 'Modificar');
-            h += b('reprogramar', 'calendar2-week', 'Reprogramar');
-            if (yaOcurrio) h += b('atendida', 'check2-circle', 'Marcar como atendida');
-            if (yaOcurrio) h += b('ausente', 'person-x', 'Marcar como ausente');
-            h += b('cancelar', 'x-lg', 'Cancelar cita', 'peligro');
+            if (c.estado === 'programada') items.push(['confirmar', 'check2', 'Confirmar cita']);
+            items.push(['editar', 'pencil', 'Modificar']);
+            items.push(['reprogramar', 'calendar2-week', 'Reprogramar']);
+            if (yaOcurrio) {
+                items.push(['atendida', 'check2-circle', 'Marcar como atendida']);
+                items.push(['ausente', 'person-x', 'Marcar como ausente']);
+            }
+            items.push(['cancelar', 'x-lg', 'Cancelar cita', 'peligro']);
         }
-        return '<div class="acciones-cita">' + h + '</div>';
+        return items;
+    }
+
+    function botonesAccion(c) {
+        const ver = '<button type="button" class="btn-icono" data-cita-accion="ver" data-id="' + c.id + '" title="Ver detalle"><i class="bi bi-eye"></i></button>';
+        // Sin acciones de gestión (odontólogo / cita ya cerrada): solo "Ver"
+        if (itemsAccion(c).length <= 1) return '<div class="acciones-cita">' + ver + '</div>';
+        return '<div class="acciones-cita">' + ver +
+            '<button type="button" class="btn-icono" data-cita-accion="menu" data-id="' + c.id + '" title="Más acciones" aria-haspopup="true" aria-expanded="false">' +
+            '<i class="bi bi-three-dots-vertical"></i></button></div>';
+    }
+
+    /* ── Menú desplegable de acciones ───────────────────────── */
+    let menuEl = null, menuCita = null, menuBtn = null;
+
+    function cerrarMenu() {
+        if (menuEl) menuEl.classList.remove('abierto');
+        if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
+        menuCita = menuBtn = null;
+    }
+
+    function abrirMenu(btn, c) {
+        if (!menuEl) {
+            menuEl = document.createElement('div');
+            menuEl.id = 'cita-menu';
+            menuEl.className = 'menu-acciones';
+            menuEl.setAttribute('role', 'menu');
+            document.body.appendChild(menuEl);
+        }
+        // las acciones de "ver" ya tienen su propio botón: el menú trae el resto
+        menuEl.innerHTML = itemsAccion(c).filter(i => i[0] !== 'ver').map(([acc, icono, texto, extra]) =>
+            '<button type="button" role="menuitem" class="menu-acciones-item ' + (extra || '') + '" data-cita-accion="' + acc + '" data-id="' + c.id + '">' +
+            '<i class="bi bi-' + icono + '"></i>' + esc(texto) + '</button>'
+        ).join('');
+
+        menuEl.classList.add('abierto');
+        const r = btn.getBoundingClientRect();
+        const w = menuEl.offsetWidth, h = menuEl.offsetHeight;
+        let top  = r.bottom + 4;
+        if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 4);   // si no cabe abajo, se abre hacia arriba
+        const left = Math.min(Math.max(8, r.right - w), window.innerWidth - w - 8);
+        menuEl.style.top = top + 'px';
+        menuEl.style.left = left + 'px';
+
+        menuCita = c.id;
+        menuBtn = btn;
+        btn.setAttribute('aria-expanded', 'true');
     }
 
     /* Día (CIT-04 esc. 1) */
@@ -509,8 +557,16 @@ window.Citas = (function () {
 
     document.addEventListener('click', function (e) {
         const btn = e.target.closest('[data-cita-accion]');
-        if (!btn) return;
+        if (!btn) { cerrarMenu(); return; }
         const acc = btn.dataset.citaAccion;
+
+        if (acc === 'menu') {
+            const mismo = menuCita === Number(btn.dataset.id);
+            cerrarMenu();
+            if (!mismo) { const c = buscarCita(btn.dataset.id); if (c) abrirMenu(btn, c); }
+            return;
+        }
+        cerrarMenu();
 
         if (acc === 'dia') { cambiarVista('dia', btn.dataset.fecha); return; }
 
@@ -527,6 +583,10 @@ window.Citas = (function () {
         else if (acc === 'atendida') cambiarEstado(c, 'atendida');
         else if (acc === 'ausente') cambiarEstado(c, 'ausente');
     });
+
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarMenu(); });
+    window.addEventListener('resize', cerrarMenu);
+    window.addEventListener('scroll', cerrarMenu, true);
 
     function iniciar() {
         document.querySelectorAll('#agenda-vistas button').forEach(b =>
