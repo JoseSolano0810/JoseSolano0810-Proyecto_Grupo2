@@ -218,11 +218,8 @@ window.Citas = (function () {
     }
 
     function botonesAccion(c) {
-        const ver = '<button type="button" class="btn-icono" data-cita-accion="ver" data-id="' + c.id + '" title="Ver detalle"><i class="bi bi-eye"></i></button>';
-        // Sin acciones de gestión (odontólogo / cita ya cerrada): solo "Ver"
-        if (itemsAccion(c).length <= 1) return '<div class="acciones-cita">' + ver + '</div>';
-        return '<div class="acciones-cita">' + ver +
-            '<button type="button" class="btn-icono" data-cita-accion="menu" data-id="' + c.id + '" title="Más acciones" aria-haspopup="true" aria-expanded="false">' +
+        return '<div class="acciones-cita">' +
+            '<button type="button" class="btn-icono" data-cita-accion="menu" data-id="' + c.id + '" title="Acciones" aria-haspopup="true" aria-expanded="false">' +
             '<i class="bi bi-three-dots-vertical"></i></button></div>';
     }
 
@@ -243,8 +240,7 @@ window.Citas = (function () {
             menuEl.setAttribute('role', 'menu');
             document.body.appendChild(menuEl);
         }
-        // las acciones de "ver" ya tienen su propio botón: el menú trae el resto
-        menuEl.innerHTML = itemsAccion(c).filter(i => i[0] !== 'ver').map(([acc, icono, texto, extra]) =>
+        menuEl.innerHTML = itemsAccion(c).map(([acc, icono, texto, extra]) =>
             '<button type="button" role="menuitem" class="menu-acciones-item ' + (extra || '') + '" data-cita-accion="' + acc + '" data-id="' + c.id + '">' +
             '<i class="bi bi-' + icono + '"></i>' + esc(texto) + '</button>'
         ).join('');
@@ -267,7 +263,7 @@ window.Citas = (function () {
     function htmlDia() {
         if (!S.citas.length) return vacio('No hay citas programadas para este día.');
         return S.citas.map(c =>
-            '<div class="cal-dia-item estado-' + esc(c.estado) + '" data-cita-accion="ver" data-id="' + c.id + '">' +
+            '<div class="cal-dia-item estado-' + esc(c.estado) + '" data-cita-accion="menu" data-id="' + c.id + '">' +
             '<div class="cal-dia-hora">' + esc(c.hora) + ' – ' + esc(c.hora_fin) + '</div>' +
             '<div class="cal-dia-info"><strong>' + esc(c.paciente) + '</strong>' +
             '<small>' + esc(c.odontologo) + ' · ' + esc(c.tipo_consulta) + ' · ' + esc(c.fecha_fmt) + '</small></div>' +
@@ -276,7 +272,7 @@ window.Citas = (function () {
     }
 
     function chip(c, conOdontologo) {
-        return '<button type="button" class="cal-chip estado-' + esc(c.estado) + '" data-cita-accion="ver" data-id="' + c.id + '" ' +
+        return '<button type="button" class="cal-chip estado-' + esc(c.estado) + '" data-cita-accion="menu" data-id="' + c.id + '" ' +
             'title="' + esc(c.hora + ' ' + c.paciente + ' — ' + c.odontologo + ' (' + cap(c.estado) + ')') + '">' +
             '<b>' + esc(c.hora) + '</b> ' + esc(corto(c.paciente)) +
             (conOdontologo ? '<small>' + esc(corto(c.odontologo)) + '</small>' : '') + '</button>';
@@ -502,13 +498,7 @@ window.Citas = (function () {
             '<div class="full"><span>Observaciones</span>' + (c.observaciones ? esc(c.observaciones) : '—') + '</div></div>';
         $('det-historial').innerHTML = '<div class="item">Cargando…</div>';
 
-        let pie = '';
-        if (GESTION && activa(c)) {
-            pie += '<button class="btn-outline-odent" data-cita-accion="editar" data-id="' + c.id + '"><i class="bi bi-pencil"></i> Modificar</button>' +
-                   '<button class="btn-outline-odent" data-cita-accion="reprogramar" data-id="' + c.id + '"><i class="bi bi-calendar2-week"></i> Reprogramar</button>' +
-                   '<button class="btn-peligro" data-cita-accion="cancelar" data-id="' + c.id + '"><i class="bi bi-x-lg"></i> Cancelar cita</button>';
-        }
-        $('det-acciones').innerHTML = '<button class="btn-outline-odent" onclick="cerrarModal(\'modal-cita-detalle\')">Cerrar</button>' + pie;
+        $('det-acciones').innerHTML = '<button class="btn-outline-odent" onclick="cerrarModal(\'modal-cita-detalle\')">Cerrar</button>';
         abrirModal('modal-cita-detalle');
 
         try {
