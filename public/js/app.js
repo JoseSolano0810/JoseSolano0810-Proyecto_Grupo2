@@ -162,7 +162,7 @@ const respuestasChat = {
     'dolor':       'El dolor dental puede indicar caries profunda, infección o un nervio expuesto. Le recomendamos programar una cita lo antes posible. ¿Es el dolor constante o solo al masticar?',
     'muela':       'Si el dolor de muela es intenso y persistente, podría necesitar atención urgente. Intente no tomar antiinflamatorios por más de 2 días sin evaluación profesional.',
     'cayó':        '¡Importante! Si se cayó un diente permanente, manténgalo húmedo (en leche o solución salina) y acuda a la clínica en menos de 2 horas para posible reimplante.',
-    'cita':        `Su próxima cita programada es el 14 de agosto de 2026 a las 9:00 a.m. con el Dr. Méndez para control de ortodoncia.`,
+    'cita':        'Puede consultar sus citas en la sección «Mis citas» del menú. Para agendar o modificar una cita, comuníquese con la recepción de la clínica.',
     'encía':       'Las encías inflamadas pueden ser señal de gingivitis o periodontitis. Un cepillado suave y enjuague con agua salina puede ayudar, pero se recomienda revisión profesional.',
     'bracket':     'Si se rompió un bracket, no es una emergencia, pero debe notificar a su odontólogo para reagendar o repararlo en la próxima cita.',
     'emergencia':  '🚨 En caso de emergencia dental severa (hemorragia, trauma, dolor intenso), llame directamente a la clínica o acuda a urgencias.',
@@ -219,7 +219,6 @@ function chatEnter(e) {
     if (e.key === 'Enter') enviarMensajeChat();
 }
 
-/* ── Toasts apilables (éxito / error / aviso / info) ───────── */
 function mostrarToast(mensaje, tipo = 'exito', duracion = 4000) {
     if (tipo === 'advertencia') tipo = 'aviso';
     const iconos = { exito: 'check-circle-fill', peligro: 'exclamation-octagon-fill', aviso: 'exclamation-triangle-fill', info: 'info-circle-fill' };
@@ -339,7 +338,6 @@ async function refrescarSecciones(slugs = []) {
     }
 }
 
-/* ── Helper para guardar: POST JSON + botón "Guardando…" + avisos ── */
 async function guardarJSON(accion, payload, opciones = {}) {
     const btn = opciones.boton || null;
     let htmlOriginal = '';
@@ -381,7 +379,6 @@ async function guardarJSON(accion, payload, opciones = {}) {
     }
 }
 
-/* ── Marcar campos inválidos (en vez de alert) ─────────────── */
 function validarCampos(ids, mensaje = 'Complete todos los campos obligatorios.') {
     let primero = null;
     ids.forEach(id => {

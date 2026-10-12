@@ -75,6 +75,9 @@
                             <h3>Citas de hoy</h3>
                             <button class="btn-outline-odent" onclick="mostrarPagina('agenda')" style="font-size:13px;padding:6px 14px;">Ver agenda →</button>
                         </div>
+                        <?php if (!$citas): ?>
+                            <p style="color:var(--gris-azulado);font-size:14px;">No hay citas programadas para hoy.</p>
+                        <?php endif; ?>
                         <?php foreach ($citas as $cita): ?>
                             <div class="cita-item">
                                 <div class="cita-hora"><?= $cita['hora'] ?></div>
@@ -239,43 +242,8 @@
                 </div>
             </div>
 
-            <!-- ───────────────── AGENDA ───────────────── -->
-            <div class="pagina" id="pagina-agenda">
-                <div class="panel-titulo" style="margin-bottom:20px;">
-                    <h2>Mi agenda</h2>
-                    <button class="btn-odent" onclick="abrirModal('modal-nueva-cita')">
-                        <i class="bi bi-plus-lg"></i> Nueva cita
-                    </button>
-                </div>
-                <div class="tarjeta">
-                    <table class="tabla-odent">
-                        <thead>
-                            <tr>
-                                <th>Hora</th>
-                                <th>Paciente</th>
-                                <th>Tratamiento</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($citas as $cita): ?>
-                                <tr>
-                                    <td><strong><?= $cita['hora'] ?></strong></td>
-                                    <td><?= htmlspecialchars($cita['paciente']) ?></td>
-                                    <td><?= htmlspecialchars($cita['tratamiento']) ?></td>
-                                    <td><span class="badge-estado badge-<?= $cita['estado'] ?>"><?= ucfirst($cita['estado']) ?></span></td>
-                                    <td>
-                                        <button class="btn-outline-odent" style="font-size:12px;padding:5px 12px;">
-                                            <i class="bi bi-pencil"></i> Editar
-                                        </button>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <!-- ───────────────── AGENDA (CIT-01 a CIT-06) ───────────────── -->
+            <?php include ROOT_PATH . '/views/shared/agenda_pagina.php'; ?>
 
             <!-- ───────────────── PACIENTES ───────────────── -->
             <div class="pagina" id="pagina-pacientes">
@@ -628,39 +596,7 @@
         </div>
     </div>
 
-    <!-- Modal nueva cita -->
-    <div class="modal-overlay" id="modal-nueva-cita">
-        <div class="modal-caja">
-            <div class="modal-header">
-                <h3>Nueva cita</h3>
-                <button class="modal-cerrar" onclick="cerrarModal('modal-nueva-cita')"><i class="bi bi-x-lg"></i></button>
-            </div>
-            <div class="campo-grupo"><label>Paciente</label>
-                <select>
-                    <option value="">Seleccione un paciente</option>
-                    <?php foreach ($pacientes as $p): ?>
-                        <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nombre']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="campo-grupo"><label>Fecha</label><input type="date" value="<?= date('Y-m-d') ?>"></div>
-            <div class="campo-grupo"><label>Hora</label><input type="time"></div>
-            <div class="campo-grupo"><label>Tratamiento</label>
-                <select>
-                    <option>Limpieza dental</option>
-                    <option>Extracción</option>
-                    <option>Ortodoncia</option>
-                    <option>Blanqueamiento</option>
-                    <option>Revisión general</option>
-                </select>
-            </div>
-            <div class="campo-grupo"><label>Notas</label><textarea rows="3" placeholder="Observaciones opcionales..."></textarea></div>
-            <div class="modal-footer">
-                <button class="btn-outline-odent" onclick="cerrarModal('modal-nueva-cita')">Cancelar</button>
-                <button class="btn-odent"><i class="bi bi-check-lg"></i> Agendar</button>
-            </div>
-        </div>
-    </div>
+    <?php include ROOT_PATH . '/views/shared/agenda_modales.php'; ?>
 
     <!-- Modal nuevo tratamiento -->
     <div class="modal-overlay" id="modal-nuevo-tratamiento">
@@ -931,6 +867,7 @@
     </div>
 
     <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
+    <script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
     <script>
         const BASE = '<?= BASE_URL ?>';
         let usuarioIdSeleccionado = null;

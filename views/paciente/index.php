@@ -11,24 +11,13 @@
 
 <?php
 
-$rol = 'paciente';
-$usuario = ['nombre' => 'Ana Rojas', 'iniciales' => 'AR'];
-$pagina_activa = 'inicio';
+$rol           = $rol           ?? 'paciente';
+$usuario       = $usuario       ?? ['nombre' => '', 'iniciales' => ''];
+$pagina_activa = $pagina_activa ?? 'inicio';
 
-$proxima_cita = [
-    'mes'        => 'AGO',
-    'dia'        => '14',
-    'hora'       => '09:00 a.m.',
-    'odontologo' => 'Dr. Carlos Méndez',
-    'tratamiento'=> 'Control de ortodoncia',
-];
-
-$mis_citas = [
-    ['fecha'=>'14/08/2026','hora'=>'09:00','odontologo'=>'Dr. Méndez', 'tratamiento'=>'Ortodoncia control',  'estado'=>'confirmada'],
-    ['fecha'=>'28/07/2026','hora'=>'08:00','odontologo'=>'Dr. Méndez', 'tratamiento'=>'Limpieza dental',     'estado'=>'completada'],
-    ['fecha'=>'10/06/2026','hora'=>'10:00','odontologo'=>'Dr. Méndez', 'tratamiento'=>'Revisión general',    'estado'=>'completada'],
-    ['fecha'=>'03/05/2026','hora'=>'11:30','odontologo'=>'Dr. Méndez', 'tratamiento'=>'Ortodoncia inicio',   'estado'=>'completada'],
-];
+// Citas reales (CitaController::listarMisCitas / proximaCita)
+$proxima_cita = $proxima_cita ?? null;
+$mis_citas    = $mis_citas    ?? [];
 
 $mis_tratamientos = [
     ['nombre'=>'Ortodoncia fase 2','progreso'=>72,'inicio'=>'10/03/2026','sesiones_total'=>12,'sesiones_realizadas'=>8,'estado'=>'proceso'],
@@ -77,6 +66,7 @@ $saldo_pendiente = 60000;
 
                     <div class="tarjeta">
                         <h3 style="margin-bottom:14px;">Próxima cita</h3>
+                        <?php if ($proxima_cita): ?>
                         <div class="proxima-cita">
                             <div class="proxima-cita-fecha">
                                 <div class="mes"><?= $proxima_cita['mes'] ?></div>
@@ -85,9 +75,12 @@ $saldo_pendiente = 60000;
                             <div class="proxima-cita-info">
                                 <h4><?= htmlspecialchars($proxima_cita['tratamiento']) ?></h4>
                                 <p><?= htmlspecialchars($proxima_cita['odontologo']) ?></p>
-                                <p><i class="bi bi-clock"></i> <?= $proxima_cita['hora'] ?></p>
+                                <p><i class="bi bi-clock"></i> <?= htmlspecialchars($proxima_cita['hora']) ?></p>
                             </div>
                         </div>
+                        <?php else: ?>
+                        <p style="color:var(--gris-azulado);font-size:14px;">No tiene citas próximas programadas.</p>
+                        <?php endif; ?>
                     </div>
 
                     <div class="tarjeta">
@@ -148,13 +141,16 @@ $saldo_pendiente = 60000;
                         <tr><th>Fecha</th><th>Hora</th><th>Odontólogo</th><th>Tratamiento</th><th>Estado</th></tr>
                     </thead>
                     <tbody>
+                        <?php if (!$mis_citas): ?>
+                        <tr><td colspan="5" style="text-align:center;color:var(--gris-azulado);">Aún no tiene citas registradas.</td></tr>
+                        <?php endif; ?>
                         <?php foreach ($mis_citas as $c): ?>
                         <tr>
-                            <td><?= $c['fecha'] ?></td>
-                            <td><?= $c['hora'] ?></td>
+                            <td><?= htmlspecialchars($c['fecha_fmt']) ?></td>
+                            <td><?= htmlspecialchars($c['hora']) ?></td>
                             <td><?= htmlspecialchars($c['odontologo']) ?></td>
                             <td><?= htmlspecialchars($c['tratamiento']) ?></td>
-                            <td><span class="badge-estado badge-<?= $c['estado'] ?>"><?= ucfirst($c['estado']) ?></span></td>
+                            <td><span class="badge-estado badge-<?= htmlspecialchars($c['estado']) ?>"><?= ucfirst($c['estado']) ?></span></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
