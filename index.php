@@ -13,6 +13,7 @@ require_once ROOT_PATH . '/controllers/TratamientoController.php';
 require_once ROOT_PATH . '/controllers/CotizacionController.php';
 require_once ROOT_PATH . '/controllers/PagoController.php';
 require_once ROOT_PATH . '/controllers/BitacoraController.php';
+require_once ROOT_PATH . '/controllers/ExpedienteController.php';
 require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/RecordatorioService.php';
 
@@ -39,20 +40,20 @@ switch ($accion) {
         AuthService::logout($_GET['motivo'] ?? '');
         break;
 
-    // mantiene viva la sesión mientras el usuario interactúa (USU-04)
+    // mantiene viva la sesión mientras el usuario interactúa
     case 'ping':
         AuthService::requerir(AuthService::ROLES);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['ok' => true]);
         break;
 
-    // USU-05: el usuario cambia su propia contraseña
+    // el usuario cambia su propia contraseña
     case 'perfil.contrasena':
         header('Content-Type: application/json; charset=utf-8');
         (new LoginController())->cambiarContrasena();
         break;
 
-    // USU-06: bitácora
+    //  bitácora
     case 'bitacora.listar':
         (new BitacoraController())->listar();
         break;
@@ -64,7 +65,7 @@ switch ($accion) {
         cargarPanel(AuthService::usuarioActual());
         break;
 
-    // cambiar rol activo (usuarios con más de un rol)
+    // cambiar rol activo
     case 'cambiar_rol':
         AuthService::requerir(AuthService::ROLES);
         AuthService::cambiarRolActivo($_GET['rol'] ?? '');
@@ -179,6 +180,31 @@ switch ($accion) {
         $ctrl->registrar();
         break;
 
+    // ── Expedientes clínicos  ────────────────
+    case 'expedientes.pacientes':
+        (new ExpedienteController())->listarPacientes();
+        break;
+
+    case 'expedientes.obtener':
+        (new ExpedienteController())->obtener();
+        break;
+
+    case 'expedientes.crear':
+        (new ExpedienteController())->crear();
+        break;
+
+    case 'expedientes.actualizar':
+        (new ExpedienteController())->actualizar();
+        break;
+
+    case 'expedientes.atenciones':
+        (new ExpedienteController())->listarAtenciones();
+        break;
+
+    case 'expedientes.atencion.registrar':
+        (new ExpedienteController())->registrarAtencion();
+        break;
+
     // ── Tratamientos ──────────────────────────────────────────
     case 'tratamientos.listar':
         $ctrl = new TratamientoController();
@@ -197,9 +223,7 @@ switch ($accion) {
         break;
 }
 
-/**
- * Panel * rol
- */
+/** Panel * rol */
 function cargarPanel(array $sesion): void
 {
     $usuario       = ['nombre' => $sesion['nombre'], 'iniciales' => $sesion['iniciales']];
