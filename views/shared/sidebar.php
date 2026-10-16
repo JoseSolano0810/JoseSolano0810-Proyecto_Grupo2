@@ -42,6 +42,9 @@
             <a class="sidebar-enlace <?= $pagina_activa === 'odontograma'  ? 'activo' : '' ?>" onclick="mostrarPagina('odontograma')">
                 <i class="bi bi-clipboard2-pulse"></i> Odontograma
             </a>
+            <a class="sidebar-enlace <?= $pagina_activa === 'documentos'   ? 'activo' : '' ?>" onclick="mostrarPagina('documentos')">
+                <i class="bi bi-file-earmark-medical"></i> Documentos
+            </a>
             <a class="sidebar-enlace <?= $pagina_activa === 'tratamientos' ? 'activo' : '' ?>" onclick="mostrarPagina('tratamientos')">
                 <i class="bi bi-bandaid"></i> Tratamientos
             </a>
@@ -118,7 +121,7 @@
 
 </aside>
 
-<!-- USU-05: modal cambiar mi contraseña -->
+<!--modal cambiar mi contraseña -->
 <div class="modal-overlay" id="modal-cambiar-contrasena">
     <div class="modal-caja" style="max-width:420px;">
         <div class="modal-header">

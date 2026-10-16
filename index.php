@@ -15,6 +15,7 @@ require_once ROOT_PATH . '/controllers/PagoController.php';
 require_once ROOT_PATH . '/controllers/BitacoraController.php';
 require_once ROOT_PATH . '/controllers/ExpedienteController.php';
 require_once ROOT_PATH . '/controllers/OdontogramaController.php';
+require_once ROOT_PATH . '/controllers/DocumentoController.php';
 require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/RecordatorioService.php';
 
@@ -48,13 +49,13 @@ switch ($accion) {
         echo json_encode(['ok' => true]);
         break;
 
-    // USU-05: el usuario cambia su propia contraseña
+    // el usuario cambia su propia contraseña
     case 'perfil.contrasena':
         header('Content-Type: application/json; charset=utf-8');
         (new LoginController())->cambiarContrasena();
         break;
 
-    // USU-06: bitácora
+    // bitácora
     case 'bitacora.listar':
         (new BitacoraController())->listar();
         break;
@@ -181,7 +182,7 @@ switch ($accion) {
         $ctrl->registrar();
         break;
 
-    // ── Expedientes clínicos (CLI-01 / CLI-02) ────────────────
+    // ── Expedientes clínicos  ────────────────
     case 'expedientes.pacientes':
         (new ExpedienteController())->listarPacientes();
         break;
@@ -206,13 +207,31 @@ switch ($accion) {
         (new ExpedienteController())->registrarAtencion();
         break;
 
-    // ── Odontograma (CLI-03 / CLI-04) ─────────────────────────
+    // ── Odontograma  ─────────────────────────
     case 'odontograma.obtener':
         (new OdontogramaController())->obtener();
         break;
 
     case 'odontograma.guardar':
         (new OdontogramaController())->guardar();
+        break;
+
+    // ── Documentos clínicos  ──────────────────────────
+    case 'documentos.listar':
+        (new DocumentoController())->listar();
+        break;
+
+    case 'documentos.subir':
+        (new DocumentoController())->subir();
+        break;
+
+    case 'documentos.descargar':
+        // Descarga directa — no JSON, sirve el archivo con headers
+        (new DocumentoController())->descargar();
+        break;
+
+    case 'documentos.eliminar':
+        (new DocumentoController())->eliminar();
         break;
 
     // ── Tratamientos ──────────────────────────────────────────
