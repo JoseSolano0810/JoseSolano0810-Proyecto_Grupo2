@@ -14,6 +14,7 @@ require_once ROOT_PATH . '/controllers/CotizacionController.php';
 require_once ROOT_PATH . '/controllers/PagoController.php';
 require_once ROOT_PATH . '/controllers/BitacoraController.php';
 require_once ROOT_PATH . '/controllers/ExpedienteController.php';
+require_once ROOT_PATH . '/controllers/OdontogramaController.php';
 require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/RecordatorioService.php';
 
@@ -40,20 +41,20 @@ switch ($accion) {
         AuthService::logout($_GET['motivo'] ?? '');
         break;
 
-    // mantiene viva la sesión mientras el usuario interactúa
+    // mantiene viva la sesión mientras el usuario interactúa (USU-04)
     case 'ping':
         AuthService::requerir(AuthService::ROLES);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['ok' => true]);
         break;
 
-    // el usuario cambia su propia contraseña
+    // USU-05: el usuario cambia su propia contraseña
     case 'perfil.contrasena':
         header('Content-Type: application/json; charset=utf-8');
         (new LoginController())->cambiarContrasena();
         break;
 
-    //  bitácora
+    // USU-06: bitácora
     case 'bitacora.listar':
         (new BitacoraController())->listar();
         break;
@@ -65,7 +66,7 @@ switch ($accion) {
         cargarPanel(AuthService::usuarioActual());
         break;
 
-    // cambiar rol activo
+    // cambiar rol activo (usuarios con más de un rol)
     case 'cambiar_rol':
         AuthService::requerir(AuthService::ROLES);
         AuthService::cambiarRolActivo($_GET['rol'] ?? '');
@@ -180,7 +181,7 @@ switch ($accion) {
         $ctrl->registrar();
         break;
 
-    // ── Expedientes clínicos  ────────────────
+    // ── Expedientes clínicos (CLI-01 / CLI-02) ────────────────
     case 'expedientes.pacientes':
         (new ExpedienteController())->listarPacientes();
         break;
@@ -205,6 +206,15 @@ switch ($accion) {
         (new ExpedienteController())->registrarAtencion();
         break;
 
+    // ── Odontograma (CLI-03 / CLI-04) ─────────────────────────
+    case 'odontograma.obtener':
+        (new OdontogramaController())->obtener();
+        break;
+
+    case 'odontograma.guardar':
+        (new OdontogramaController())->guardar();
+        break;
+
     // ── Tratamientos ──────────────────────────────────────────
     case 'tratamientos.listar':
         $ctrl = new TratamientoController();
@@ -223,7 +233,9 @@ switch ($accion) {
         break;
 }
 
-/** Panel * rol */
+/**
+ * Panel * rol
+ */
 function cargarPanel(array $sesion): void
 {
     $usuario       = ['nombre' => $sesion['nombre'], 'iniciales' => $sesion['iniciales']];
@@ -246,16 +258,6 @@ function cargarPanel(array $sesion): void
                 $roles            = $datos['roles'];
             }
 
-            $estado_dientes = [
-                11=>'sano',  12=>'sano',  13=>'sano',  14=>'corona', 15=>'sano',
-                16=>'sano',  17=>'caries',18=>'sano',
-                21=>'sano',  22=>'sano',  23=>'sano',  24=>'sano',   25=>'sano',
-                26=>'ausente',27=>'sano', 28=>'sano',
-                31=>'sano',  32=>'sano',  33=>'sano',  34=>'sano',   35=>'caries',
-                36=>'sano',  37=>'sano',  38=>'ausente',
-                41=>'sano',  42=>'sano',  43=>'sano',  44=>'sano',   45=>'sano',
-                46=>'corona',47=>'sano',  48=>'sano',
-            ];
             require ROOT_PATH . '/views/odontologo/index.php';
             break;
 

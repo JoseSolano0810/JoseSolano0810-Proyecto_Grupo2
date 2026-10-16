@@ -1002,6 +1002,22 @@ h4 {
     opacity: .5;
 }
 
+.diente.endodoncia {
+    border-color: #7c3aed;
+    background: rgba(139, 92, 246, .1);
+}
+
+.diente.extraccion {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, .08);
+    opacity: .7;
+}
+
+.diente.implante {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, .1);
+}
+
 .diente.seleccionado {
     border-color: var(--azul-odent);
     background: rgba(23, 50, 77, .08);
