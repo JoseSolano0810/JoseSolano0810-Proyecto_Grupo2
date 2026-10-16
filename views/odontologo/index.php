@@ -242,7 +242,7 @@
                 </div>
             </div>
 
-            <!-- ───────────────── AGENDA (CIT-01 a CIT-06) ───────────────── -->
+            <!-- ───────────────── AGENDA ───────────────── -->
             <?php include ROOT_PATH . '/views/shared/agenda_pagina.php'; ?>
 
             <!-- ───────────────── PACIENTES ───────────────── -->
@@ -292,112 +292,264 @@
                 </div>
             </div>
 
-            <!-- ───────────────── EXPEDIENTES ───────────────── -->
+            <!-- ───────────────── EXPEDIENTES  ─── -->
             <div class="pagina" id="pagina-expedientes">
-                <div class="panel-titulo" style="margin-bottom:20px;">
-                    <h2>Expedientes clínicos</h2>
-                    <div style="display:flex;gap:10px;">
-                        <input type="text" placeholder="Buscar paciente..."
-                            style="border:1.5px solid var(--borde);border-radius:8px;padding:8px 14px;font-size:14px;min-width:220px;">
-                        <button class="btn-odent"><i class="bi bi-search"></i> Buscar</button>
+
+                <!-- Vista: lista de pacientes -->
+                <div id="exp-vista-lista">
+                    <div class="panel-titulo" style="margin-bottom:20px;">
+                        <div>
+                            <h2>Expedientes clínicos</h2>
+                            <p style="font-size:14px;color:var(--gris-azulado);margin-top:4px;">
+                                Seleccione un paciente para ver o crear su expediente
+                            </p>
+                        </div>
+                        <div style="display:flex;gap:10px;">
+                            <input type="text" id="exp-buscar" placeholder="Buscar por nombre o cédula…"
+                                style="border:1.5px solid var(--borde);border-radius:8px;padding:8px 14px;font-size:14px;min-width:240px;"
+                                oninput="expBuscar(this.value)">
+                            <button class="btn-odent" onclick="expBuscar(document.getElementById('exp-buscar').value)">
+                                <i class="bi bi-search"></i> Buscar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tarjeta">
+                        <table class="tabla-odent">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Paciente</th>
+                                    <th>Cédula</th>
+                                    <th>Edad</th>
+                                    <th>Grupo sanguíneo</th>
+                                    <th>Estado</th>
+                                    <th>Expediente</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="exp-tbody">
+                                <tr><td colspan="8" style="text-align:center;color:var(--gris-azulado);">Cargando…</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                <div class="tarjeta">
-                    <table class="tabla-odent">
-                        <thead>
-                            <tr>
-                                <th>N.°</th>
-                                <th>Paciente</th>
-                                <th>Cédula</th>
-                                <th>Edad</th>
-                                <th>Última visita</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($pacientes as $p): ?>
-                                <tr>
-                                    <td><?= $p['id'] ?></td>
-                                    <td><strong><?= htmlspecialchars($p['nombre']) ?></strong></td>
-                                    <td><?= $p['cedula'] ?></td>
-                                    <td><?= $p['edad'] ?> años</td>
-                                    <td><?= $p['ultima_visita'] ?></td>
-                                    <td><span class="badge-estado badge-<?= $p['estado'] ?>"><?= ucfirst($p['estado']) ?></span></td>
-                                    <td>
-                                        <button class="btn-outline-odent" onclick="mostrarPagina('odontograma')" style="font-size:12px;padding:5px 12px;">
-                                            <i class="bi bi-clipboard2-pulse"></i> Ver expediente
-                                        </button>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+
+                <!-- Vista: detalle de expediente de un paciente -->
+                <div id="exp-vista-detalle" style="display:none;">
+                    <div class="panel-titulo" style="margin-bottom:20px;">
+                        <div>
+                            <button class="btn-outline-odent" onclick="expVolverLista()" style="margin-bottom:8px;font-size:13px;">
+                                <i class="bi bi-arrow-left"></i> Volver
+                            </button>
+                            <h2 id="exp-detalle-nombre">Expediente clínico</h2>
+                            <p id="exp-detalle-cedula" style="font-size:14px;color:var(--gris-azulado);margin-top:2px;"></p>
+                        </div>
+                        <div style="display:flex;gap:10px;">
+                            <button class="btn-outline-odent" onclick="abrirOdontograma()" id="btn-ver-odontograma" style="display:none;">
+                                <i class="bi bi-grid-3x3"></i> Odontograma
+                            </button>
+                            <button class="btn-outline-odent" onclick="abrirEditarExpediente()" id="btn-editar-exp" style="display:none;">
+                                <i class="bi bi-pencil"></i> Editar expediente
+                            </button>
+                            <button class="btn-odent" onclick="abrirRegistrarAtencion()">
+                                <i class="bi bi-plus-lg"></i> Registrar atención
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sin expediente aún -->
+                    <div id="exp-sin-expediente" style="display:none;">
+                        <div class="tarjeta" style="text-align:center;padding:40px 20px;">
+                            <i class="bi bi-folder2-open" style="font-size:48px;color:var(--gris-azulado);display:block;margin-bottom:16px;"></i>
+                            <h3 style="margin-bottom:8px;">Este paciente no tiene expediente clínico</h3>
+                            <p style="color:var(--gris-azulado);font-size:14px;margin-bottom:24px;">
+                                Cree el expediente para registrar la historia clínica y las atenciones del paciente.
+                            </p>
+                            <button class="btn-odent" onclick="abrirModal('modal-exp-crear')">
+                                <i class="bi bi-file-earmark-medical"></i> Crear expediente
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Con expediente -->
+                    <div id="exp-con-expediente" style="display:none;">
+                        <div class="panel-grid col-2" style="margin-bottom:24px;">
+                            <div class="tarjeta">
+                                <h3 style="margin-bottom:16px;"><i class="bi bi-clipboard2-pulse" style="color:var(--azul-odent);margin-right:6px;"></i>Datos del expediente</h3>
+                                <div class="campo-grupo" style="margin-bottom:10px;">
+                                    <label style="font-size:12px;color:var(--gris-azulado);">Motivo de consulta</label>
+                                    <p id="exp-motivo" style="font-size:14px;margin:0;"></p>
+                                </div>
+                                <div class="panel-grid col-2" style="gap:10px;">
+                                    <div class="campo-grupo" style="margin-bottom:10px;">
+                                        <label style="font-size:12px;color:var(--gris-azulado);">Alergias</label>
+                                        <p id="exp-alergias" style="font-size:14px;margin:0;"></p>
+                                    </div>
+                                    <div class="campo-grupo" style="margin-bottom:10px;">
+                                        <label style="font-size:12px;color:var(--gris-azulado);">Enfermedades</label>
+                                        <p id="exp-enfermedades" style="font-size:14px;margin:0;"></p>
+                                    </div>
+                                </div>
+                                <div class="campo-grupo" style="margin-bottom:10px;">
+                                    <label style="font-size:12px;color:var(--gris-azulado);">Medicamentos actuales</label>
+                                    <p id="exp-medicamentos" style="font-size:14px;margin:0;"></p>
+                                </div>
+                                <div class="campo-grupo" style="margin-bottom:10px;">
+                                    <label style="font-size:12px;color:var(--gris-azulado);">Antecedentes</label>
+                                    <p id="exp-antecedentes" style="font-size:14px;margin:0;"></p>
+                                </div>
+                                <div class="campo-grupo" style="margin-bottom:0;">
+                                    <label style="font-size:12px;color:var(--gris-azulado);">Observaciones generales</label>
+                                    <p id="exp-observaciones" style="font-size:14px;margin:0;"></p>
+                                </div>
+                            </div>
+
+                            <div class="tarjeta">
+                                <h3 style="margin-bottom:16px;"><i class="bi bi-person-vcard" style="color:var(--azul-odent);margin-right:6px;"></i>Datos del paciente</h3>
+                                <div class="panel-grid col-2" style="gap:10px;">
+                                    <div class="campo-grupo" style="margin-bottom:10px;">
+                                        <label style="font-size:12px;color:var(--gris-azulado);">Fecha de nacimiento</label>
+                                        <p id="exp-pac-fnac" style="font-size:14px;margin:0;"></p>
+                                    </div>
+                                    <div class="campo-grupo" style="margin-bottom:10px;">
+                                        <label style="font-size:12px;color:var(--gris-azulado);">Edad</label>
+                                        <p id="exp-pac-edad" style="font-size:14px;margin:0;"></p>
+                                    </div>
+                                    <div class="campo-grupo" style="margin-bottom:10px;">
+                                        <label style="font-size:12px;color:var(--gris-azulado);">Sexo</label>
+                                        <p id="exp-pac-sexo" style="font-size:14px;margin:0;"></p>
+                                    </div>
+                                    <div class="campo-grupo" style="margin-bottom:10px;">
+                                        <label style="font-size:12px;color:var(--gris-azulado);">Grupo sanguíneo</label>
+                                        <p id="exp-pac-sangre" style="font-size:14px;margin:0;"></p>
+                                    </div>
+                                </div>
+                                <div class="campo-grupo" style="margin-bottom:10px;">
+                                    <label style="font-size:12px;color:var(--gris-azulado);">Teléfono</label>
+                                    <p id="exp-pac-tel" style="font-size:14px;margin:0;"></p>
+                                </div>
+                                <div class="campo-grupo" style="margin-bottom:0;">
+                                    <label style="font-size:12px;color:var(--gris-azulado);">Correo electrónico</label>
+                                    <p id="exp-pac-correo" style="font-size:14px;margin:0;"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Historial de atenciones -->
+                        <div class="tarjeta">
+                            <div class="panel-titulo" style="margin-bottom:16px;">
+                                <h3><i class="bi bi-journal-medical" style="color:var(--azul-odent);margin-right:6px;"></i>Historial de atenciones</h3>
+                                <span id="exp-atenciones-count" style="font-size:13px;color:var(--gris-azulado);"></span>
+                            </div>
+                            <div id="exp-atenciones-lista">
+                                <div style="text-align:center;padding:20px;color:var(--gris-azulado);">Cargando atenciones…</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
             </div>
 
             <!-- ───────────────── ODONTOGRAMA ───────────────── -->
             <div class="pagina" id="pagina-odontograma">
-                <h2 style="margin-bottom:6px;">Odontograma</h2>
-                <p style="font-size:14px;color:var(--gris-azulado);margin-bottom:20px;">
-                    Paciente: <strong>Ana Rojas</strong> — Haga clic en un diente para editar
-                </p>
-                <div class="panel-grid col-2">
-                    <div class="odontograma-container">
-                        <p style="font-size:12px;color:var(--gris-azulado);margin-bottom:12px;text-align:center;font-weight:600;">MAXILAR SUPERIOR</p>
-                        <div class="odontograma-fila">
-                            <?php foreach ([18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28] as $num): ?>
-                                <div class="diente <?= $estado_dientes[$num] ?? 'sano' ?>" onclick="seleccionarDiente(<?= $num ?>)" id="diente-<?= $num ?>">
-                                    <i class="bi bi-circle-fill" style="font-size:10px;"></i>
-                                    <span><?= $num ?></span>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <div style="border-top:2px dashed var(--borde);margin:10px 0;"></div>
-                        <p style="font-size:12px;color:var(--gris-azulado);margin-bottom:12px;text-align:center;font-weight:600;">MAXILAR INFERIOR</p>
-                        <div class="odontograma-fila">
-                            <?php foreach ([48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38] as $num): ?>
-                                <div class="diente <?= $estado_dientes[$num] ?? 'sano' ?>" onclick="seleccionarDiente(<?= $num ?>)" id="diente-<?= $num ?>">
-                                    <i class="bi bi-circle-fill" style="font-size:10px;"></i>
-                                    <span><?= $num ?></span>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <div class="leyenda-odontograma">
-                            <div class="leyenda-item">
-                                <div class="leyenda-color" style="background:#fff;border-color:var(--borde);"></div> Sano
-                            </div>
-                            <div class="leyenda-item">
-                                <div class="leyenda-color" style="background:rgba(192,57,43,.2);border-color:#C0392B;"></div> Caries
-                            </div>
-                            <div class="leyenda-item">
-                                <div class="leyenda-color" style="background:rgba(245,158,11,.2);border-color:#f59e0b;"></div> Corona
-                            </div>
-                            <div class="leyenda-item">
-                                <div class="leyenda-color" style="background:var(--fondo-odent);border-color:var(--gris-azulado);"></div> Ausente
-                            </div>
-                        </div>
+                <!-- Cabecera dinámica -->
+                <div class="panel-titulo" style="margin-bottom:6px;">
+                    <div>
+                        <button class="btn-outline-odent" onclick="odoVolverExpediente()" style="margin-bottom:8px;font-size:13px;">
+                            <i class="bi bi-arrow-left"></i> Volver al expediente
+                        </button>
+                        <h2>Odontograma</h2>
+                        <p id="odo-cabecera-paciente" style="font-size:14px;color:var(--gris-azulado);margin-top:2px;">
+                            Haga clic en un diente para editar su estado
+                        </p>
                     </div>
-                    <div class="tarjeta">
-                        <h3 style="margin-bottom:14px;">Detalle de pieza</h3>
-                        <div id="detalle-diente">
-                            <div class="alerta info"><i class="bi bi-hand-index"></i> Seleccione un diente para editar.</div>
-                        </div>
-                        <div id="panel-edicion-diente" style="display:none;">
-                            <div class="campo-grupo"><label>Pieza dental (FDI)</label><input type="text" id="diente-numero" readonly></div>
-                            <div class="campo-grupo">
-                                <label>Estado</label>
-                                <select id="diente-estado">
-                                    <option value="sano">Sano</option>
-                                    <option value="caries">Caries</option>
-                                    <option value="corona">Corona</option>
-                                    <option value="ausente">Ausente</option>
-                                </select>
+                </div>
+
+                <!-- Sin expediente seleccionado -->
+                <div id="odo-sin-expediente" style="display:none;">
+                    <div class="tarjeta" style="text-align:center;padding:40px 20px;">
+                        <i class="bi bi-clipboard2-x" style="font-size:48px;color:var(--gris-azulado);display:block;margin-bottom:16px;"></i>
+                        <h3 style="margin-bottom:8px;">Ningún expediente seleccionado</h3>
+                        <p style="color:var(--gris-azulado);font-size:14px;margin-bottom:24px;">
+                            Abra primero un expediente clínico desde la sección <strong>Expedientes</strong> y luego haga clic en "Odontograma".
+                        </p>
+                        <button class="btn-odent" onclick="mostrarPagina('expedientes')">
+                            <i class="bi bi-folder2-open"></i> Ir a Expedientes
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Con expediente: odontograma interactivo -->
+                <div id="odo-con-expediente" style="display:none;">
+                    <div class="panel-grid col-2">
+                        <!-- Mapa dental -->
+                        <div class="odontograma-container">
+                            <p style="font-size:12px;color:var(--gris-azulado);margin-bottom:12px;text-align:center;font-weight:600;">MAXILAR SUPERIOR</p>
+                            <div class="odontograma-fila" id="odo-fila-superior">
+                                <!-- Renderizado por JS -->
                             </div>
-                            <div class="campo-grupo"><label>Observaciones</label><textarea rows="3" placeholder="Notas clínicas..."></textarea></div>
-                            <div style="display:flex;gap:10px;">
-                                <button class="btn-odent" onclick="guardarDiente()"><i class="bi bi-check-lg"></i> Guardar</button>
-                                <button class="btn-outline-odent" onclick="cancelarDiente()">Cancelar</button>
+                            <div style="border-top:2px dashed var(--borde);margin:10px 0;"></div>
+                            <p style="font-size:12px;color:var(--gris-azulado);margin-bottom:12px;text-align:center;font-weight:600;">MAXILAR INFERIOR</p>
+                            <div class="odontograma-fila" id="odo-fila-inferior">
+                                <!-- Renderizado por JS -->
+                            </div>
+                            <div class="leyenda-odontograma">
+                                <div class="leyenda-item"><div class="leyenda-color" style="background:#fff;border-color:var(--borde);"></div> Sano</div>
+                                <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(192,57,43,.2);border-color:#C0392B;"></div> Caries</div>
+                                <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(245,158,11,.2);border-color:#f59e0b;"></div> Corona</div>
+                                <div class="leyenda-item"><div class="leyenda-color" style="background:var(--fondo-odent);border-color:var(--gris-azulado);"></div> Ausente</div>
+                                <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(139,92,246,.15);border-color:#7c3aed;"></div> Endodoncia</div>
+                                <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(239,68,68,.15);border-color:#ef4444;"></div> Extracción</div>
+                                <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(16,185,129,.15);border-color:#10b981;"></div> Implante</div>
+                            </div>
+                        </div>
+
+                        <!-- Panel de edición -->
+                        <div class="tarjeta">
+                            <h3 style="margin-bottom:14px;">Detalle de pieza</h3>
+
+                            <!-- Estado: ningún diente seleccionado -->
+                            <div id="odo-hint">
+                                <div class="alerta info"><i class="bi bi-hand-index"></i> Seleccione un diente para editar su estado.</div>
+                            </div>
+
+                            <!-- Estado: cargando -->
+                            <div id="odo-loading" style="display:none;text-align:center;padding:20px;color:var(--gris-azulado);">
+                                <div class="spinner-border spinner-border-sm" role="status" style="margin-right:6px;"></div> Cargando…
+                            </div>
+
+                            <!-- Formulario de edición -->
+                            <div id="odo-panel-edicion" style="display:none;">
+                                <div class="campo-grupo">
+                                    <label>Pieza dental (FDI)</label>
+                                    <input type="text" id="odo-numero" readonly style="background:var(--fondo-odent);">
+                                </div>
+                                <div class="campo-grupo">
+                                    <label>Estado</label>
+                                    <select id="odo-estado">
+                                        <option value="sano">Sano</option>
+                                        <option value="caries">Caries</option>
+                                        <option value="corona">Corona</option>
+                                        <option value="ausente">Ausente</option>
+                                        <option value="endodoncia">Endodoncia</option>
+                                        <option value="extraccion">Extracción</option>
+                                        <option value="implante">Implante</option>
+                                    </select>
+                                </div>
+                                <div class="campo-grupo">
+                                    <label>Observaciones</label>
+                                    <textarea id="odo-observaciones" rows="3" placeholder="Notas clínicas opcionales…"></textarea>
+                                </div>
+                                <div id="odo-ultima-mod" style="font-size:12px;color:var(--gris-azulado);margin-bottom:14px;display:none;">
+                                    <i class="bi bi-clock-history"></i> Última modificación: <span id="odo-fecha-mod"></span>
+                                </div>
+                                <div style="display:flex;gap:10px;">
+                                    <button class="btn-odent" id="odo-btn-guardar" onclick="odoGuardarDiente()">
+                                        <i class="bi bi-check-lg"></i> Guardar
+                                    </button>
+                                    <button class="btn-outline-odent" onclick="odoCancelarEdicion()">Cancelar</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -866,6 +1018,123 @@
         </div>
     </div>
 
+    <!-- Modal crear expediente (CLI-01) -->
+    <div class="modal-overlay" id="modal-exp-crear">
+        <div class="modal-caja">
+            <div class="modal-header">
+                <h3>Crear expediente clínico</h3>
+                <button class="modal-cerrar" onclick="cerrarModal('modal-exp-crear')"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="campo-grupo">
+                <label>Motivo de consulta *</label>
+                <textarea id="ec-motivo" rows="3" placeholder="Describa el motivo principal de consulta del paciente…"></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="campo-grupo">
+                    <label>Alergias</label>
+                    <textarea id="ec-alergias" rows="2" placeholder="Alergias conocidas…"></textarea>
+                </div>
+                <div class="campo-grupo">
+                    <label>Enfermedades</label>
+                    <textarea id="ec-enfermedades" rows="2" placeholder="Enfermedades de base…"></textarea>
+                </div>
+            </div>
+            <div class="campo-grupo">
+                <label>Medicamentos actuales</label>
+                <textarea id="ec-medicamentos" rows="2" placeholder="Medicamentos que toma actualmente…"></textarea>
+            </div>
+            <div class="campo-grupo">
+                <label>Antecedentes</label>
+                <textarea id="ec-antecedentes" rows="2" placeholder="Antecedentes médicos o quirúrgicos relevantes…"></textarea>
+            </div>
+            <div class="campo-grupo">
+                <label>Observaciones</label>
+                <textarea id="ec-observaciones" rows="2" placeholder="Observaciones generales…"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline-odent" onclick="cerrarModal('modal-exp-crear')">Cancelar</button>
+                <button class="btn-odent" onclick="guardarCrearExpediente()">
+                    <i class="bi bi-file-earmark-check"></i> Crear expediente
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal editar expediente (CLI-01 esc. 2) -->
+    <div class="modal-overlay" id="modal-exp-editar">
+        <div class="modal-caja">
+            <div class="modal-header">
+                <h3>Editar expediente clínico</h3>
+                <button class="modal-cerrar" onclick="cerrarModal('modal-exp-editar')"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <input type="hidden" id="ee-id-expediente">
+            <div class="campo-grupo">
+                <label>Motivo de consulta *</label>
+                <textarea id="ee-motivo" rows="3"></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="campo-grupo">
+                    <label>Alergias</label>
+                    <textarea id="ee-alergias" rows="2"></textarea>
+                </div>
+                <div class="campo-grupo">
+                    <label>Enfermedades</label>
+                    <textarea id="ee-enfermedades" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="campo-grupo">
+                <label>Medicamentos actuales</label>
+                <textarea id="ee-medicamentos" rows="2"></textarea>
+            </div>
+            <div class="campo-grupo">
+                <label>Antecedentes</label>
+                <textarea id="ee-antecedentes" rows="2"></textarea>
+            </div>
+            <div class="campo-grupo">
+                <label>Observaciones</label>
+                <textarea id="ee-observaciones" rows="2"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline-odent" onclick="cerrarModal('modal-exp-editar')">Cancelar</button>
+                <button class="btn-odent" onclick="guardarEditarExpediente()">
+                    <i class="bi bi-check-lg"></i> Guardar cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal registrar atención (CLI-02) -->
+    <div class="modal-overlay" id="modal-exp-atencion">
+        <div class="modal-caja">
+            <div class="modal-header">
+                <h3>Registrar atención clínica</h3>
+                <button class="modal-cerrar" onclick="cerrarModal('modal-exp-atencion')"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <input type="hidden" id="ea-id-expediente">
+            <div style="background:var(--fondo-odent);border-radius:8px;padding:10px 14px;margin-bottom:16px;">
+                <p style="font-size:13px;font-weight:600;margin:0;" id="ea-paciente-nombre"></p>
+            </div>
+            <div class="campo-grupo">
+                <label>Diagnóstico *</label>
+                <textarea id="ea-diagnostico" rows="3" placeholder="Diagnóstico de la atención…"></textarea>
+            </div>
+            <div class="campo-grupo">
+                <label>Tratamiento realizado</label>
+                <textarea id="ea-tratamiento" rows="2" placeholder="Procedimiento o tratamiento realizado en esta sesión…"></textarea>
+            </div>
+            <div class="campo-grupo">
+                <label>Observaciones</label>
+                <textarea id="ea-observaciones" rows="2" placeholder="Notas adicionales…"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline-odent" onclick="cerrarModal('modal-exp-atencion')">Cancelar</button>
+                <button class="btn-odent" onclick="guardarAtencion()">
+                    <i class="bi bi-journal-plus"></i> Registrar atención
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
     <script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
     <script>
@@ -874,14 +1143,14 @@
         let estadoActualSeleccionado = null;
 
 
-        /* ── USU-01 esc. 3: cancelar descarta lo digitado ───────── */
+        /* ── cancelar descarta lo digitado ───────── */
         function abrirNuevoUsuario() {
             ['nu-nombre', 'nu-cedula', 'nu-telefono', 'nu-correo', 'nu-usuario', 'nu-contrasena', 'nu-rol']
                 .forEach(id => document.getElementById(id).value = '');
             abrirModal('modal-nuevo-usuario');
         }
 
-        /* ── USU-06: bitácora ───────────────────────────────────── */
+        /* ── bitácora ───────────────────────────────────── */
         const escapar = t => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
         async function cargarBitacora() {
@@ -923,11 +1192,6 @@
             cargarBitacora();
         }
 
-        const mostrarPaginaOriginal = window.mostrarPagina;
-        window.mostrarPagina = function (slug) {
-            mostrarPaginaOriginal(slug);
-            if (slug === 'bitacora') cargarBitacora();
-        };
 
         /* ── Filtrar usuarios ───────────────────────────────────── */
         function filtrarUsuarios(texto) {
@@ -1067,6 +1331,477 @@
                 recargar: ['usuarios']
             });
         }
+
+        /* ═══════════════════════════════════════════════════════════
+           MÓDULO EXPEDIENTES CLÍNICOS  
+           ═══════════════════════════════════════════════════════════ */
+
+        let _expPacienteActual = null;   // fila del paciente seleccionado
+        let _expDatos          = null;   // objeto expediente cargado
+
+        const _exp = (id) => document.getElementById(id);
+        const _expEsc = (t) => String(t ?? '—').replace(/[&<>"']/g, c =>
+            ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+        /* ── Carga lista de pacientes ──────────────────────────── */
+        async function expCargarLista(q = '') {
+            const tbody = _exp('exp-tbody');
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gris-azulado);">Cargando…</td></tr>';
+            try {
+                const url = `${BASE}/index.php?accion=expedientes.pacientes` + (q ? `&q=${encodeURIComponent(q)}` : '');
+                const res  = await fetch(url, { headers: { Accept: 'application/json' } });
+                const data = await res.json();
+                if (!Array.isArray(data) || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gris-azulado);">No se encontraron pacientes.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.map((p, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <div class="sidebar-perfil-avatar" style="width:32px;height:32px;font-size:11px;flex-shrink:0;">
+                                    ${_expIniciales(p.nombre_completo)}
+                                </div>
+                                <strong>${_expEsc(p.nombre_completo)}</strong>
+                            </div>
+                        </td>
+                        <td>${_expEsc(p.identificacion)}</td>
+                        <td>${p.edad != null ? p.edad + ' años' : '—'}</td>
+                        <td>${_expEsc(p.grupo_sanguineo)}</td>
+                        <td>
+                            <span class="badge-estado badge-${p.estado === 'activo' ? 'confirmada' : 'cancelada'}">
+                                ${p.estado ? (p.estado.charAt(0).toUpperCase() + p.estado.slice(1)) : '—'}
+                            </span>
+                        </td>
+                        <td>
+                            ${p.id_paciente
+                                ? '<span class="badge-estado badge-completada"><i class="bi bi-check-circle"></i> Creado</span>'
+                                : '<span class="badge-estado badge-pendiente"><i class="bi bi-dash-circle"></i> Sin expediente</span>'}
+                        </td>
+                        <td>
+                            <button class="btn-outline-odent" style="font-size:12px;padding:4px 10px;"
+                                onclick='expAbrirPaciente(${JSON.stringify(p)})'>
+                                <i class="bi bi-clipboard2-pulse"></i> Ver expediente
+                            </button>
+                        </td>
+                    </tr>`).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gris-azulado);">Error al cargar la lista de pacientes.</td></tr>';
+            }
+        }
+
+        function _expIniciales(nombre) {
+            if (!nombre) return '?';
+            const p = nombre.trim().split(/\s+/);
+            return (p[0]?.[0] ?? '').toUpperCase() + (p[1]?.[0] ?? '').toUpperCase();
+        }
+
+        /* ── Búsqueda en tiempo real ───────────────────────────── */
+        let _expBuscarTimer = null;
+        function expBuscar(q) {
+            clearTimeout(_expBuscarTimer);
+            _expBuscarTimer = setTimeout(() => expCargarLista(q.trim()), 300);
+        }
+
+        /* ── Abrir expediente de un paciente ──────────────────── */
+        async function expAbrirPaciente(paciente) {
+            _expPacienteActual = paciente;
+            _exp('exp-vista-lista').style.display   = 'none';
+            _exp('exp-vista-detalle').style.display = '';
+            _exp('exp-sin-expediente').style.display = 'none';
+            _exp('exp-con-expediente').style.display  = 'none';
+
+            _exp('exp-detalle-nombre').textContent = paciente.nombre_completo ?? '—';
+            _exp('exp-detalle-cedula').textContent = 'Cédula: ' + (paciente.identificacion ?? '—');
+
+            if (!paciente.id_paciente) {
+                // El usuario tiene rol paciente pero sin perfil clínico aún
+                _exp('exp-sin-expediente').style.display      = '';
+                _exp('btn-editar-exp').style.display          = 'none';
+                _exp('btn-ver-odontograma').style.display     = 'none';
+                return;
+            }
+
+            // Cargar expediente por id_paciente
+            try {
+                const res  = await fetch(`${BASE}/index.php?accion=expedientes.obtener&id_paciente=${paciente.id_paciente}`, {
+                    headers: { Accept: 'application/json' }
+                });
+                const data = await res.json();
+
+                if (!data || !data.id_expediente) {
+                    _exp('exp-sin-expediente').style.display      = '';
+                    _exp('btn-editar-exp').style.display          = 'none';
+                    _exp('btn-ver-odontograma').style.display     = 'none';
+                } else {
+                    _expDatos = data;
+                    expRenderizarExpediente(data, paciente);
+                    _exp('exp-con-expediente').style.display      = '';
+                    _exp('btn-editar-exp').style.display          = '';
+                    _exp('btn-ver-odontograma').style.display     = '';
+                    expCargarAtenciones(data.id_expediente);
+                }
+            } catch (e) {
+                mostrarToast('Error al cargar el expediente.', 'error');
+            }
+        }
+
+        /* ── Mostrar datos del expediente en los campos ────────── */
+        function expRenderizarExpediente(data, paciente) {
+            _exp('exp-motivo').textContent        = data.motivo_consulta  || '—';
+            _exp('exp-alergias').textContent      = data.alergias         || 'Ninguna';
+            _exp('exp-enfermedades').textContent  = data.enfermedades     || 'Ninguna';
+            _exp('exp-medicamentos').textContent  = data.medicamentos_actuales || 'Ninguno';
+            _exp('exp-antecedentes').textContent  = data.antecedentes     || 'Sin antecedentes';
+            _exp('exp-observaciones').textContent = data.observaciones    || '—';
+
+            _exp('exp-pac-fnac').textContent  = paciente.fecha_nacimiento ? new Date(paciente.fecha_nacimiento + 'T00:00:00').toLocaleDateString('es-CR') : '—';
+            _exp('exp-pac-edad').textContent  = paciente.edad != null ? paciente.edad + ' años' : '—';
+            _exp('exp-pac-sexo').textContent  = paciente.sexo ? (paciente.sexo.charAt(0).toUpperCase() + paciente.sexo.slice(1)) : '—';
+            _exp('exp-pac-sangre').textContent = paciente.grupo_sanguineo || '—';
+            _exp('exp-pac-tel').textContent    = paciente.telefono   || '—';
+            _exp('exp-pac-correo').textContent = paciente.correo     || '—';
+        }
+
+        /* ── Cargar atenciones ─────────────────────────────────── */
+        async function expCargarAtenciones(idExpediente) {
+            const lista = _exp('exp-atenciones-lista');
+            lista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gris-azulado);">Cargando atenciones…</div>';
+            try {
+                const res  = await fetch(`${BASE}/index.php?accion=expedientes.atenciones&id_expediente=${idExpediente}`, {
+                    headers: { Accept: 'application/json' }
+                });
+                const data = await res.json();
+                _exp('exp-atenciones-count').textContent = `${data.length} registro${data.length !== 1 ? 's' : ''}`;
+                if (!data.length) {
+                    lista.innerHTML = '<div class="alerta info"><i class="bi bi-info-circle"></i> No hay atenciones registradas aún.</div>';
+                    return;
+                }
+                lista.innerHTML = data.map(a => `
+                    <div style="border:1.5px solid var(--borde);border-radius:10px;padding:16px;margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
+                            <div>
+                                <span style="font-weight:600;font-size:14px;">${_expEsc(a.odontologo)}</span>
+                                <span style="font-size:12px;color:var(--gris-azulado);margin-left:8px;">${_expFecha(a.created_at)}</span>
+                            </div>
+                            <span class="badge-estado badge-confirmada"><i class="bi bi-journal-check"></i> Atención</span>
+                        </div>
+                        <div style="margin-bottom:8px;">
+                            <p style="font-size:12px;color:var(--gris-azulado);margin:0 0 2px;font-weight:600;">DIAGNÓSTICO</p>
+                            <p style="font-size:14px;margin:0;">${_expEsc(a.diagnostico)}</p>
+                        </div>
+                        ${a.tratamiento_realizado ? `
+                        <div style="margin-bottom:8px;">
+                            <p style="font-size:12px;color:var(--gris-azulado);margin:0 0 2px;font-weight:600;">TRATAMIENTO REALIZADO</p>
+                            <p style="font-size:14px;margin:0;">${_expEsc(a.tratamiento_realizado)}</p>
+                        </div>` : ''}
+                        ${a.observaciones ? `
+                        <div>
+                            <p style="font-size:12px;color:var(--gris-azulado);margin:0 0 2px;font-weight:600;">OBSERVACIONES</p>
+                            <p style="font-size:14px;margin:0;">${_expEsc(a.observaciones)}</p>
+                        </div>` : ''}
+                    </div>`).join('');
+            } catch (e) {
+                lista.innerHTML = '<div class="alerta info">No se pudieron cargar las atenciones.</div>';
+            }
+        }
+
+        function _expFecha(str) {
+            if (!str) return '—';
+            const d = new Date(str.replace(' ', 'T'));
+            return d.toLocaleDateString('es-CR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+        }
+
+        /* ── Volver a la lista ─────────────────────────────────── */
+        function expVolverLista() {
+            _expPacienteActual = null;
+            _expDatos          = null;
+            _exp('exp-vista-detalle').style.display = 'none';
+            _exp('exp-vista-lista').style.display   = '';
+        }
+
+        /* ── Crear expediente (CLI-01) ─────────────────────────── */
+        async function guardarCrearExpediente() {
+            if (!validarCampos(['ec-motivo'], 'El motivo de consulta es obligatorio.')) return;
+            if (!_expPacienteActual?.id_paciente) return mostrarToast('No se identificó al paciente.', 'error');
+
+            await guardarJSON('expedientes.crear', {
+                id_paciente:          _expPacienteActual.id_paciente,
+                motivo_consulta:      _exp('ec-motivo').value.trim(),
+                alergias:             _exp('ec-alergias').value.trim(),
+                enfermedades:         _exp('ec-enfermedades').value.trim(),
+                medicamentos_actuales:_exp('ec-medicamentos').value.trim(),
+                antecedentes:         _exp('ec-antecedentes').value.trim(),
+                observaciones:        _exp('ec-observaciones').value.trim()
+            }, {
+                boton: document.querySelector('#modal-exp-crear .modal-footer .btn-odent'),
+                cerrarModal: 'modal-exp-crear',
+                exito: 'Expediente creado exitosamente.',
+                alExito: () => expAbrirPaciente(_expPacienteActual)
+            });
+        }
+
+        /* ── Editar expediente  ────────────────── */
+        function abrirEditarExpediente() {
+            if (!_expDatos) return;
+            _exp('ee-id-expediente').value = _expDatos.id_expediente;
+            _exp('ee-motivo').value        = _expDatos.motivo_consulta          || '';
+            _exp('ee-alergias').value      = _expDatos.alergias                 || '';
+            _exp('ee-enfermedades').value  = _expDatos.enfermedades             || '';
+            _exp('ee-medicamentos').value  = _expDatos.medicamentos_actuales    || '';
+            _exp('ee-antecedentes').value  = _expDatos.antecedentes             || '';
+            _exp('ee-observaciones').value = _expDatos.observaciones            || '';
+            abrirModal('modal-exp-editar');
+        }
+
+        async function guardarEditarExpediente() {
+            if (!validarCampos(['ee-motivo'], 'El motivo de consulta es obligatorio.')) return;
+
+            await guardarJSON('expedientes.actualizar', {
+                id_expediente:        _exp('ee-id-expediente').value,
+                motivo_consulta:      _exp('ee-motivo').value.trim(),
+                alergias:             _exp('ee-alergias').value.trim(),
+                enfermedades:         _exp('ee-enfermedades').value.trim(),
+                medicamentos_actuales:_exp('ee-medicamentos').value.trim(),
+                antecedentes:         _exp('ee-antecedentes').value.trim(),
+                observaciones:        _exp('ee-observaciones').value.trim()
+            }, {
+                boton: document.querySelector('#modal-exp-editar .modal-footer .btn-odent'),
+                cerrarModal: 'modal-exp-editar',
+                exito: 'Expediente actualizado.',
+                alExito: () => expAbrirPaciente(_expPacienteActual)
+            });
+        }
+
+        /* ── Registrar atención ───────────────────────── */
+        function abrirRegistrarAtencion() {
+            if (!_expDatos) {
+                return mostrarToast('Primero cree el expediente clínico del paciente.', 'aviso');
+            }
+            _exp('ea-id-expediente').value     = _expDatos.id_expediente;
+            _exp('ea-paciente-nombre').textContent = _expPacienteActual?.nombre_completo ?? '';
+            _exp('ea-diagnostico').value        = '';
+            _exp('ea-tratamiento').value        = '';
+            _exp('ea-observaciones').value      = '';
+            abrirModal('modal-exp-atencion');
+        }
+
+        async function guardarAtencion() {
+            if (!validarCampos(['ea-diagnostico'], 'El diagnóstico es obligatorio.')) return;
+
+            await guardarJSON('expedientes.atencion.registrar', {
+                id_expediente:        _exp('ea-id-expediente').value,
+                diagnostico:          _exp('ea-diagnostico').value.trim(),
+                tratamiento_realizado:_exp('ea-tratamiento').value.trim(),
+                observaciones:        _exp('ea-observaciones').value.trim()
+            }, {
+                boton: document.querySelector('#modal-exp-atencion .modal-footer .btn-odent'),
+                cerrarModal: 'modal-exp-atencion',
+                exito: 'Atención registrada exitosamente.',
+                alExito: () => expCargarAtenciones(_expDatos.id_expediente)
+            });
+        }
+
+        /* ── Cargar lista al navegar a la página ──────────────── */
+        const _mostrarPaginaBase = window.mostrarPagina;
+        window.mostrarPagina = function (slug) {
+            _mostrarPaginaBase(slug);
+            if (slug === 'expedientes') {
+                expVolverLista();
+                expCargarLista();
+            }
+            if (slug === 'bitacora') cargarBitacora();
+            if (slug === 'odontograma') odoIniciar();
+        };
+
+        /* ═══════════════════════════════════════════════════════════
+           FIN MÓDULO EXPEDIENTES
+           ═══════════════════════════════════════════════════════════ */
+
+        /* ═══════════════════════════════════════════════════════════
+           MÓDULO ODONTOGRAMA 
+           ═══════════════════════════════════════════════════════════ */
+
+        // ── Estado ────────────────────────────────────────────────
+        let _odoExpediente  = null;  // { id_expediente, nombre_completo }
+        let _odoPiezas      = {};    // { numero_pieza: { estado, observaciones, updated_at } }
+        let _odoPiezaActual = null;  // número FDI seleccionado actualmente
+
+        // Distribución FDI de las arcadas
+        const ODO_SUPERIOR = [18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28];
+        const ODO_INFERIOR = [48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
+
+        // Colores por estado (clases CSS del DOM + estilos inline para los que no tienen clase)
+        const ODO_CLASES = {
+            sano:        'sano',
+            caries:      'caries',
+            corona:      'corona',
+            ausente:     'ausente',
+            endodoncia:  'endodoncia',
+            extraccion:  'extraccion',
+            implante:    'implante',
+        };
+
+        // ── Helpers ───────────────────────────────────────────────
+        function _odo(id) { return document.getElementById(id); }
+
+        function _odoEstado(num) {
+            return (_odoPiezas[num]?.estado) ?? 'sano';
+        }
+
+        function _odoRenderizarDiente(num) {
+            const estado = _odoEstado(num);
+            return `<div class="diente ${estado}" id="diente-${num}" onclick="odoSeleccionarDiente(${num})">
+                        <i class="bi bi-circle-fill" style="font-size:10px;"></i>
+                        <span>${num}</span>
+                    </div>`;
+        }
+
+        function _odoRenderizarFila(nums) {
+            return nums.map(_odoRenderizarDiente).join('');
+        }
+
+        function _odoActualizarDomPieza(num) {
+            const el = document.getElementById('diente-' + num);
+            if (!el) return;
+            // Quitar todas las clases de estado
+            Object.keys(ODO_CLASES).forEach(c => el.classList.remove(c));
+            el.classList.add(_odoEstado(num));
+        }
+
+        // ── Iniciar / cargar odontograma ──────────────────────────
+
+        function odoIniciar() {
+            if (!_odoExpediente) {
+                _odo('odo-sin-expediente').style.display = '';
+                _odo('odo-con-expediente').style.display = 'none';
+                return;
+            }
+            _odo('odo-sin-expediente').style.display = 'none';
+            _odo('odo-con-expediente').style.display = '';
+            _odo('odo-cabecera-paciente').innerHTML =
+                `Paciente: <strong>${escapar(_odoExpediente.nombre_completo)}</strong> — Haga clic en un diente para editar`;
+            _odoRenderizarArcadas();
+            _odoCancelarSeleccion();
+            _odoCargarPiezas();
+        }
+
+        function _odoRenderizarArcadas() {
+            _odo('odo-fila-superior').innerHTML = _odoRenderizarFila(ODO_SUPERIOR);
+            _odo('odo-fila-inferior').innerHTML = _odoRenderizarFila(ODO_INFERIOR);
+        }
+
+        async function _odoCargarPiezas() {
+            if (!_odoExpediente) return;
+            try {
+                const r = await fetch(`${BASE}index.php?accion=odontograma.obtener&id_expediente=${_odoExpediente.id_expediente}`);
+                const data = await r.json();
+                if (!data.ok) return;
+                _odoPiezas = data.piezas ?? {};
+                // Actualizar DOM pieza por pieza
+                [...ODO_SUPERIOR, ...ODO_INFERIOR].forEach(_odoActualizarDomPieza);
+            } catch(e) {
+                mostrarToast('Error al cargar el odontograma.', 'error');
+            }
+        }
+
+        // ── Selección de diente ───────────────────────────────────
+
+        function odoSeleccionarDiente(num) {
+            _odoPiezaActual = num;
+            const datos = _odoPiezas[num] ?? { estado: 'sano', observaciones: '', updated_at: null };
+
+            _odo('odo-hint').style.display          = 'none';
+            _odo('odo-loading').style.display        = 'none';
+            _odo('odo-panel-edicion').style.display  = '';
+
+            _odo('odo-numero').value          = num;
+            _odo('odo-estado').value          = datos.estado ?? 'sano';
+            _odo('odo-observaciones').value   = datos.observaciones ?? '';
+
+            if (datos.updated_at) {
+                _odo('odo-fecha-mod').textContent = datos.updated_at;
+                _odo('odo-ultima-mod').style.display = '';
+            } else {
+                _odo('odo-ultima-mod').style.display = 'none';
+            }
+
+            // Marcar diente activo visualmente
+            document.querySelectorAll('#pagina-odontograma .diente').forEach(el => el.classList.remove('seleccionado'));
+            const elDiente = document.getElementById('diente-' + num);
+            if (elDiente) elDiente.classList.add('seleccionado');
+        }
+
+        function _odoCancelarSeleccion() {
+            _odoPiezaActual = null;
+            _odo('odo-hint').style.display          = '';
+            _odo('odo-loading').style.display        = 'none';
+            _odo('odo-panel-edicion').style.display  = 'none';
+            document.querySelectorAll('#pagina-odontograma .diente').forEach(el => el.classList.remove('seleccionado'));
+        }
+
+        function odoCancelarEdicion() {
+            _odoCancelarSeleccion();
+        }
+
+        // ── Guardar pieza ─────────────────────────────────────────
+
+        async function odoGuardarDiente() {
+            if (!_odoPiezaActual || !_odoExpediente) return;
+
+            const estado = _odo('odo-estado').value;
+            const obs    = _odo('odo-observaciones').value.trim();
+
+            await guardarJSON('odontograma.guardar', {
+                id_expediente: _odoExpediente.id_expediente,
+                numero_pieza:  _odoPiezaActual,
+                estado,
+                observaciones: obs || null,
+            }, {
+                boton:  _odo('odo-btn-guardar'),
+                exito:  `Pieza ${_odoPiezaActual} guardada como "${estado}".`,
+                alExito: (res) => {
+                    // Actualizar estado en memoria y en el DOM
+                    if (!_odoPiezas[_odoPiezaActual]) _odoPiezas[_odoPiezaActual] = {};
+                    _odoPiezas[_odoPiezaActual].estado        = estado;
+                    _odoPiezas[_odoPiezaActual].observaciones = obs || null;
+                    _odoPiezas[_odoPiezaActual].updated_at    = new Date().toLocaleString('es-CR');
+                    _odoActualizarDomPieza(_odoPiezaActual);
+                    _odoCancelarSeleccion();
+                }
+            });
+        }
+
+        // ── Navegar al odontograma desde expediente ───────────────
+
+
+        function abrirOdontograma() {
+            if (!_expDatos || !_expPacienteActual) {
+                return mostrarToast('Primero abra un expediente clínico.', 'aviso');
+            }
+            _odoExpediente = {
+                id_expediente:  _expDatos.id_expediente,
+                nombre_completo: _expPacienteActual.nombre_completo,
+            };
+            mostrarPagina('odontograma');
+        }
+
+        /**
+         * "Volver al expediente" desde la vista del odontograma.
+         */
+        function odoVolverExpediente() {
+            mostrarPagina('expedientes');
+            // El override de mostrarPagina llama expVolverLista() + expCargarLista(),
+            // pero si el paciente sigue en memoria abrimos el detalle directamente.
+            if (_expPacienteActual) {
+                expAbrirPaciente(_expPacienteActual);
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           FIN MÓDULO ODONTOGRAMA
+           ═══════════════════════════════════════════════════════════ */
 
         /* ── Cambiar estado ─────────────────────────────────────── */
         function confirmarCambioEstado(id, estadoActual, nombre) {
