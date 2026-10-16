@@ -242,7 +242,7 @@
                 </div>
             </div>
 
-            <!-- ───────────────── AGENDA ───────────────── -->
+            <!-- ───────────────── AGENDA  ───────────────── -->
             <?php include ROOT_PATH . '/views/shared/agenda_pagina.php'; ?>
 
             <!-- ───────────────── PACIENTES ───────────────── -->
@@ -345,9 +345,12 @@
                             <h2 id="exp-detalle-nombre">Expediente clínico</h2>
                             <p id="exp-detalle-cedula" style="font-size:14px;color:var(--gris-azulado);margin-top:2px;"></p>
                         </div>
-                        <div style="display:flex;gap:10px;">
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;">
                             <button class="btn-outline-odent" onclick="abrirOdontograma()" id="btn-ver-odontograma" style="display:none;">
                                 <i class="bi bi-grid-3x3"></i> Odontograma
+                            </button>
+                            <button class="btn-outline-odent" onclick="abrirDocumentos()" id="btn-ver-documentos" style="display:none;">
+                                <i class="bi bi-file-earmark-medical"></i> Documentos
                             </button>
                             <button class="btn-outline-odent" onclick="abrirEditarExpediente()" id="btn-editar-exp" style="display:none;">
                                 <i class="bi bi-pencil"></i> Editar expediente
@@ -552,6 +555,112 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ───────────────── DOCUMENTOS CLÍNICOS ───────────── -->
+            <div class="pagina" id="pagina-documentos">
+
+                <!-- Cabecera dinámica -->
+                <div class="panel-titulo" style="margin-bottom:6px;">
+                    <div>
+                        <button class="btn-outline-odent" onclick="docVolverExpediente()" style="margin-bottom:8px;font-size:13px;">
+                            <i class="bi bi-arrow-left"></i> Volver al expediente
+                        </button>
+                        <h2>Documentos clínicos</h2>
+                        <p id="doc-cabecera-paciente" style="font-size:14px;color:var(--gris-azulado);margin-top:2px;">
+                            Archivos adjuntos del expediente
+                        </p>
+                    </div>
+                    <button class="btn-odent" id="doc-btn-subir-cabecera" onclick="abrirModal('modal-doc-subir')" style="display:none;">
+                        <i class="bi bi-upload"></i> Subir documento
+                    </button>
+                </div>
+
+                <!-- Sin expediente seleccionado -->
+                <div id="doc-sin-expediente">
+                    <div class="tarjeta" style="text-align:center;padding:40px 20px;">
+                        <i class="bi bi-folder2-open" style="font-size:48px;color:var(--gris-azulado);display:block;margin-bottom:16px;"></i>
+                        <h3 style="margin-bottom:8px;">Ningún expediente seleccionado</h3>
+                        <p style="color:var(--gris-azulado);font-size:14px;margin-bottom:24px;">
+                            Abra primero un expediente clínico desde la sección <strong>Expedientes</strong> y luego haga clic en "Documentos".
+                        </p>
+                        <button class="btn-odent" onclick="mostrarPagina('expedientes')">
+                            <i class="bi bi-folder2-open"></i> Ir a Expedientes
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Con expediente: lista de documentos -->
+                <div id="doc-con-expediente" style="display:none;">
+                    <div class="tarjeta">
+                        <div class="panel-titulo" style="margin-bottom:16px;">
+                            <h3><i class="bi bi-paperclip" style="color:var(--azul-odent);margin-right:6px;"></i>Archivos adjuntos</h3>
+                            <span id="doc-count" style="font-size:13px;color:var(--gris-azulado);"></span>
+                        </div>
+
+                        <!-- Estado: cargando -->
+                        <div id="doc-loading" style="text-align:center;padding:20px;color:var(--gris-azulado);">
+                            <div class="spinner-border spinner-border-sm" role="status" style="margin-right:6px;"></div> Cargando documentos…
+                        </div>
+
+                        <!-- Lista de documentos -->
+                        <div id="doc-lista" style="display:none;"></div>
+
+                        <!-- Sin documentos aún -->
+                        <div id="doc-vacio" style="display:none;text-align:center;padding:30px 20px;">
+                            <i class="bi bi-file-earmark-x" style="font-size:40px;color:var(--gris-azulado);display:block;margin-bottom:12px;"></i>
+                            <p style="color:var(--gris-azulado);font-size:14px;margin-bottom:16px;">Este expediente no tiene documentos adjuntos aún.</p>
+                            <button class="btn-odent" onclick="abrirModal('modal-doc-subir')">
+                                <i class="bi bi-upload"></i> Subir primer documento
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal: subir documento -->
+            <div class="modal-overlay" id="modal-doc-subir">
+                <div class="modal-caja" style="max-width:480px;">
+                    <div class="modal-header">
+                        <h3><i class="bi bi-upload" style="margin-right:6px;"></i>Subir documento</h3>
+                        <button class="modal-cerrar" onclick="cerrarModal('modal-doc-subir')"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <div class="campo-grupo">
+                        <label>Archivo *</label>
+                        <input type="file" id="doc-archivo" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx">
+                        <small style="color:var(--gris-azulado);font-size:12px;">PDF, imagen (JPG/PNG/WEBP) o Word — máximo 8 MB</small>
+                    </div>
+                    <div class="campo-grupo">
+                        <label>Descripción <span style="color:var(--gris-azulado);font-size:12px;">(opcional)</span></label>
+                        <input type="text" id="doc-descripcion" placeholder="Ej. Radiografía panorámica, Consentimiento informado…" maxlength="500">
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-outline-odent" onclick="cerrarModal('modal-doc-subir')">Cancelar</button>
+                        <button class="btn-odent" id="doc-btn-subir" onclick="docSubir()">
+                            <i class="bi bi-upload"></i> Subir
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal: confirmar eliminación documento -->
+            <div class="modal-overlay" id="modal-doc-confirmar-eliminar">
+                <div class="modal-caja" style="max-width:420px;">
+                    <div class="modal-header">
+                        <h3>Eliminar documento</h3>
+                        <button class="modal-cerrar" onclick="cerrarModal('modal-doc-confirmar-eliminar')"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <p style="padding:20px 0 10px;font-size:14px;">
+                        ¿Está seguro que desea eliminar <strong id="doc-nombre-a-eliminar"></strong>?<br>
+                        <span style="color:var(--rojo-odent,#C0392B);font-size:13px;">Esta acción no se puede deshacer.</span>
+                    </p>
+                    <div class="modal-footer">
+                        <button class="btn-outline-odent" onclick="cerrarModal('modal-doc-confirmar-eliminar')">Cancelar</button>
+                        <button class="btn-peligro" id="doc-btn-confirmar-eliminar" onclick="docConfirmarEliminar()">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1018,7 +1127,7 @@
         </div>
     </div>
 
-    <!-- Modal crear expediente (CLI-01) -->
+    <!-- Modal crear expediente -->
     <div class="modal-overlay" id="modal-exp-crear">
         <div class="modal-caja">
             <div class="modal-header">
@@ -1060,7 +1169,7 @@
         </div>
     </div>
 
-    <!-- Modal editar expediente (CLI-01 esc. 2) -->
+    <!-- Modal editar expediente  -->
     <div class="modal-overlay" id="modal-exp-editar">
         <div class="modal-caja">
             <div class="modal-header">
@@ -1103,7 +1212,7 @@
         </div>
     </div>
 
-    <!-- Modal registrar atención (CLI-02) -->
+    <!-- Modal registrar atención -->
     <div class="modal-overlay" id="modal-exp-atencion">
         <div class="modal-caja">
             <div class="modal-header">
@@ -1150,7 +1259,7 @@
             abrirModal('modal-nuevo-usuario');
         }
 
-        /* ── bitácora ───────────────────────────────────── */
+        /* bitácora ───────────────────────────────────── */
         const escapar = t => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
         async function cargarBitacora() {
@@ -1192,6 +1301,7 @@
             cargarBitacora();
         }
 
+        // El override de mostrarPagina está en el bloque de Expedientes (cubre bitácora y expedientes).
 
         /* ── Filtrar usuarios ───────────────────────────────────── */
         function filtrarUsuarios(texto) {
@@ -1333,7 +1443,7 @@
         }
 
         /* ═══════════════════════════════════════════════════════════
-           MÓDULO EXPEDIENTES CLÍNICOS  
+           MÓDULO EXPEDIENTES CLÍNICOS 
            ═══════════════════════════════════════════════════════════ */
 
         let _expPacienteActual = null;   // fila del paciente seleccionado
@@ -1420,6 +1530,7 @@
                 _exp('exp-sin-expediente').style.display      = '';
                 _exp('btn-editar-exp').style.display          = 'none';
                 _exp('btn-ver-odontograma').style.display     = 'none';
+                _exp('btn-ver-documentos').style.display      = 'none';
                 return;
             }
 
@@ -1434,12 +1545,14 @@
                     _exp('exp-sin-expediente').style.display      = '';
                     _exp('btn-editar-exp').style.display          = 'none';
                     _exp('btn-ver-odontograma').style.display     = 'none';
+                    _exp('btn-ver-documentos').style.display      = 'none';
                 } else {
                     _expDatos = data;
                     expRenderizarExpediente(data, paciente);
                     _exp('exp-con-expediente').style.display      = '';
                     _exp('btn-editar-exp').style.display          = '';
                     _exp('btn-ver-odontograma').style.display     = '';
+                    _exp('btn-ver-documentos').style.display      = '';
                     expCargarAtenciones(data.id_expediente);
                 }
             } catch (e) {
@@ -1521,7 +1634,7 @@
             _exp('exp-vista-lista').style.display   = '';
         }
 
-        /* ── Crear expediente (CLI-01) ─────────────────────────── */
+        /* ── Crear expediente  ─────────────────────────── */
         async function guardarCrearExpediente() {
             if (!validarCampos(['ec-motivo'], 'El motivo de consulta es obligatorio.')) return;
             if (!_expPacienteActual?.id_paciente) return mostrarToast('No se identificó al paciente.', 'error');
@@ -1574,7 +1687,7 @@
             });
         }
 
-        /* ── Registrar atención ───────────────────────── */
+        /* ── Registrar atención (CLI-02) ───────────────────────── */
         function abrirRegistrarAtencion() {
             if (!_expDatos) {
                 return mostrarToast('Primero cree el expediente clínico del paciente.', 'aviso');
@@ -1613,6 +1726,7 @@
             }
             if (slug === 'bitacora') cargarBitacora();
             if (slug === 'odontograma') odoIniciar();
+            if (slug === 'documentos')  docIniciar();
         };
 
         /* ═══════════════════════════════════════════════════════════
@@ -1620,7 +1734,7 @@
            ═══════════════════════════════════════════════════════════ */
 
         /* ═══════════════════════════════════════════════════════════
-           MÓDULO ODONTOGRAMA 
+           MÓDULO ODONTOGRAMA
            ═══════════════════════════════════════════════════════════ */
 
         // ── Estado ────────────────────────────────────────────────
@@ -1672,6 +1786,11 @@
 
         // ── Iniciar / cargar odontograma ──────────────────────────
 
+        /**
+         * Llamado por mostrarPagina('odontograma').
+         * Si hay expediente en memoria (_odoExpediente) carga sus piezas,
+         * de lo contrario muestra el estado vacío.
+         */
         function odoIniciar() {
             if (!_odoExpediente) {
                 _odo('odo-sin-expediente').style.display = '';
@@ -1775,7 +1894,10 @@
 
         // ── Navegar al odontograma desde expediente ───────────────
 
-
+        /**
+         * Llamado por el botón "Odontograma" en la vista de detalle de expediente.
+         * Recibe el id_expediente y nombre del paciente desde _expDatos / _expPacienteActual.
+         */
         function abrirOdontograma() {
             if (!_expDatos || !_expPacienteActual) {
                 return mostrarToast('Primero abra un expediente clínico.', 'aviso');
@@ -1801,6 +1923,187 @@
 
         /* ═══════════════════════════════════════════════════════════
            FIN MÓDULO ODONTOGRAMA
+           ═══════════════════════════════════════════════════════════ */
+
+        /* ═══════════════════════════════════════════════════════════
+           MÓDULO DOCUMENTOS CLÍNICOS 
+           ═══════════════════════════════════════════════════════════ */
+
+        // ── Estado ────────────────────────────────────────────────
+        let _docExpediente      = null;   // { id_expediente, nombre_completo }
+        let _docIdAEliminar     = null;   // id_documento seleccionado para borrar
+        let _docNombreAEliminar = '';
+
+        // ── Helpers ───────────────────────────────────────────────
+        function _doc(id) { return document.getElementById(id); }
+
+        function _docIcono(mime) {
+            if (mime === 'application/pdf')                     return 'bi-file-earmark-pdf text-danger';
+            if (mime.startsWith('image/'))                      return 'bi-file-earmark-image text-success';
+            if (mime.includes('word') || mime.includes('docx')) return 'bi-file-earmark-word text-primary';
+            return 'bi-file-earmark';
+        }
+
+        // ── Iniciar / cargar documentos ───────────────────────────
+
+        function docIniciar() {
+            if (!_docExpediente) {
+                _doc('doc-sin-expediente').style.display = '';
+                _doc('doc-con-expediente').style.display = 'none';
+                _doc('doc-btn-subir-cabecera').style.display = 'none';
+                return;
+            }
+            _doc('doc-sin-expediente').style.display     = 'none';
+            _doc('doc-con-expediente').style.display     = '';
+            _doc('doc-btn-subir-cabecera').style.display = '';
+            _doc('doc-cabecera-paciente').innerHTML =
+                `Paciente: <strong>${escapar(_docExpediente.nombre_completo)}</strong> — Archivos adjuntos del expediente`;
+            docCargarLista();
+        }
+
+        async function docCargarLista() {
+            _doc('doc-loading').style.display = '';
+            _doc('doc-lista').style.display   = 'none';
+            _doc('doc-vacio').style.display   = 'none';
+
+            try {
+                const r    = await fetch(`${BASE}index.php?accion=documentos.listar&id_expediente=${_docExpediente.id_expediente}`);
+                const data = await r.json();
+
+                _doc('doc-loading').style.display = 'none';
+
+                if (!data.ok || !data.documentos.length) {
+                    _doc('doc-vacio').style.display = '';
+                    _doc('doc-count').textContent   = '0 documentos';
+                    return;
+                }
+
+                _doc('doc-count').textContent = data.documentos.length + ' documento' + (data.documentos.length !== 1 ? 's' : '');
+                _doc('doc-lista').innerHTML = data.documentos.map(d => `
+                    <div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--borde);">
+                        <i class="bi ${_docIcono(d.tipo_mime)}" style="font-size:28px;flex-shrink:0;"></i>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapar(d.nombre_original)}">
+                                ${escapar(d.nombre_original)}
+                            </div>
+                            ${d.descripcion ? `<div style="font-size:13px;color:var(--gris-azulado);">${escapar(d.descripcion)}</div>` : ''}
+                            <div style="font-size:12px;color:var(--gris-azulado);margin-top:2px;">
+                                ${escapar(d.tamano_fmt)} · ${escapar(d.created_at.substring(0,10))} · ${escapar(d.subido_por_nombre)}
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-shrink:0;">
+                            <a href="${escapar(d.url_descarga)}" class="btn-outline-odent" style="font-size:12px;padding:5px 12px;text-decoration:none;" download>
+                                <i class="bi bi-download"></i> Descargar
+                            </a>
+                            <button class="btn-outline-odent" style="font-size:12px;padding:5px 10px;color:var(--rojo-odent,#C0392B);border-color:var(--rojo-odent,#C0392B);"
+                                onclick="docAbrirEliminar(${d.id_documento}, '${escapar(d.nombre_original).replace(/'/g,"\\'")}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>`).join('');
+
+                // Quitar borde del último elemento
+                const items = _doc('doc-lista').querySelectorAll('[style*="border-bottom"]');
+                if (items.length) items[items.length - 1].style.borderBottom = 'none';
+
+                _doc('doc-lista').style.display = '';
+            } catch(e) {
+                _doc('doc-loading').style.display = 'none';
+                mostrarToast('Error al cargar los documentos.', 'error');
+            }
+        }
+
+        // ── Subir documento ───────────────────────────────────────
+
+        async function docSubir() {
+            const archivoInput = _doc('doc-archivo');
+            if (!archivoInput.files.length) {
+                archivoInput.classList.add('campo-invalido');
+                return mostrarToast('Seleccione un archivo para subir.', 'aviso');
+            }
+            archivoInput.classList.remove('campo-invalido');
+
+            const formData = new FormData();
+            formData.append('archivo',       archivoInput.files[0]);
+            formData.append('id_expediente', _docExpediente.id_expediente);
+            formData.append('descripcion',   _doc('doc-descripcion').value.trim());
+
+            const btn = _doc('doc-btn-subir');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Subiendo…';
+
+            try {
+                const res  = await fetch(`${BASE}index.php?accion=documentos.subir`, {
+                    method: 'POST',
+                    body:   formData,
+                    // No se pone Content-Type: el navegador lo pone automáticamente con boundary
+                });
+                const data = await res.json();
+
+                if (!data.ok) {
+                    mostrarToast(data.mensaje || 'Error al subir el archivo.', 'error');
+                } else {
+                    mostrarToast('Documento subido correctamente.', 'exito');
+                    cerrarModal('modal-doc-subir');
+                    archivoInput.value  = '';
+                    _doc('doc-descripcion').value = '';
+                    docCargarLista();
+                }
+            } catch(e) {
+                mostrarToast('Error de conexión al subir el archivo.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-upload"></i> Subir';
+            }
+        }
+
+        // ── Eliminar documento ────────────────────────────────────
+
+        function docAbrirEliminar(idDocumento, nombre) {
+            _docIdAEliminar     = idDocumento;
+            _docNombreAEliminar = nombre;
+            _doc('doc-nombre-a-eliminar').textContent = nombre;
+            abrirModal('modal-doc-confirmar-eliminar');
+        }
+
+        async function docConfirmarEliminar() {
+            if (!_docIdAEliminar || !_docExpediente) return;
+
+            await guardarJSON('documentos.eliminar', {
+                id_documento:  _docIdAEliminar,
+                id_expediente: _docExpediente.id_expediente,
+            }, {
+                boton:        _doc('doc-btn-confirmar-eliminar'),
+                cerrarModal:  'modal-doc-confirmar-eliminar',
+                exito:        'Documento eliminado.',
+                alExito:      () => {
+                    _docIdAEliminar     = null;
+                    _docNombreAEliminar = '';
+                    docCargarLista();
+                }
+            });
+        }
+
+        // ── Navegar a documentos desde expediente ─────────────────
+
+        function abrirDocumentos() {
+            if (!_expDatos || !_expPacienteActual) {
+                return mostrarToast('Primero abra un expediente clínico.', 'aviso');
+            }
+            _docExpediente = {
+                id_expediente:   _expDatos.id_expediente,
+                nombre_completo: _expPacienteActual.nombre_completo,
+            };
+            mostrarPagina('documentos');
+        }
+
+        function docVolverExpediente() {
+            mostrarPagina('expedientes');
+            if (_expPacienteActual) expAbrirPaciente(_expPacienteActual);
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           FIN MÓDULO DOCUMENTOS
            ═══════════════════════════════════════════════════════════ */
 
         /* ── Cambiar estado ─────────────────────────────────────── */
