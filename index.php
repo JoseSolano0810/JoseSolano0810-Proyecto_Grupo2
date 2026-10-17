@@ -1,4 +1,12 @@
 <?php
+// Silenciar errores de display ANTES de cualquier require, para que los
+// warnings de XAMPP no contaminen respuestas JSON. El log de PHP sigue activo.
+$_accionTemp = $_GET['accion'] ?? '';
+if (str_contains($_accionTemp, '.')) {
+    ini_set('display_errors', '0');
+}
+unset($_accionTemp);
+
 define('ROOT_PATH', str_replace('\\', '/', __DIR__));
 
 require_once __DIR__ . '/config/config.php';
@@ -24,6 +32,8 @@ $metodo = $_SERVER['REQUEST_METHOD'];
 
 if (str_contains($accion, '.')) {
     header('Content-Type: application/json; charset=utf-8');
+    // Evitar que warnings de PHP contaminen el JSON (especialmente en XAMPP con display_errors=On)
+    ini_set('display_errors', '0');
 }
 
 switch ($accion) {
@@ -205,6 +215,10 @@ switch ($accion) {
 
     case 'expedientes.atencion.registrar':
         (new ExpedienteController())->registrarAtencion();
+        break;
+
+    case 'expedientes.paciente.actualizar':
+        (new ExpedienteController())->actualizarPaciente();
         break;
 
     // ── Odontograma  ─────────────────────────

@@ -38,48 +38,54 @@ class DocumentoController
     /* ── POST ?accion=documentos.subir (multipart/form-data) ── */
     public function subir(): void
     {
-        if (empty($_FILES['archivo']) || $_FILES['archivo']['error'] !== UPLOAD_ERR_OK) {
-            $codigo = $_FILES['archivo']['error'] ?? -1;
-            $msg = match($codigo) {
-                UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'El archivo supera el tamaño permitido.',
-                UPLOAD_ERR_NO_FILE  => 'No se recibió ningún archivo.',
-                default             => 'Error al recibir el archivo (código ' . $codigo . ').',
-            };
-            http_response_code(400);
-            echo json_encode(['ok' => false, 'mensaje' => $msg]);
-            return;
+        header('Content-Type: application/json; charset=utf-8');
+        try {
+            if (empty($_FILES['archivo']) || $_FILES['archivo']['error'] !== UPLOAD_ERR_OK) {
+                $codigo = $_FILES['archivo']['error'] ?? -1;
+                $msg = match($codigo) {
+                    UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'El archivo supera el tamaño permitido.',
+                    UPLOAD_ERR_NO_FILE  => 'No se recibió ningún archivo.',
+                    default             => 'Error al recibir el archivo (código ' . $codigo . ').',
+                };
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'mensaje' => $msg]);
+                return;
+            }
+
+            $idExpediente = (int)($_POST['id_expediente'] ?? 0);
+            $descripcion  = trim($_POST['descripcion'] ?? '');
+
+            if (!$idExpediente) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'mensaje' => 'id_expediente requerido.']);
+                return;
+            }
+
+            $sesion    = AuthService::usuarioActual();
+            $resultado = $this->model->subir($_FILES['archivo'], $idExpediente, $sesion['id'], $descripcion);
+
+            if (!$resultado['ok']) {
+                http_response_code(422);
+                echo json_encode($resultado);
+                return;
+            }
+
+            Bitacora::registrar(
+                'DOCUMENTO_SUBIDO',
+                "Documento #{$resultado['id_documento']} subido al expediente #{$idExpediente}: " . $_FILES['archivo']['name'],
+                $sesion['id'],
+                $sesion['nombre_usuario']
+            );
+
+            echo json_encode([
+                'ok'           => true,
+                'id_documento' => $resultado['id_documento'],
+                'mensaje'      => 'Documento subido correctamente.',
+            ]);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'mensaje' => $e->getMessage()]);
         }
-
-        $idExpediente = (int)($_POST['id_expediente'] ?? 0);
-        $descripcion  = trim($_POST['descripcion'] ?? '');
-
-        if (!$idExpediente) {
-            http_response_code(400);
-            echo json_encode(['ok' => false, 'mensaje' => 'id_expediente requerido.']);
-            return;
-        }
-
-        $sesion    = AuthService::usuarioActual();
-        $resultado = $this->model->subir($_FILES['archivo'], $idExpediente, $sesion['id'], $descripcion);
-
-        if (!$resultado['ok']) {
-            http_response_code(422);
-            echo json_encode($resultado);
-            return;
-        }
-
-        Bitacora::registrar(
-            $sesion['id'],
-            'subir_documento',
-            "Documento #{$resultado['id_documento']} subido al expediente #{$idExpediente}: " . $_FILES['archivo']['name'],
-            $_SERVER['REMOTE_ADDR'] ?? ''
-        );
-
-        echo json_encode([
-            'ok'           => true,
-            'id_documento' => $resultado['id_documento'],
-            'mensaje'      => 'Documento subido correctamente.',
-        ]);
     }
 
     /* ── GET ?accion=documentos.descargar&id=X ──────────────── */
@@ -138,10 +144,10 @@ class DocumentoController
 
         $sesion = AuthService::usuarioActual();
         Bitacora::registrar(
-            $sesion['id'],
-            'eliminar_documento',
+            'DOCUMENTO_ELIMINADO',
             "Documento #{$idDocumento} eliminado del expediente #{$idExpediente}",
-            $_SERVER['REMOTE_ADDR'] ?? ''
+            $sesion['id'],
+            $sesion['nombre_usuario']
         );
 
         echo json_encode(['ok' => true, 'mensaje' => 'Documento eliminado.']);

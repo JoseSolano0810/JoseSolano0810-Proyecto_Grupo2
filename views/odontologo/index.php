@@ -352,6 +352,9 @@
                             <button class="btn-outline-odent" onclick="abrirDocumentos()" id="btn-ver-documentos" style="display:none;">
                                 <i class="bi bi-file-earmark-medical"></i> Documentos
                             </button>
+                            <button class="btn-outline-odent" onclick="abrirEditarPaciente()" id="btn-editar-pac" style="display:none;">
+                                <i class="bi bi-person-gear"></i> Editar paciente
+                            </button>
                             <button class="btn-outline-odent" onclick="abrirEditarExpediente()" id="btn-editar-exp" style="display:none;">
                                 <i class="bi bi-pencil"></i> Editar expediente
                             </button>
@@ -1212,6 +1215,54 @@
         </div>
     </div>
 
+    <!-- Modal editar datos del paciente -->
+    <div class="modal-overlay" id="modal-editar-paciente">
+        <div class="modal-caja">
+            <div class="modal-header">
+                <h3><i class="bi bi-person-gear" style="color:var(--azul-odent);margin-right:6px;"></i>Datos del paciente</h3>
+                <button class="modal-cerrar" onclick="cerrarModal('modal-editar-paciente')"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <input type="hidden" id="ep-id-paciente">
+            <div class="campo-grupo">
+                <label>Fecha de nacimiento</label>
+                <input type="date" id="ep-fecha-nac" max="<?= date('Y-m-d') ?>"
+                       oninput="epActualizarEdad(this.value)">
+                <small id="ep-edad-preview" style="color:var(--gris-azulado);font-size:12px;margin-top:4px;display:block;"></small>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="campo-grupo">
+                    <label>Sexo</label>
+                    <select id="ep-sexo">
+                        <option value="">— Sin especificar —</option>
+                        <option value="masculino">Masculino</option>
+                        <option value="femenino">Femenino</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="campo-grupo">
+                    <label>Grupo sanguíneo</label>
+                    <select id="ep-sangre">
+                        <option value="">— Sin especificar —</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A−</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B−</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB−</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O−</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline-odent" onclick="cerrarModal('modal-editar-paciente')">Cancelar</button>
+                <button class="btn-odent" id="ep-btn-guardar" onclick="guardarEditarPaciente()">
+                    <i class="bi bi-check-lg"></i> Guardar cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal registrar atención -->
     <div class="modal-overlay" id="modal-exp-atencion">
         <div class="modal-caja">
@@ -1528,11 +1579,15 @@
             if (!paciente.id_paciente) {
                 // El usuario tiene rol paciente pero sin perfil clínico aún
                 _exp('exp-sin-expediente').style.display      = '';
+                _exp('btn-editar-pac').style.display          = 'none';
                 _exp('btn-editar-exp').style.display          = 'none';
                 _exp('btn-ver-odontograma').style.display     = 'none';
                 _exp('btn-ver-documentos').style.display      = 'none';
                 return;
             }
+
+            // Mostrar botón editar paciente siempre que haya perfil clínico
+            _exp('btn-editar-pac').style.display = '';
 
             // Cargar expediente por id_paciente
             try {
@@ -1630,6 +1685,7 @@
         function expVolverLista() {
             _expPacienteActual = null;
             _expDatos          = null;
+            _exp('btn-editar-pac').style.display = 'none';
             _exp('exp-vista-detalle').style.display = 'none';
             _exp('exp-vista-lista').style.display   = '';
         }
@@ -1685,6 +1741,56 @@
                 exito: 'Expediente actualizado.',
                 alExito: () => expAbrirPaciente(_expPacienteActual)
             });
+        }
+
+        /* ── Editar datos del paciente ─────────────────────────── */
+        function abrirEditarPaciente() {
+            if (!_expPacienteActual?.id_paciente) return;
+            _exp('ep-id-paciente').value       = _expPacienteActual.id_paciente;
+            _exp('ep-fecha-nac').value         = _expPacienteActual.fecha_nacimiento || '';
+            _exp('ep-sexo').value              = _expPacienteActual.sexo            || '';
+            _exp('ep-sangre').value            = _expPacienteActual.grupo_sanguineo || '';
+            epActualizarEdad(_expPacienteActual.fecha_nacimiento || '');
+            abrirModal('modal-editar-paciente');
+        }
+
+        function epActualizarEdad(fechaStr) {
+            const preview = _exp('ep-edad-preview');
+            if (!fechaStr) { preview.textContent = ''; return; }
+            const hoy   = new Date();
+            const nac   = new Date(fechaStr + 'T00:00:00');
+            let edad    = hoy.getFullYear() - nac.getFullYear();
+            const m     = hoy.getMonth() - nac.getMonth();
+            if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
+            preview.textContent = edad >= 0 ? `Edad: ${edad} años` : '';
+        }
+
+        async function guardarEditarPaciente() {
+            const pacienteRef = _expPacienteActual;
+            const res = await guardarJSON('expedientes.paciente.actualizar', {
+                id_paciente:     _exp('ep-id-paciente').value,
+                fecha_nacimiento:_exp('ep-fecha-nac').value,
+                sexo:            _exp('ep-sexo').value,
+                grupo_sanguineo: _exp('ep-sangre').value
+            }, {
+                cerrarModal: 'modal-editar-paciente',
+                exito: 'Datos del paciente actualizados.'
+            });
+            if (res?.ok && pacienteRef) {
+                // Actualizar objeto local con los nuevos datos antes de recargar
+                pacienteRef.fecha_nacimiento = _exp('ep-fecha-nac').value || null;
+                pacienteRef.sexo             = _exp('ep-sexo').value      || null;
+                pacienteRef.grupo_sanguineo  = _exp('ep-sangre').value    || null;
+                if (pacienteRef.fecha_nacimiento) {
+                    const hoy = new Date(), nac = new Date(pacienteRef.fecha_nacimiento + 'T00:00:00');
+                    let edad = hoy.getFullYear() - nac.getFullYear();
+                    if (hoy.getMonth() - nac.getMonth() < 0 || (hoy.getMonth() - nac.getMonth() === 0 && hoy.getDate() < nac.getDate())) edad--;
+                    pacienteRef.edad = edad;
+                } else {
+                    pacienteRef.edad = null;
+                }
+                expRenderizarExpediente(_expDatos, pacienteRef);
+            }
         }
 
         /* ── Registrar atención (CLI-02) ───────────────────────── */
