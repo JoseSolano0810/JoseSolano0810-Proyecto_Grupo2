@@ -71,10 +71,10 @@ class ExpedienteController
         $id  = $this->expediente->crear($datos);
         $ses = AuthService::usuarioActual();
         Bitacora::registrar(
-            $ses['id'],
-            $ses['nombre_usuario'],
             'EXPEDIENTE_CREADO',
-            "Expediente clínico ID $id creado para paciente ID $idPaciente"
+            "Expediente clínico ID $id creado para paciente ID $idPaciente",
+            $ses['id'],
+            $ses['nombre_usuario']
         );
 
         echo json_encode(['ok' => true, 'id_expediente' => $id]);
@@ -96,10 +96,10 @@ class ExpedienteController
         $this->expediente->actualizar($idExpediente, $datos);
         $ses = AuthService::usuarioActual();
         Bitacora::registrar(
-            $ses['id'],
-            $ses['nombre_usuario'],
             'EXPEDIENTE_EDITADO',
-            "Expediente clínico ID $idExpediente actualizado"
+            "Expediente clínico ID $idExpediente actualizado",
+            $ses['id'],
+            $ses['nombre_usuario']
         );
 
         echo json_encode(['ok' => true]);
@@ -139,13 +139,44 @@ class ExpedienteController
 
         $id = $this->expediente->registrarAtencion($datos);
         Bitacora::registrar(
-            $ses['id'],
-            $ses['nombre_usuario'],
             'ATENCION_REGISTRADA',
-            "Atención clínica ID $id en expediente ID $idExpediente"
+            "Atención clínica ID $id en expediente ID $idExpediente",
+            $ses['id'],
+            $ses['nombre_usuario']
         );
 
         echo json_encode(['ok' => true, 'id_atencion' => $id]);
+    }
+
+    /** Actualiza datos personales del paciente (fecha_nacimiento, sexo, grupo_sanguineo) */
+    public function actualizarPaciente(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        try {
+            $datos = $this->bodyJson();
+
+            $idPaciente = (int) ($datos['id_paciente'] ?? 0);
+            if (!$idPaciente) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Falta id_paciente']);
+                return;
+            }
+
+            $this->paciente->actualizar($idPaciente, $datos);
+
+            $ses = AuthService::usuarioActual();
+            Bitacora::registrar(
+                'PACIENTE_ACTUALIZADO',
+                "Datos clínicos del paciente ID $idPaciente actualizados",
+                $ses['id'],
+                $ses['nombre_usuario']
+            );
+
+            echo json_encode(['ok' => true]);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+        }
     }
 
     /* Helpers */

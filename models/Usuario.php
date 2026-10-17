@@ -58,7 +58,8 @@ class Usuario
     }
 
     /**
-     * Crea usuario (el rol elegido queda como rol inicial/principal)
+     * Crea usuario (el rol elegido queda como rol inicial/principal).
+     * Si el rol es "paciente", crea automáticamente la fila en la tabla paciente.
      */
     public function crear(array $datos): int
     {
@@ -86,6 +87,13 @@ class Usuario
             $this->db->prepare(
                 "INSERT INTO usuario_rol (id_usuario, id_rol, es_principal) VALUES (?, ?, 1)"
             )->execute([$id, $datos['rol_id']]);
+
+            // Si el rol asignado es "paciente", crear fila en tabla paciente
+            if ($this->esRolPaciente((int) $datos['rol_id'])) {
+                $this->db->prepare(
+                    "INSERT IGNORE INTO paciente (id_usuario, estado) VALUES (?, 'activo')"
+                )->execute([$id]);
+            }
 
             $this->db->commit();
             return $id;
@@ -141,6 +149,7 @@ class Usuario
     /**
      * Reemplaza TODOS los roles del usuario y define cuál es el inicial.
      * $rolIds debe incluir a $rolPrincipal.
+     * Si alguno de los roles asignados es "paciente", crea la fila en tabla paciente.
      */
     public function asignarRoles(int $id, array $rolIds, int $rolPrincipal): void
     {
@@ -152,12 +161,23 @@ class Usuario
             $ins = $this->db->prepare(
                 "INSERT INTO usuario_rol (id_usuario, id_rol, es_principal) VALUES (?, ?, ?)"
             );
+            $tienePaciente = false;
             foreach ($rolIds as $rolId) {
                 $ins->execute([$id, $rolId, $rolId === $rolPrincipal ? 1 : 0]);
+                if ($this->esRolPaciente((int) $rolId)) {
+                    $tienePaciente = true;
+                }
             }
 
             $this->db->prepare("UPDATE usuario SET id_rol = ? WHERE id_usuario = ?")
                      ->execute([$rolPrincipal, $id]);
+
+            // Si alguno de los roles es "paciente", asegurar fila en tabla paciente
+            if ($tienePaciente) {
+                $this->db->prepare(
+                    "INSERT IGNORE INTO paciente (id_usuario, estado) VALUES (?, 'activo')"
+                )->execute([$id]);
+            }
 
             $this->db->commit();
         } catch (Throwable $e) {
@@ -276,5 +296,16 @@ class Usuario
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return (bool) $stmt->fetchColumn();
+    }
+
+    /**
+     * Devuelve true si el id_rol corresponde al rol "paciente".
+     * Se consulta la BD para no depender de un ID hardcodeado.
+     */
+    private function esRolPaciente(int $idRol): bool
+    {
+        $stmt = $this->db->prepare("SELECT nombre FROM rol WHERE id_rol = ? LIMIT 1");
+        $stmt->execute([$idRol]);
+        return $stmt->fetchColumn() === 'paciente';
     }
 }
