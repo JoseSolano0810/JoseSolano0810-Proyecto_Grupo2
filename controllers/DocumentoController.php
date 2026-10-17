@@ -16,23 +16,29 @@ class DocumentoController
     /* ── GET ?accion=documentos.listar&id_expediente=X ──────── */
     public function listar(): void
     {
-        $idExpediente = (int)($_GET['id_expediente'] ?? 0);
-        if (!$idExpediente) {
-            http_response_code(400);
-            echo json_encode(['ok' => false, 'mensaje' => 'id_expediente requerido.']);
-            return;
+        header('Content-Type: application/json; charset=utf-8');
+        try {
+            $idExpediente = (int)($_GET['id_expediente'] ?? 0);
+            if (!$idExpediente) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'mensaje' => 'id_expediente requerido.']);
+                return;
+            }
+
+            $docs = $this->model->listarPorExpediente($idExpediente);
+
+            // Agregar URL de descarga y tamaño legible para el frontend
+            foreach ($docs as &$d) {
+                $d['url_descarga'] = BASE_URL . '/index.php?accion=documentos.descargar&id=' . $d['id_documento'];
+                $d['tamano_fmt']   = DocumentoClinico::formatearTamano((int)$d['tamano_bytes']);
+            }
+            unset($d);
+
+            echo json_encode(['ok' => true, 'documentos' => $docs]);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'mensaje' => 'Error interno al listar documentos: ' . $e->getMessage()]);
         }
-
-        $docs = $this->model->listarPorExpediente($idExpediente);
-
-        // Agregar URL de descarga y tamaño legible para el frontend
-        foreach ($docs as &$d) {
-            $d['url_descarga'] = BASE_URL . '/index.php?accion=documentos.descargar&id=' . $d['id_documento'];
-            $d['tamano_fmt']   = DocumentoClinico::formatearTamano((int)$d['tamano_bytes']);
-        }
-        unset($d);
-
-        echo json_encode(['ok' => true, 'documentos' => $docs]);
     }
 
     /* ── POST ?accion=documentos.subir (multipart/form-data) ── */
@@ -42,11 +48,13 @@ class DocumentoController
         try {
             if (empty($_FILES['archivo']) || $_FILES['archivo']['error'] !== UPLOAD_ERR_OK) {
                 $codigo = $_FILES['archivo']['error'] ?? -1;
-                $msg = match($codigo) {
-                    UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'El archivo supera el tamaño permitido.',
-                    UPLOAD_ERR_NO_FILE  => 'No se recibió ningún archivo.',
-                    default             => 'Error al recibir el archivo (código ' . $codigo . ').',
-                };
+                if ($codigo === UPLOAD_ERR_INI_SIZE || $codigo === UPLOAD_ERR_FORM_SIZE) {
+                    $msg = 'El archivo supera el tamaño permitido.';
+                } elseif ($codigo === UPLOAD_ERR_NO_FILE) {
+                    $msg = 'No se recibió ningún archivo.';
+                } else {
+                    $msg = 'Error al recibir el archivo (código ' . $codigo . ').';
+                }
                 http_response_code(400);
                 echo json_encode(['ok' => false, 'mensaje' => $msg]);
                 return;
@@ -124,33 +132,39 @@ class DocumentoController
     /* ── POST ?accion=documentos.eliminar ───────────────────── */
     public function eliminar(): void
     {
-        $datos        = $this->bodyJson();
-        $idDocumento  = (int)($datos['id_documento']  ?? 0);
-        $idExpediente = (int)($datos['id_expediente'] ?? 0);
+        header('Content-Type: application/json; charset=utf-8');
+        try {
+            $datos        = $this->bodyJson();
+            $idDocumento  = (int)($datos['id_documento']  ?? 0);
+            $idExpediente = (int)($datos['id_expediente'] ?? 0);
 
-        if (!$idDocumento || !$idExpediente) {
-            http_response_code(400);
-            echo json_encode(['ok' => false, 'mensaje' => 'id_documento e id_expediente requeridos.']);
-            return;
+            if (!$idDocumento || !$idExpediente) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'mensaje' => 'id_documento e id_expediente requeridos.']);
+                return;
+            }
+
+            $resultado = $this->model->eliminar($idDocumento, $idExpediente);
+
+            if (!$resultado['ok']) {
+                http_response_code(404);
+                echo json_encode($resultado);
+                return;
+            }
+
+            $sesion = AuthService::usuarioActual();
+            Bitacora::registrar(
+                'DOCUMENTO_ELIMINADO',
+                "Documento #{$idDocumento} eliminado del expediente #{$idExpediente}",
+                $sesion['id'],
+                $sesion['nombre_usuario']
+            );
+
+            echo json_encode(['ok' => true, 'mensaje' => 'Documento eliminado.']);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'mensaje' => 'Error interno al eliminar: ' . $e->getMessage()]);
         }
-
-        $resultado = $this->model->eliminar($idDocumento, $idExpediente);
-
-        if (!$resultado['ok']) {
-            http_response_code(404);
-            echo json_encode($resultado);
-            return;
-        }
-
-        $sesion = AuthService::usuarioActual();
-        Bitacora::registrar(
-            'DOCUMENTO_ELIMINADO',
-            "Documento #{$idDocumento} eliminado del expediente #{$idExpediente}",
-            $sesion['id'],
-            $sesion['nombre_usuario']
-        );
-
-        echo json_encode(['ok' => true, 'mensaje' => 'Documento eliminado.']);
     }
 
     /* ── Helper ─────────────────────────────────────────────── */
