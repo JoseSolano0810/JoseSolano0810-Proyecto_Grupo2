@@ -462,8 +462,8 @@
                 <!-- Cabecera dinámica -->
                 <div class="panel-titulo" style="margin-bottom:6px;">
                     <div>
-                        <button class="btn-outline-odent" onclick="odoVolverExpediente()" style="margin-bottom:8px;font-size:13px;">
-                            <i class="bi bi-arrow-left"></i> Volver al expediente
+                        <button class="btn-outline-odent" id="odo-btn-volver" onclick="odoVolverExpediente()" style="margin-bottom:8px;font-size:13px;">
+                            <i class="bi bi-arrow-left"></i> <span id="odo-btn-volver-texto">Volver al expediente</span>
                         </button>
                         <h2>Odontograma</h2>
                         <p id="odo-cabecera-paciente" style="font-size:14px;color:var(--gris-azulado);margin-top:2px;">
@@ -472,17 +472,27 @@
                     </div>
                 </div>
 
-                <!-- Sin expediente seleccionado -->
+                <!-- Sin expediente seleccionado: lista de pacientes con expediente -->
                 <div id="odo-sin-expediente" style="display:none;">
-                    <div class="tarjeta" style="text-align:center;padding:40px 20px;">
-                        <i class="bi bi-clipboard2-x" style="font-size:48px;color:var(--gris-azulado);display:block;margin-bottom:16px;"></i>
-                        <h3 style="margin-bottom:8px;">Ningún expediente seleccionado</h3>
-                        <p style="color:var(--gris-azulado);font-size:14px;margin-bottom:24px;">
-                            Abra primero un expediente clínico desde la sección <strong>Expedientes</strong> y luego haga clic en "Odontograma".
-                        </p>
-                        <button class="btn-odent" onclick="mostrarPagina('expedientes')">
-                            <i class="bi bi-folder2-open"></i> Ir a Expedientes
-                        </button>
+                    <div class="tarjeta">
+                        <div class="panel-titulo" style="margin-bottom:16px;">
+                            <div>
+                                <h3 style="margin:0;">Seleccionar paciente</h3>
+                                <p style="color:var(--gris-azulado);font-size:13px;margin:4px 0 0;">
+                                    Elija un paciente para ver o editar su odontograma
+                                </p>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:14px;">
+                            <input type="text" id="odo-buscar-paciente" placeholder="Buscar paciente…"
+                                   style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:14px;"
+                                   oninput="odoBuscarPaciente(this.value)">
+                        </div>
+                        <div id="odo-lista-pacientes" style="max-height:420px;overflow-y:auto;">
+                            <div style="text-align:center;padding:30px;color:var(--gris-azulado);">
+                                <div class="spinner-border spinner-border-sm" role="status"></div> Cargando pacientes…
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -568,8 +578,8 @@
                 <!-- Cabecera dinámica -->
                 <div class="panel-titulo" style="margin-bottom:6px;">
                     <div>
-                        <button class="btn-outline-odent" onclick="docVolverExpediente()" style="margin-bottom:8px;font-size:13px;">
-                            <i class="bi bi-arrow-left"></i> Volver al expediente
+                        <button class="btn-outline-odent" id="doc-btn-volver" onclick="docVolverExpediente()" style="margin-bottom:8px;font-size:13px;">
+                            <i class="bi bi-arrow-left"></i> <span id="doc-btn-volver-texto">Volver al expediente</span>
                         </button>
                         <h2>Documentos clínicos</h2>
                         <p id="doc-cabecera-paciente" style="font-size:14px;color:var(--gris-azulado);margin-top:2px;">
@@ -581,17 +591,27 @@
                     </button>
                 </div>
 
-                <!-- Sin expediente seleccionado -->
+                <!-- Sin expediente seleccionado: lista de pacientes con expediente -->
                 <div id="doc-sin-expediente">
-                    <div class="tarjeta" style="text-align:center;padding:40px 20px;">
-                        <i class="bi bi-folder2-open" style="font-size:48px;color:var(--gris-azulado);display:block;margin-bottom:16px;"></i>
-                        <h3 style="margin-bottom:8px;">Ningún expediente seleccionado</h3>
-                        <p style="color:var(--gris-azulado);font-size:14px;margin-bottom:24px;">
-                            Abra primero un expediente clínico desde la sección <strong>Expedientes</strong> y luego haga clic en "Documentos".
-                        </p>
-                        <button class="btn-odent" onclick="mostrarPagina('expedientes')">
-                            <i class="bi bi-folder2-open"></i> Ir a Expedientes
-                        </button>
+                    <div class="tarjeta">
+                        <div class="panel-titulo" style="margin-bottom:16px;">
+                            <div>
+                                <h3 style="margin:0;">Seleccionar paciente</h3>
+                                <p style="color:var(--gris-azulado);font-size:13px;margin:4px 0 0;">
+                                    Elija un paciente para ver o subir sus documentos clínicos
+                                </p>
+                            </div>
+                        </div>
+                        <div style="margin-bottom:14px;">
+                            <input type="text" id="doc-buscar-paciente" placeholder="Buscar paciente…"
+                                   style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:14px;"
+                                   oninput="docBuscarPaciente(this.value)">
+                        </div>
+                        <div id="doc-lista-pacientes" style="max-height:420px;overflow-y:auto;">
+                            <div style="text-align:center;padding:30px;color:var(--gris-azulado);">
+                                <div class="spinner-border spinner-border-sm" role="status"></div> Cargando pacientes…
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1824,6 +1844,10 @@
 
         /* ── Cargar lista al navegar a la página ──────────────── */
         const _mostrarPaginaBase = window.mostrarPagina;
+
+        // Flag para distinguir navegación interna (desde expediente) vs sidebar
+        let _navegandoDesdeExpediente = false;
+
         window.mostrarPagina = function (slug) {
             _mostrarPaginaBase(slug);
             if (slug === 'expedientes') {
@@ -1831,8 +1855,28 @@
                 expCargarLista();
             }
             if (slug === 'bitacora') cargarBitacora();
-            if (slug === 'odontograma') odoIniciar();
-            if (slug === 'documentos')  docIniciar();
+            if (slug === 'odontograma') {
+                if (_navegandoDesdeExpediente) {
+                    // Viene de Expedientes → cargar directo el odontograma
+                    _navegandoDesdeExpediente = false;
+                } else {
+                    // Viene del sidebar → siempre mostrar lista de pacientes
+                    _odoExpediente = null;
+                    _odoPacientesCache = null; // forzar recarga fresca de la lista
+                }
+                odoIniciar();
+            }
+            if (slug === 'documentos') {
+                if (_navegandoDesdeExpediente) {
+                    // Viene de Expedientes → cargar directo los documentos
+                    _navegandoDesdeExpediente = false;
+                } else {
+                    // Viene del sidebar → siempre mostrar lista de pacientes
+                    _docExpediente = null;
+                    _docPacientesCache = null; // forzar recarga fresca de la lista
+                }
+                docIniciar();
+            }
         };
 
         /* ═══════════════════════════════════════════════════════════
@@ -1901,12 +1945,16 @@
             if (!_odoExpediente) {
                 _odo('odo-sin-expediente').style.display = '';
                 _odo('odo-con-expediente').style.display = 'none';
+                _odoCargarListaPacientes();
                 return;
             }
             _odo('odo-sin-expediente').style.display = 'none';
             _odo('odo-con-expediente').style.display = '';
             _odo('odo-cabecera-paciente').innerHTML =
                 `Paciente: <strong>${escapar(_odoExpediente.nombre_completo)}</strong> — Haga clic en un diente para editar`;
+            // Texto del botón volver según contexto
+            const textoVolver = document.getElementById('odo-btn-volver-texto');
+            if (textoVolver) textoVolver.textContent = _expPacienteActual ? 'Volver al expediente' : 'Volver a la lista';
             _odoRenderizarArcadas();
             _odoCancelarSeleccion();
             _odoCargarPiezas();
@@ -1920,7 +1968,7 @@
         async function _odoCargarPiezas() {
             if (!_odoExpediente) return;
             try {
-                const r = await fetch(`${BASE}index.php?accion=odontograma.obtener&id_expediente=${_odoExpediente.id_expediente}`);
+                const r = await fetch(`${BASE}/index.php?accion=odontograma.obtener&id_expediente=${_odoExpediente.id_expediente}`);
                 const data = await r.json();
                 if (!data.ok) return;
                 _odoPiezas = data.piezas ?? {};
@@ -2012,6 +2060,7 @@
                 id_expediente:  _expDatos.id_expediente,
                 nombre_completo: _expPacienteActual.nombre_completo,
             };
+            _navegandoDesdeExpediente = true;
             mostrarPagina('odontograma');
         }
 
@@ -2019,11 +2068,97 @@
          * "Volver al expediente" desde la vista del odontograma.
          */
         function odoVolverExpediente() {
-            mostrarPagina('expedientes');
-            // El override de mostrarPagina llama expVolverLista() + expCargarLista(),
-            // pero si el paciente sigue en memoria abrimos el detalle directamente.
             if (_expPacienteActual) {
-                expAbrirPaciente(_expPacienteActual);
+                // Venimos desde un expediente: volver al detalle de ese paciente
+                // Guardamos referencia ANTES de cambiar de página (mostrarPagina resetea _expPacienteActual)
+                const pacienteGuardado = _expPacienteActual;
+                _mostrarPaginaBase('expedientes');  // cambia la página SIN resetear expedientes
+                expAbrirPaciente(pacienteGuardado);
+            } else {
+                // Venimos desde la lista del sidebar: volver a la lista de pacientes
+                _odoExpediente = null;
+                odoIniciar();
+            }
+        }
+
+        // ── Lista de pacientes en pantalla de selección ───────────
+
+        let _odoPacientesCache = null; // cache de pacientes con expediente
+
+        async function _odoCargarListaPacientes() {
+            if (_odoPacientesCache !== null) {
+                _odoRenderizarListaPacientes(_odoPacientesCache, '');
+                return;
+            }
+            try {
+                const r = await fetch(`${BASE}/index.php?accion=expedientes.pacientes`);
+                const data = await r.json();
+                // El endpoint devuelve array directo de pacientes
+                _odoPacientesCache = Array.isArray(data) ? data : (data.pacientes ?? []);
+                _odoRenderizarListaPacientes(_odoPacientesCache, '');
+            } catch(e) {
+                document.getElementById('odo-lista-pacientes').innerHTML =
+                    '<p style="color:var(--gris-azulado);text-align:center;padding:20px;">No se pudo cargar la lista de pacientes.</p>';
+            }
+        }
+
+        function _odoRenderizarListaPacientes(lista, filtro) {
+            const contenedor = document.getElementById('odo-lista-pacientes');
+            const termino = filtro.trim().toLowerCase();
+            const filtrados = termino
+                ? lista.filter(p => (p.nombre_completo || '').toLowerCase().includes(termino))
+                : lista;
+
+            if (!filtrados.length) {
+                contenedor.innerHTML = '<p style="color:var(--gris-azulado);text-align:center;padding:20px;">No se encontraron pacientes.</p>';
+                return;
+            }
+
+            contenedor.innerHTML = filtrados.map(p => {
+                const nombre   = escapar(p.nombre_completo || 'Paciente');
+                const idPac    = p.id_paciente;
+                const nombreJs = (p.nombre_completo || 'Paciente').replace(/'/g, "\\'");
+                return `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--borde);">
+                    <div>
+                        <div style="font-weight:600;font-size:14px;">${nombre}</div>
+                        <div style="font-size:12px;color:var(--gris-azulado);">${escapar(p.identificacion || '')}</div>
+                    </div>
+                    <button class="btn-outline-odent" style="font-size:12px;padding:5px 14px;"
+                        onclick="odoAbrirDesdeListado(${idPac}, '${nombreJs}', this)">
+                        <i class="bi bi-clipboard2-pulse"></i> Ver odontograma
+                    </button>
+                </div>`;
+            }).join('');
+
+            // Quitar borde del último item
+            const items = contenedor.querySelectorAll('[style*="border-bottom"]');
+            if (items.length) items[items.length - 1].style.borderBottom = 'none';
+        }
+
+        function odoBuscarPaciente(valor) {
+            if (_odoPacientesCache) _odoRenderizarListaPacientes(_odoPacientesCache, valor);
+        }
+
+        async function odoAbrirDesdeListado(idPaciente, nombreCompleto, btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+            try {
+                const r = await fetch(`${BASE}/index.php?accion=expedientes.obtener&id_paciente=${idPaciente}`);
+                const data = await r.json();
+                if (!data || !data.id_expediente) {
+                    mostrarToast('Este paciente no tiene expediente clínico aún.', 'aviso');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-clipboard2-pulse"></i> Ver odontograma';
+                    return;
+                }
+                _odoExpediente = { id_expediente: data.id_expediente, nombre_completo: nombreCompleto };
+                _navegandoDesdeExpediente = true;
+                odoIniciar();
+            } catch(e) {
+                mostrarToast('Error al cargar el expediente.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-clipboard2-pulse"></i> Ver odontograma';
             }
         }
 
@@ -2057,6 +2192,7 @@
                 _doc('doc-sin-expediente').style.display = '';
                 _doc('doc-con-expediente').style.display = 'none';
                 _doc('doc-btn-subir-cabecera').style.display = 'none';
+                _docCargarListaPacientes();
                 return;
             }
             _doc('doc-sin-expediente').style.display     = 'none';
@@ -2064,6 +2200,9 @@
             _doc('doc-btn-subir-cabecera').style.display = '';
             _doc('doc-cabecera-paciente').innerHTML =
                 `Paciente: <strong>${escapar(_docExpediente.nombre_completo)}</strong> — Archivos adjuntos del expediente`;
+            // Texto del botón volver según contexto
+            const textoVolver = document.getElementById('doc-btn-volver-texto');
+            if (textoVolver) textoVolver.textContent = _expPacienteActual ? 'Volver al expediente' : 'Volver a la lista';
             docCargarLista();
         }
 
@@ -2073,7 +2212,7 @@
             _doc('doc-vacio').style.display   = 'none';
 
             try {
-                const r    = await fetch(`${BASE}index.php?accion=documentos.listar&id_expediente=${_docExpediente.id_expediente}`);
+                const r    = await fetch(`${BASE}/index.php?accion=documentos.listar&id_expediente=${_docExpediente.id_expediente}`);
                 const data = await r.json();
 
                 _doc('doc-loading').style.display = 'none';
@@ -2139,7 +2278,7 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Subiendo…';
 
             try {
-                const res  = await fetch(`${BASE}index.php?accion=documentos.subir`, {
+                const res  = await fetch(`${BASE}/index.php?accion=documentos.subir`, {
                     method: 'POST',
                     body:   formData,
                     // No se pone Content-Type: el navegador lo pone automáticamente con boundary
@@ -2200,12 +2339,101 @@
                 id_expediente:   _expDatos.id_expediente,
                 nombre_completo: _expPacienteActual.nombre_completo,
             };
+            _navegandoDesdeExpediente = true;
             mostrarPagina('documentos');
         }
 
         function docVolverExpediente() {
-            mostrarPagina('expedientes');
-            if (_expPacienteActual) expAbrirPaciente(_expPacienteActual);
+            if (_expPacienteActual) {
+                // Venimos desde un expediente: volver al detalle de ese paciente
+                // Guardamos referencia ANTES de cambiar de página (mostrarPagina resetea _expPacienteActual)
+                const pacienteGuardado = _expPacienteActual;
+                _mostrarPaginaBase('expedientes');  // cambia la página SIN resetear expedientes
+                expAbrirPaciente(pacienteGuardado);
+            } else {
+                // Venimos desde la lista del sidebar: volver a la lista de pacientes
+                _docExpediente = null;
+                docIniciar();
+            }
+        }
+
+        // ── Lista de pacientes en pantalla de selección (documentos) ─
+
+        let _docPacientesCache = null;
+
+        async function _docCargarListaPacientes() {
+            if (_docPacientesCache !== null) {
+                _docRenderizarListaPacientes(_docPacientesCache, '');
+                return;
+            }
+            try {
+                const r = await fetch(`${BASE}/index.php?accion=expedientes.pacientes`);
+                const data = await r.json();
+                _docPacientesCache = Array.isArray(data) ? data : (data.pacientes ?? []);
+                _docRenderizarListaPacientes(_docPacientesCache, '');
+            } catch(e) {
+                document.getElementById('doc-lista-pacientes').innerHTML =
+                    '<p style="color:var(--gris-azulado);text-align:center;padding:20px;">No se pudo cargar la lista de pacientes.</p>';
+            }
+        }
+
+        function _docRenderizarListaPacientes(lista, filtro) {
+            const contenedor = document.getElementById('doc-lista-pacientes');
+            const termino = filtro.trim().toLowerCase();
+            const filtrados = termino
+                ? lista.filter(p => (p.nombre_completo || '').toLowerCase().includes(termino))
+                : lista;
+
+            if (!filtrados.length) {
+                contenedor.innerHTML = '<p style="color:var(--gris-azulado);text-align:center;padding:20px;">No se encontraron pacientes.</p>';
+                return;
+            }
+
+            contenedor.innerHTML = filtrados.map(p => {
+                const nombre   = escapar(p.nombre_completo || 'Paciente');
+                const idPac    = p.id_paciente;
+                const nombreJs = (p.nombre_completo || 'Paciente').replace(/'/g, "\\'");
+                return `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--borde);">
+                    <div>
+                        <div style="font-weight:600;font-size:14px;">${nombre}</div>
+                        <div style="font-size:12px;color:var(--gris-azulado);">${escapar(p.identificacion || '')}</div>
+                    </div>
+                    <button class="btn-outline-odent" style="font-size:12px;padding:5px 14px;"
+                        onclick="docAbrirDesdeListado(${idPac}, '${nombreJs}', this)">
+                        <i class="bi bi-folder2-open"></i> Ver documentos
+                    </button>
+                </div>`;
+            }).join('');
+
+            const items = contenedor.querySelectorAll('[style*="border-bottom"]');
+            if (items.length) items[items.length - 1].style.borderBottom = 'none';
+        }
+
+        function docBuscarPaciente(valor) {
+            if (_docPacientesCache) _docRenderizarListaPacientes(_docPacientesCache, valor);
+        }
+
+        async function docAbrirDesdeListado(idPaciente, nombreCompleto, btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+            try {
+                const r = await fetch(`${BASE}/index.php?accion=expedientes.obtener&id_paciente=${idPaciente}`);
+                const data = await r.json();
+                if (!data || !data.id_expediente) {
+                    mostrarToast('Este paciente no tiene expediente clínico aún.', 'aviso');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-folder2-open"></i> Ver documentos';
+                    return;
+                }
+                _docExpediente = { id_expediente: data.id_expediente, nombre_completo: nombreCompleto };
+                _navegandoDesdeExpediente = true;
+                docIniciar();
+            } catch(e) {
+                mostrarToast('Error al cargar el expediente.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-folder2-open"></i> Ver documentos';
+            }
         }
 
         /* ═══════════════════════════════════════════════════════════

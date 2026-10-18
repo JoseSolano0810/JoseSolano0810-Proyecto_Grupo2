@@ -40,14 +40,8 @@ class DocumentoClinico
                 descripcion     VARCHAR(500) DEFAULT NULL,
                 subido_por      INT UNSIGNED NOT NULL,
                 created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
-                CONSTRAINT fk_doc_expediente
-                    FOREIGN KEY (id_expediente)
-                    REFERENCES expediente_clinico (id_expediente)
-                    ON DELETE CASCADE,
-                CONSTRAINT fk_doc_usuario
-                    FOREIGN KEY (subido_por)
-                    REFERENCES usuario (id_usuario)
-                    ON DELETE RESTRICT
+                INDEX idx_expediente (id_expediente),
+                INDEX idx_usuario (subido_por)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         ");
     }
@@ -61,7 +55,7 @@ class DocumentoClinico
             "SELECT d.id_documento, d.nombre_original, d.nombre_disco,
                     d.tipo_mime, d.tamano_bytes, d.descripcion,
                     d.created_at,
-                    u.nombre AS subido_por_nombre
+                    u.nombre_completo AS subido_por_nombre
              FROM   documento_clinico d
              JOIN   usuario u ON u.id_usuario = d.subido_por
              WHERE  d.id_expediente = :ide
@@ -72,7 +66,7 @@ class DocumentoClinico
     }
 
     /** Obtiene un documento por ID (para verificar pertenencia antes de descargar). */
-    public function obtenerPorId(int $idDocumento): array|false
+    public function obtenerPorId(int $idDocumento)
     {
         $stmt = $this->db->prepare(
             "SELECT * FROM documento_clinico WHERE id_documento = :id LIMIT 1"
