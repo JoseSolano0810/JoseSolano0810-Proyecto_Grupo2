@@ -293,7 +293,6 @@ function cargarPanel(array $sesion): void
 
             require ROOT_PATH . '/views/odontologo/index.php';
             break;
-
         case 'recepcionista':
         case 'asistente_dental':
             $citas        = (new CitaController())->listar();
