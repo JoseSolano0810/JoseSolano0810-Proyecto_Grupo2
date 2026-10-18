@@ -1856,19 +1856,25 @@
             }
             if (slug === 'bitacora') cargarBitacora();
             if (slug === 'odontograma') {
-                // Si viene del sidebar (no de abrirOdontograma), limpiar estado
-                if (!_navegandoDesdeExpediente) {
+                if (_navegandoDesdeExpediente) {
+                    // Viene de Expedientes → cargar directo el odontograma
+                    _navegandoDesdeExpediente = false;
+                } else {
+                    // Viene del sidebar → siempre mostrar lista de pacientes
                     _odoExpediente = null;
+                    _odoPacientesCache = null; // forzar recarga fresca de la lista
                 }
-                _navegandoDesdeExpediente = false;
                 odoIniciar();
             }
             if (slug === 'documentos') {
-                // Si viene del sidebar (no de abrirDocumentos), limpiar estado
-                if (!_navegandoDesdeExpediente) {
+                if (_navegandoDesdeExpediente) {
+                    // Viene de Expedientes → cargar directo los documentos
+                    _navegandoDesdeExpediente = false;
+                } else {
+                    // Viene del sidebar → siempre mostrar lista de pacientes
                     _docExpediente = null;
+                    _docPacientesCache = null; // forzar recarga fresca de la lista
                 }
-                _navegandoDesdeExpediente = false;
                 docIniciar();
             }
         };
@@ -1962,7 +1968,7 @@
         async function _odoCargarPiezas() {
             if (!_odoExpediente) return;
             try {
-                const r = await fetch(`${BASE}index.php?accion=odontograma.obtener&id_expediente=${_odoExpediente.id_expediente}`);
+                const r = await fetch(`${BASE}/index.php?accion=odontograma.obtener&id_expediente=${_odoExpediente.id_expediente}`);
                 const data = await r.json();
                 if (!data.ok) return;
                 _odoPiezas = data.piezas ?? {};
@@ -2064,8 +2070,10 @@
         function odoVolverExpediente() {
             if (_expPacienteActual) {
                 // Venimos desde un expediente: volver al detalle de ese paciente
-                mostrarPagina('expedientes');
-                expAbrirPaciente(_expPacienteActual);
+                // Guardamos referencia ANTES de cambiar de página (mostrarPagina resetea _expPacienteActual)
+                const pacienteGuardado = _expPacienteActual;
+                _mostrarPaginaBase('expedientes');  // cambia la página SIN resetear expedientes
+                expAbrirPaciente(pacienteGuardado);
             } else {
                 // Venimos desde la lista del sidebar: volver a la lista de pacientes
                 _odoExpediente = null;
@@ -2083,7 +2091,7 @@
                 return;
             }
             try {
-                const r = await fetch(`${BASE}index.php?accion=expedientes.pacientes`);
+                const r = await fetch(`${BASE}/index.php?accion=expedientes.pacientes`);
                 const data = await r.json();
                 // El endpoint devuelve array directo de pacientes
                 _odoPacientesCache = Array.isArray(data) ? data : (data.pacientes ?? []);
@@ -2136,7 +2144,7 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
             try {
-                const r = await fetch(`${BASE}index.php?accion=expedientes.obtener&id_paciente=${idPaciente}`);
+                const r = await fetch(`${BASE}/index.php?accion=expedientes.obtener&id_paciente=${idPaciente}`);
                 const data = await r.json();
                 if (!data || !data.id_expediente) {
                     mostrarToast('Este paciente no tiene expediente clínico aún.', 'aviso');
@@ -2204,7 +2212,7 @@
             _doc('doc-vacio').style.display   = 'none';
 
             try {
-                const r    = await fetch(`${BASE}index.php?accion=documentos.listar&id_expediente=${_docExpediente.id_expediente}`);
+                const r    = await fetch(`${BASE}/index.php?accion=documentos.listar&id_expediente=${_docExpediente.id_expediente}`);
                 const data = await r.json();
 
                 _doc('doc-loading').style.display = 'none';
@@ -2270,7 +2278,7 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Subiendo…';
 
             try {
-                const res  = await fetch(`${BASE}index.php?accion=documentos.subir`, {
+                const res  = await fetch(`${BASE}/index.php?accion=documentos.subir`, {
                     method: 'POST',
                     body:   formData,
                     // No se pone Content-Type: el navegador lo pone automáticamente con boundary
@@ -2338,8 +2346,10 @@
         function docVolverExpediente() {
             if (_expPacienteActual) {
                 // Venimos desde un expediente: volver al detalle de ese paciente
-                mostrarPagina('expedientes');
-                expAbrirPaciente(_expPacienteActual);
+                // Guardamos referencia ANTES de cambiar de página (mostrarPagina resetea _expPacienteActual)
+                const pacienteGuardado = _expPacienteActual;
+                _mostrarPaginaBase('expedientes');  // cambia la página SIN resetear expedientes
+                expAbrirPaciente(pacienteGuardado);
             } else {
                 // Venimos desde la lista del sidebar: volver a la lista de pacientes
                 _docExpediente = null;
@@ -2357,7 +2367,7 @@
                 return;
             }
             try {
-                const r = await fetch(`${BASE}index.php?accion=expedientes.pacientes`);
+                const r = await fetch(`${BASE}/index.php?accion=expedientes.pacientes`);
                 const data = await r.json();
                 _docPacientesCache = Array.isArray(data) ? data : (data.pacientes ?? []);
                 _docRenderizarListaPacientes(_docPacientesCache, '');
@@ -2408,7 +2418,7 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
             try {
-                const r = await fetch(`${BASE}index.php?accion=expedientes.obtener&id_paciente=${idPaciente}`);
+                const r = await fetch(`${BASE}/index.php?accion=expedientes.obtener&id_paciente=${idPaciente}`);
                 const data = await r.json();
                 if (!data || !data.id_expediente) {
                     mostrarToast('Este paciente no tiene expediente clínico aún.', 'aviso');
