@@ -1924,6 +1924,7 @@
                 _odoPiezas = data.piezas ?? {};
                 // Actualizar DOM pieza por pieza
                 [...ODO_SUPERIOR, ...ODO_INFERIOR].forEach(_odoActualizarDomPieza);
+                if (typeof treOdontograma === 'function') treOdontograma(_odoExpediente.id_expediente);
             } catch(e) {
                 mostrarToast('Error al cargar el odontograma.', 'error');
             }
