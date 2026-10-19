@@ -162,28 +162,48 @@ $saldo_pendiente = 60000;
 
         <div class="pagina" id="pagina-tratamientos">
             <h2 style="margin-bottom:20px;">Mis tratamientos</h2>
-            <div class="panel-grid col-2">
-                <?php foreach ($mis_tratamientos as $t): ?>
-                <div class="tarjeta">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-                        <h3><?= htmlspecialchars($t['nombre']) ?></h3>
-                        <span class="badge-estado badge-<?= $t['estado'] ?>">
-                            <?= $t['estado'] === 'proceso' ? 'En proceso' : 'Completado' ?>
-                        </span>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;color:var(--gris-azulado);margin-bottom:14px;">
-                        <div><strong style="color:var(--gris-texto);">Inicio</strong><br><?= $t['inicio'] ?></div>
-                        <div><strong style="color:var(--gris-texto);">Sesiones</strong><br><?= $t['sesiones_realizadas'] ?> / <?= $t['sesiones_total'] ?></div>
-                    </div>
-                    <div class="tratamiento-header">
-                        <span>Progreso</span><span><?= $t['progreso'] ?>%</span>
-                    </div>
-                    <div class="barra-progreso">
-                        <div class="barra-relleno" style="width:<?= $t['progreso'] ?>%;"></div>
-                    </div>
-                </div>
-                <?php endforeach; ?>
+            <?php if (!$mis_tratamientos): ?>
+    <div class="tarjeta" style="text-align:center;padding:40px 16px;">
+        <i class="bi bi-clipboard2-pulse" style="font-size:36px;color:var(--verde-odent);"></i>
+        <h3 style="margin:10px 0 6px;">Todavía no tiene tratamientos</h3>
+        <p style="color:var(--gris-azulado);font-size:14px;">Cuando su odontólogo cree un plan para usted, podrá seguir su avance desde aquí.</p>
+    </div>
+<?php endif; ?>
+<div class="panel-grid col-2">
+    <?php foreach ($mis_tratamientos as $t): ?>
+    <div class="tarjeta">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;">
+            <h3><?= htmlspecialchars($t['nombre']) ?></h3>
+            <span class="badge-estado badge-<?= htmlspecialchars($t['estado']) ?>">
+                <?= $etiquetas_trat[$t['estado']] ?? ucfirst($t['estado']) ?>
+            </span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;color:var(--gris-azulado);margin-bottom:14px;">
+            <div><strong style="color:var(--gris-texto);">Inicio</strong><br><?= $t['inicio'] ?></div>
+            <div><strong style="color:var(--gris-texto);">Fin estimado</strong><br><?= date('d/m/Y', strtotime($t['fecha_fin_estimada'])) ?></div>
+            <div><strong style="color:var(--gris-texto);">Sesiones</strong><br><?= (int) $t['sesiones_realizadas'] ?> / <?= (int) $t['sesiones_total'] ?></div>
+            <div><strong style="color:var(--gris-texto);">Su odontólogo</strong><br><?= htmlspecialchars($t['odontologo']) ?></div>
+        </div>
+        <?php if (!empty($t['piezas'])): ?>
+            <div class="tre-piezas">
+                <?php foreach ($t['piezas'] as $pz): ?><span class="tre-chip-pieza"><?= (int) $pz ?></span><?php endforeach; ?>
             </div>
+        <?php endif; ?>
+        <div class="tratamiento-header">
+            <span>Progreso</span><span><?= (int) $t['progreso'] ?>%</span>
+        </div>
+        <div class="barra-progreso">
+            <div class="barra-relleno <?= $t['estado'] === 'cancelado' ? 'tre-cancelado' : '' ?>" style="width:<?= (int) $t['progreso'] ?>%;"></div>
+        </div>
+        <?php if (!empty($t['descripcion'])): ?>
+            <p style="font-size:13px;color:var(--gris-azulado);margin:12px 0 0;"><?= htmlspecialchars($t['descripcion']) ?></p>
+        <?php endif; ?>
+        <?php if (!empty($t['observaciones'])): ?>
+            <div class="tre-pac-obs"><strong>Nota de su odontólogo:</strong> <?= htmlspecialchars($t['observaciones']) ?></div>
+        <?php endif; ?>
+    </div>
+    <?php endforeach; ?>
+</div>
         </div>
 
         <div class="pagina" id="pagina-pagos">
