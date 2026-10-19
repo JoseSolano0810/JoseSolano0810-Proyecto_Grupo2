@@ -688,37 +688,10 @@
                 </div>
             </div>
 
-            <!-- ───────────────── TRATAMIENTOS ───────────────── -->
+                        <!-- ───────────────── TRATAMIENTOS ───────────────── -->
             <div class="pagina" id="pagina-tratamientos">
-                <div class="panel-titulo" style="margin-bottom:20px;">
-                    <h2>Planes de tratamiento</h2>
-                    <button class="btn-odent" onclick="abrirModal('modal-nuevo-tratamiento')"><i class="bi bi-plus-lg"></i> Nuevo plan</button>
-                </div>
-                <div class="panel-grid col-2">
-                    <?php foreach ($pacientes as $p):
-                        $idx = $p['id'] - 1;
-                        $t   = $tratamientos[$idx] ?? ['tratamiento' => 'Sin plan activo', 'progreso' => 0];
-                    ?>
-                        <div class="tarjeta">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                                <div>
-                                    <h4><?= htmlspecialchars($p['nombre']) ?></h4>
-                                    <p style="font-size:13px;color:var(--gris-azulado);">Cédula: <?= $p['cedula'] ?></p>
-                                </div>
-                                <span class="badge-estado badge-<?= $p['estado'] ?>"><?= ucfirst($p['estado']) ?></span>
-                            </div>
-                            <div class="tratamiento-item">
-                                <div class="tratamiento-header"><span><?= htmlspecialchars($t['tratamiento']) ?></span><span><?= $t['progreso'] ?>%</span></div>
-                                <div class="barra-progreso" style="margin-bottom:12px;">
-                                    <div class="barra-relleno" style="width:<?= $t['progreso'] ?>%;"></div>
-                                </div>
-                            </div>
-                            <button class="btn-outline-odent" style="font-size:13px;padding:7px 14px;width:100%;"><i class="bi bi-eye"></i> Ver detalle</button>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+                <?php include ROOT_PATH . '/views/shared/tratamientos_pagina.php'; ?>
             </div>
-
             <!-- ───────────────── COTIZACIONES ───────────────── -->
             <div class="pagina" id="pagina-cotizaciones">
                 <div class="panel-titulo" style="margin-bottom:20px;">
@@ -882,31 +855,7 @@
 
     <?php include ROOT_PATH . '/views/shared/agenda_modales.php'; ?>
 
-    <!-- Modal nuevo tratamiento -->
-    <div class="modal-overlay" id="modal-nuevo-tratamiento">
-        <div class="modal-caja">
-            <div class="modal-header">
-                <h3>Nuevo plan de tratamiento</h3>
-                <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-tratamiento')"><i class="bi bi-x-lg"></i></button>
-            </div>
-            <div class="campo-grupo"><label>Paciente</label>
-                <select>
-                    <option value="">Seleccione un paciente</option>
-                    <?php foreach ($pacientes as $p): ?>
-                        <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nombre']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="campo-grupo"><label>Nombre del plan</label><input type="text" placeholder="Ej: Ortodoncia fase 1"></div>
-            <div class="campo-grupo"><label>Diagnóstico</label><textarea rows="3" placeholder="Descripción del diagnóstico..."></textarea></div>
-            <div class="campo-grupo"><label>Fecha de inicio</label><input type="date" value="<?= date('Y-m-d') ?>"></div>
-            <div class="modal-footer">
-                <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-tratamiento')">Cancelar</button>
-                <button class="btn-odent"><i class="bi bi-check-lg"></i> Crear plan</button>
-            </div>
-        </div>
-    </div>
-
+        <?php include ROOT_PATH . '/views/shared/tratamientos_modales.php'; ?>
     <!-- Modal nuevo paciente -->
     <div class="modal-overlay" id="modal-nuevo-paciente">
         <div class="modal-caja">
@@ -1317,6 +1266,7 @@
 
     <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
     <script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
+        <script src="<?= BASE_URL ?>/public/js/tratamientos.js?v=<?= @filemtime(ROOT_PATH . '/public/js/tratamientos.js') ?>"></script>
     <script>
         const BASE = '<?= BASE_URL ?>';
         let usuarioIdSeleccionado = null;
