@@ -280,16 +280,38 @@ switch ($accion) {
         break;
 
     // ── Tratamientos ──────────────────────────────────────────
+        // ── Tratamientos ──────────────────────────────────────────
     case 'tratamientos.listar':
-        $ctrl = new TratamientoController();
-        echo json_encode($ctrl->listar());
+        (new TratamientoController())->listarJson();
+        break;
+
+    case 'tratamientos.detalle':
+        (new TratamientoController())->detalle();
+        break;
+
+    case 'tratamientos.catalogos':
+        (new TratamientoController())->catalogos();
         break;
 
     case 'tratamientos.crear':
-        $ctrl = new TratamientoController();
-        $ctrl->crear();
+        (new TratamientoController())->crear();
         break;
 
+    case 'tratamientos.estado':
+        (new TratamientoController())->actualizarEstado();
+        break;
+
+    case 'tratamientos.asociar':
+        (new TratamientoController())->asociar();
+        break;
+
+    case 'tratamientos.historial':
+        (new TratamientoController())->historial();
+        break;
+
+    case 'tratamientos.odontograma':
+        (new TratamientoController())->odontograma();
+        break;
     default:
         http_response_code(404);
         $ctrl = new LoginController();
