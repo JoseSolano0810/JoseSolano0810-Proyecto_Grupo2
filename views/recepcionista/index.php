@@ -1,370 +1,1038 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Odent | Recepcionista</title>
+    <title>Odent | <?= ($rol ?? 'recepcionista') === 'asistente_dental' ? 'Asistente Dental' : 'Recepcionista' ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= BASE_URL ?>/public/css/estilos.css?v=<?= @filemtime(ROOT_PATH . '/public/css/estilos.css') ?>">
 </head>
+
 <body>
 
-<?php
-$rol           = $rol           ?? 'recepcionista';
-$usuario       = $usuario       ?? ['nombre' => '', 'iniciales' => ''];
-$pagina_activa = $pagina_activa ?? 'inicio';
+    <?php
+    $rol           = $rol           ?? 'recepcionista';
+    $usuario       = $usuario       ?? ['nombre' => '', 'iniciales' => ''];
+    $pagina_activa = $pagina_activa ?? 'inicio';
 
-// Las citas vienen de la BD (CitaController::listar); nunca se simulan aquí
-$citas = $citas ?? [];
+    $esRecepcionista   = $rol === 'recepcionista';
+    $esAsistenteDental = $rol === 'asistente_dental';
 
-$pacientes = $pacientes ?? [
-    ['id'=>1,'nombre'=>'Ana Rojas',    'cedula'=>'1-0234-5678','telefono'=>'8888-1111','correo'=>'ana.rojas@mail.com',   'estado'=>'activo'],
-    ['id'=>2,'nombre'=>'Luis Vargas',  'cedula'=>'2-0345-6789','telefono'=>'8888-2222','correo'=>'luis.vargas@mail.com',  'estado'=>'activo'],
-    ['id'=>3,'nombre'=>'Pedro Gómez',  'cedula'=>'1-0901-2345','telefono'=>'8888-3333','correo'=>'pedro.gomez@mail.com',  'estado'=>'activo'],
-    ['id'=>4,'nombre'=>'María Solís',  'cedula'=>'1-0456-7890','telefono'=>'8888-4444','correo'=>'maria.solis@mail.com',  'estado'=>'activo'],
-    ['id'=>5,'nombre'=>'Carlos Castro','cedula'=>'3-0123-4567','telefono'=>'8888-5555','correo'=>'carlos.castro@mail.com','estado'=>'inactivo'],
-    ['id'=>6,'nombre'=>'Jorge Pérez',  'cedula'=>'3-0567-8901','telefono'=>'8888-6666','correo'=>'jorge.perez@mail.com',  'estado'=>'inactivo'],
-    ['id'=>7,'nombre'=>'Sofía Torres', 'cedula'=>'1-0678-9012','telefono'=>'8888-7777','correo'=>'sofia.torres@mail.com', 'estado'=>'activo'],
-];
+    // Las citas vienen de la BD (CitaController::listar); nunca se simulan aquí
+    $citas = $citas ?? [];
 
-$cotizaciones = $cotizaciones ?? [
-    ['id'=>'COT-001','paciente'=>'Ana Rojas',   'fecha'=>'28/07/2026','total'=>95000, 'estado'=>'aprobada'],
-    ['id'=>'COT-002','paciente'=>'Luis Vargas',  'fecha'=>'29/07/2026','total'=>120000,'estado'=>'pendiente'],
-    ['id'=>'COT-003','paciente'=>'Pedro Gómez',  'fecha'=>'30/07/2026','total'=>45000, 'estado'=>'pendiente'],
-    ['id'=>'COT-004','paciente'=>'María Solís',  'fecha'=>'01/08/2026','total'=>200000,'estado'=>'aprobada'],
-    ['id'=>'COT-005','paciente'=>'Carlos Castro','fecha'=>'02/08/2026','total'=>75000, 'estado'=>'rechazada'],
-];
+    $pacientes = $pacientes ?? [
+        ['id' => 1, 'nombre' => 'Ana Rojas',    'cedula' => '1-0234-5678', 'telefono' => '8888-1111', 'correo' => 'ana.rojas@mail.com',   'estado' => 'activo'],
+        ['id' => 2, 'nombre' => 'Luis Vargas',  'cedula' => '2-0345-6789', 'telefono' => '8888-2222', 'correo' => 'luis.vargas@mail.com',  'estado' => 'activo'],
+        ['id' => 3, 'nombre' => 'Pedro Gómez',  'cedula' => '1-0901-2345', 'telefono' => '8888-3333', 'correo' => 'pedro.gomez@mail.com',  'estado' => 'activo'],
+        ['id' => 4, 'nombre' => 'María Solís',  'cedula' => '1-0456-7890', 'telefono' => '8888-4444', 'correo' => 'maria.solis@mail.com',  'estado' => 'activo'],
+        ['id' => 5, 'nombre' => 'Carlos Castro', 'cedula' => '3-0123-4567', 'telefono' => '8888-5555', 'correo' => 'carlos.castro@mail.com', 'estado' => 'inactivo'],
+        ['id' => 6, 'nombre' => 'Jorge Pérez',  'cedula' => '3-0567-8901', 'telefono' => '8888-6666', 'correo' => 'jorge.perez@mail.com',  'estado' => 'inactivo'],
+        ['id' => 7, 'nombre' => 'Sofía Torres', 'cedula' => '1-0678-9012', 'telefono' => '8888-7777', 'correo' => 'sofia.torres@mail.com', 'estado' => 'activo'],
+    ];
 
-$pagos = $pagos ?? [
-    ['id'=>'PAG-001','paciente'=>'Ana Rojas', 'fecha'=>'28/07/2026','monto'=>50000, 'metodo'=>'Tarjeta', 'cotizacion'=>'COT-001','estado'=>'completada'],
-    ['id'=>'PAG-002','paciente'=>'María Solís','fecha'=>'01/08/2026','monto'=>100000,'metodo'=>'Efectivo','cotizacion'=>'COT-004','estado'=>'completada'],
-    ['id'=>'PAG-003','paciente'=>'Luis Vargas','fecha'=>'03/08/2026','monto'=>60000, 'metodo'=>'Sinpe',  'cotizacion'=>'COT-002','estado'=>'pendiente'],
-];
-?>
+    $cotizaciones = $cotizaciones ?? [
+        ['id' => 'COT-001', 'paciente' => 'Ana Rojas',   'fecha' => '28/07/2026', 'total' => 95000, 'estado' => 'aprobada'],
+        ['id' => 'COT-002', 'paciente' => 'Luis Vargas', 'fecha' => '29/07/2026', 'total' => 120000, 'estado' => 'pendiente'],
+        ['id' => 'COT-003', 'paciente' => 'Pedro Gómez', 'fecha' => '30/07/2026', 'total' => 45000, 'estado' => 'pendiente'],
+        ['id' => 'COT-004', 'paciente' => 'María Solís', 'fecha' => '01/08/2026', 'total' => 200000, 'estado' => 'aprobada'],
+        ['id' => 'COT-005', 'paciente' => 'Carlos Castro', 'fecha' => '02/08/2026', 'total' => 75000, 'estado' => 'rechazada'],
+    ];
 
-<div class="layout-app">
+    $pagos = $pagos ?? [
+        ['id' => 'PAG-001', 'paciente' => 'Ana Rojas', 'fecha' => '28/07/2026', 'monto' => 50000, 'metodo' => 'Tarjeta', 'cotizacion' => 'COT-001', 'estado' => 'completada'],
+        ['id' => 'PAG-002', 'paciente' => 'María Solís', 'fecha' => '01/08/2026', 'monto' => 100000, 'metodo' => 'Efectivo', 'cotizacion' => 'COT-004', 'estado' => 'completada'],
+        ['id' => 'PAG-003', 'paciente' => 'Luis Vargas', 'fecha' => '03/08/2026', 'monto' => 60000, 'metodo' => 'Sinpe',  'cotizacion' => 'COT-002', 'estado' => 'pendiente'],
+    ];
+    ?>
 
-    <?php include ROOT_PATH . '/views/shared/sidebar.php'; ?>
+    <div class="layout-app">
 
-    <div class="contenido-principal">
+        <?php include ROOT_PATH . '/views/shared/sidebar.php'; ?>
 
-        <header class="topbar">
-            <span class="topbar-titulo" id="topbar-titulo">Panel de recepción</span>
-            <div class="topbar-acciones">
-                <span class="topbar-fecha"><?= date('d/m/Y') ?></span>
-                <div class="topbar-notificacion">
-                    <i class="bi bi-bell"></i>
-                    <span class="notif-badge">2</span>
-                </div>
-            </div>
-        </header>
+        <div class="contenido-principal">
 
-        <div class="pagina activa" id="pagina-inicio">
-
-            <div class="kpi-grid">
-                <div class="kpi-card">
-                    <div class="kpi-icono azul"><i class="bi bi-calendar3"></i></div>
-                    <div>
-                        <div class="kpi-numero"><?= count($citas) ?></div>
-                        <div class="kpi-etiqueta">Citas hoy</div>
+            <header class="topbar">
+                <span class="topbar-titulo" id="topbar-titulo">
+                    <?= $esAsistenteDental ? 'Panel de asistente dental' : 'Panel de recepción' ?>
+                </span>
+                <div class="topbar-acciones">
+                    <span class="topbar-fecha"><?= date('d/m/Y') ?></span>
+                    <div class="topbar-notificacion">
+                        <i class="bi bi-bell"></i>
+                        <span class="notif-badge">2</span>
                     </div>
                 </div>
-                <div class="kpi-card">
-                    <div class="kpi-icono verde"><i class="bi bi-people"></i></div>
-                    <div>
-                        <div class="kpi-numero"><?= count($pacientes) ?></div>
-                        <div class="kpi-etiqueta">Pacientes registrados</div>
-                    </div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icono amarillo"><i class="bi bi-receipt"></i></div>
-                    <div>
-                        <div class="kpi-numero">2</div>
-                        <div class="kpi-etiqueta">Cotizaciones pendientes</div>
-                    </div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icono rojo"><i class="bi bi-cash-stack"></i></div>
-                    <div>
-                        <div class="kpi-numero">₡150K</div>
-                        <div class="kpi-etiqueta">Cobrado hoy</div>
-                    </div>
-                </div>
-            </div>
+            </header>
 
-            <div class="panel-grid col-2">
+            <div class="pagina activa" id="pagina-inicio">
 
-                <div class="tarjeta">
-                    <div class="panel-titulo">
-                        <h3>Agenda del día</h3>
-                        <button class="btn-odent" onclick="Citas.nueva()" style="font-size:13px;padding:7px 14px;">
-                            <i class="bi bi-plus-lg"></i> Nueva cita
-                        </button>
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icono azul"><i class="bi bi-calendar3"></i></div>
+                        <div>
+                            <div class="kpi-numero"><?= count($citas) ?></div>
+                            <div class="kpi-etiqueta">Citas hoy</div>
+                        </div>
                     </div>
-                    <?php if (!$citas): ?>
-                    <p style="color:var(--gris-azulado);font-size:14px;">No hay citas programadas para hoy.</p>
-                    <?php endif; ?>
-                    <?php foreach (array_slice($citas,0,5) as $c): ?>
-                    <div class="cita-item">
-                        <div class="cita-hora"><?= $c['hora'] ?></div>
-                        <div class="cita-info">
-                            <div class="cita-paciente"><?= htmlspecialchars($c['paciente']) ?></div>
-                            <div class="cita-tratamiento">
-                                <?= htmlspecialchars($c['odontologo']) ?> — <?= htmlspecialchars($c['tratamiento']) ?>
+
+                    <?php if ($esRecepcionista): ?>
+                        <div class="kpi-card">
+                            <div class="kpi-icono verde"><i class="bi bi-people"></i></div>
+                            <div>
+                                <div class="kpi-numero"><?= count($pacientes) ?></div>
+                                <div class="kpi-etiqueta">Pacientes registrados</div>
                             </div>
                         </div>
-                        <span class="badge-estado badge-<?= $c['estado'] ?>">
-                            <?= ucfirst($c['estado']) ?>
-                        </span>
+
+                        <div class="kpi-card">
+                            <div class="kpi-icono amarillo"><i class="bi bi-receipt"></i></div>
+                            <div>
+                                <div class="kpi-numero">2</div>
+                                <div class="kpi-etiqueta">Cotizaciones pendientes</div>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-icono rojo"><i class="bi bi-cash-stack"></i></div>
+                            <div>
+                                <div class="kpi-numero">₡150K</div>
+                                <div class="kpi-etiqueta">Cobrado hoy</div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="panel-grid <?= $esRecepcionista ? 'col-2' : '' ?>">
+
+                    <div class="tarjeta">
+                        <div class="panel-titulo">
+                            <h3>Agenda del día</h3>
+                            <button class="btn-odent" onclick="Citas.nueva()" style="font-size:13px;padding:7px 14px;">
+                                <i class="bi bi-plus-lg"></i> Nueva cita
+                            </button>
+                        </div>
+
+                        <?php if (!$citas): ?>
+                            <p style="color:var(--gris-azulado);font-size:14px;">No hay citas programadas para hoy.</p>
+                        <?php endif; ?>
+
+                        <?php foreach (array_slice($citas, 0, 5) as $c): ?>
+                            <div class="cita-item">
+                                <div class="cita-hora"><?= $c['hora'] ?></div>
+                                <div class="cita-info">
+                                    <div class="cita-paciente"><?= htmlspecialchars($c['paciente']) ?></div>
+                                    <div class="cita-tratamiento">
+                                        <?= htmlspecialchars($c['odontologo']) ?> — <?= htmlspecialchars($c['tratamiento']) ?>
+                                    </div>
+                                </div>
+                                <span class="badge-estado badge-<?= $c['estado'] ?>">
+                                    <?= ucfirst($c['estado']) ?>
+                                </span>
+                            </div>
+                        <?php endforeach; ?>
+
+                        <div style="margin-top:14px;text-align:right;">
+                            <button class="btn-outline-odent" onclick="mostrarPagina('agenda')" style="font-size:13px;padding:6px 14px;">
+                                Ver todas las citas →
+                            </button>
+                        </div>
                     </div>
-                    <?php endforeach; ?>
-                    <div style="margin-top:14px;text-align:right;">
-                        <button class="btn-outline-odent" onclick="mostrarPagina('agenda')" style="font-size:13px;padding:6px 14px;">
-                            Ver todas las citas →
+
+                    <?php if ($esRecepcionista): ?>
+                        <div class="tarjeta">
+                            <div class="panel-titulo">
+                                <h3>Últimos pagos</h3>
+                                <button class="btn-odent" onclick="abrirModal('modal-nuevo-pago')" style="font-size:13px;padding:7px 14px;">
+                                    <i class="bi bi-plus-lg"></i> Registrar pago
+                                </button>
+                            </div>
+
+                            <table class="tabla-odent">
+                                <thead>
+                                    <tr>
+                                        <th>Paciente</th>
+                                        <th>Monto</th>
+                                        <th>Método</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($pagos as $pago): ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($pago['paciente']) ?></td>
+                                            <td>₡<?= number_format($pago['monto'], 0, ',', '.') ?></td>
+                                            <td><?= $pago['metodo'] ?></td>
+                                            <td><span class="badge-estado badge-<?= $pago['estado'] ?>"><?= ucfirst($pago['estado']) ?></span></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+
+                </div>
+
+            </div>
+
+            <?php include ROOT_PATH . '/views/shared/agenda_pagina.php'; ?>
+
+            <!-- =====================================================
+     INVENTARIO
+====================================================== -->
+
+            <?php if ($esAsistenteDental): ?>
+
+                <div class="pagina" id="pagina-inventario">
+
+                    <div class="panel-titulo" style="margin-bottom:20px;">
+                        <div>
+                            <h2>Inventario</h2>
+                            <p style="color:var(--gris-azulado);margin-top:5px;">
+                                Control de insumos odontológicos.
+                            </p>
+                        </div>
+
+                        <button class="btn-odent"
+                            onclick="abrirModal('modal-nuevo-insumo')">
+                            <i class="bi bi-plus-lg"></i> Registrar insumo
                         </button>
+                    </div>
+
+
+                    <!-- Alertas de inventario -->
+                    <div id="inventario-alertas"
+                        style="display:none;margin-bottom:18px;">
+                    </div>
+
+
+                    <div class="tarjeta">
+
+                        <table class="tabla-odent">
+
+                            <thead>
+                                <tr>
+                                    <th>Insumo</th>
+                                    <th>Categoría</th>
+                                    <th>Disponible</th>
+                                    <th>Nivel mínimo</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="inventario-lista">
+                                <tr>
+                                    <td colspan="6" style="text-align:center;">
+                                        No hay insumos registrados.
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            <?php endif; ?>
+
+            <?php if ($esRecepcionista || $esAsistenteDental): ?>
+
+                <div class="pagina" id="pagina-pacientes">
+
+                    <div class="panel-titulo" style="margin-bottom:20px;">
+                        <div>
+                            <h2>Pacientes</h2>
+                            <p style="color:var(--gris-azulado);margin-top:5px;">
+                                <?= $esAsistenteDental ? 'Consulta de pacientes registrados.' : 'Registro y gestión de pacientes.' ?>
+                            </p>
+                        </div>
+
+                        <?php if ($esRecepcionista): ?>
+                            <button class="btn-odent" onclick="abrirModal('modal-nuevo-paciente')">
+                                <i class="bi bi-person-plus"></i> Nuevo paciente
+                            </button>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="tarjeta">
+
+                        <div style="display:flex;gap:10px;margin-bottom:18px;">
+                            <input type="text" id="buscar-paciente"
+                                placeholder="Buscar por nombre o cédula..."
+                                style="border:1.5px solid var(--borde);border-radius:8px;padding:8px 14px;font-size:14px;flex:1;">
+
+                            <button type="button" class="btn-odent" onclick="buscarPacienteTabla()">
+                                <i class="bi bi-search"></i> Buscar
+                            </button>
+                        </div>
+
+                        <table class="tabla-odent" id="tabla-pacientes">
+
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Nombre</th>
+                                    <th>Cédula</th>
+                                    <th>Teléfono</th>
+                                    <th>Correo</th>
+                                    <th>Estado</th>
+
+                                    <?php if ($esRecepcionista): ?>
+                                        <th>Acciones</th>
+                                    <?php endif; ?>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                <?php foreach ($pacientes as $p): ?>
+
+                                    <tr class="fila-paciente">
+                                        <td><?= $p['id'] ?></td>
+
+                                        <td>
+                                            <strong><?= htmlspecialchars($p['nombre']) ?></strong>
+                                        </td>
+
+                                        <td><?= htmlspecialchars($p['cedula']) ?></td>
+                                        <td><?= htmlspecialchars($p['telefono']) ?></td>
+                                        <td><?= htmlspecialchars($p['correo']) ?></td>
+
+                                        <td>
+                                            <span class="badge-estado badge-<?= $p['estado'] ?>">
+                                                <?= ucfirst($p['estado']) ?>
+                                            </span>
+                                        </td>
+
+                                        <?php if ($esRecepcionista): ?>
+                                            <td>
+                                                <button class="btn-outline-odent" style="font-size:12px;padding:4px 10px;">
+                                                    <i class="bi bi-pencil"></i> Editar
+                                                </button>
+                                            </td>
+                                        <?php endif; ?>
+
+                                    </tr>
+
+                                <?php endforeach; ?>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            <?php endif; ?>
+
+
+            <?php if ($esRecepcionista): ?>
+
+                <div class="pagina" id="pagina-cotizaciones">
+                    <div class="panel-titulo" style="margin-bottom:20px;">
+                        <h2>Cotizaciones</h2>
+                        <button class="btn-odent" onclick="abrirModal('modal-nueva-cotizacion')">
+                            <i class="bi bi-file-earmark-plus"></i> Nueva cotización
+                        </button>
+                    </div>
+
+                    <div class="tarjeta">
+                        <table class="tabla-odent">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Paciente</th>
+                                    <th>Fecha</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($cotizaciones as $c): ?>
+                                    <tr>
+                                        <td><strong><?= $c['id'] ?></strong></td>
+                                        <td><?= htmlspecialchars($c['paciente']) ?></td>
+                                        <td><?= $c['fecha'] ?></td>
+                                        <td>₡<?= number_format($c['total'], 0, ',', '.') ?></td>
+                                        <td>
+                                            <span class="badge-estado badge-<?= $c['estado'] === 'aprobada' ? 'confirmada' : ($c['estado'] === 'rechazada' ? 'cancelada' : 'pendiente') ?>">
+                                                <?= ucfirst($c['estado']) ?>
+                                            </span>
+                                        </td>
+                                        <td style="display:flex;gap:6px;">
+                                            <button class="btn-outline-odent" style="font-size:12px;padding:4px 10px;"><i class="bi bi-eye"></i> Ver</button>
+
+                                            <?php if ($c['estado'] === 'aprobada'): ?>
+                                                <button class="btn-odent" onclick="abrirModal('modal-nuevo-pago')" style="font-size:12px;padding:4px 10px;">
+                                                    <i class="bi bi-cash"></i> Cobrar
+                                                </button>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <div class="tarjeta">
-                    <div class="panel-titulo">
-                        <h3>Últimos pagos</h3>
-                        <button class="btn-odent" onclick="abrirModal('modal-nuevo-pago')" style="font-size:13px;padding:7px 14px;">
+                <div class="pagina" id="pagina-pagos">
+                    <div class="panel-titulo" style="margin-bottom:20px;">
+                        <h2>Registro de pagos</h2>
+                        <button class="btn-odent" onclick="abrirModal('modal-nuevo-pago')">
                             <i class="bi bi-plus-lg"></i> Registrar pago
                         </button>
                     </div>
-                    <table class="tabla-odent">
-                        <thead>
-                            <tr><th>Paciente</th><th>Monto</th><th>Método</th><th>Estado</th></tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($pagos as $pago): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($pago['paciente']) ?></td>
-                                <td>₡<?= number_format($pago['monto'],0,',','.') ?></td>
-                                <td><?= $pago['metodo'] ?></td>
-                                <td><span class="badge-estado badge-<?= $pago['estado'] ?>"><?= ucfirst($pago['estado']) ?></span></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+
+                    <div class="kpi-grid" style="margin-bottom:22px;">
+                        <div class="kpi-card">
+                            <div class="kpi-icono verde"><i class="bi bi-cash-stack"></i></div>
+                            <div>
+                                <div class="kpi-numero">₡150K</div>
+                                <div class="kpi-etiqueta">Cobrado hoy</div>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card">
+                            <div class="kpi-icono amarillo"><i class="bi bi-hourglass"></i></div>
+                            <div>
+                                <div class="kpi-numero">₡60K</div>
+                                <div class="kpi-etiqueta">Pendiente de cobro</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tarjeta">
+                        <table class="tabla-odent">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Paciente</th>
+                                    <th>Fecha</th>
+                                    <th>Monto</th>
+                                    <th>Método</th>
+                                    <th>Cotización</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($pagos as $p): ?>
+                                    <tr>
+                                        <td><strong><?= $p['id'] ?></strong></td>
+                                        <td><?= htmlspecialchars($p['paciente']) ?></td>
+                                        <td><?= $p['fecha'] ?></td>
+                                        <td>₡<?= number_format($p['monto'], 0, ',', '.') ?></td>
+                                        <td><?= $p['metodo'] ?></td>
+                                        <td><?= $p['cotizacion'] ?></td>
+                                        <td><span class="badge-estado badge-<?= $p['estado'] ?>"><?= ucfirst($p['estado']) ?></span></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-            </div>
+            <?php endif; ?>
 
         </div>
 
-        <?php include ROOT_PATH . '/views/shared/agenda_pagina.php'; ?>
+    </div>
 
-        <div class="pagina" id="pagina-pacientes">
-            <div class="panel-titulo" style="margin-bottom:20px;">
-                <h2>Registro de pacientes</h2>
-                <button class="btn-odent" onclick="abrirModal('modal-nuevo-paciente')">
-                    <i class="bi bi-person-plus"></i> Nuevo paciente
-                </button>
-            </div>
+    <?php include ROOT_PATH . '/views/shared/agenda_modales.php'; ?>
 
-            <div class="tarjeta">
-                <div style="display:flex;gap:10px;margin-bottom:18px;">
-                    <input type="text" placeholder="Buscar por nombre o cédula..." style="border:1.5px solid var(--borde);border-radius:8px;padding:8px 14px;font-size:14px;flex:1;">
-                    <button class="btn-odent"><i class="bi bi-search"></i> Buscar</button>
+    <?php if ($esRecepcionista): ?>
+
+        <div class="modal-overlay" id="modal-nuevo-paciente">
+            <div class="modal-caja">
+                <div class="modal-header">
+                    <h3>Registrar paciente</h3>
+                    <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-paciente')"><i class="bi bi-x-lg"></i></button>
                 </div>
-                <table class="tabla-odent">
-                    <thead>
-                        <tr><th>#</th><th>Nombre</th><th>Cédula</th><th>Teléfono</th><th>Correo</th><th>Estado</th><th>Acciones</th></tr>
-                    </thead>
-                    <tbody>
+                <div class="campo-grupo"><label>Nombre completo</label><input type="text" placeholder="Nombre y apellidos"></div>
+                <div class="campo-grupo"><label>Cédula</label><input type="text" placeholder="0-0000-0000"></div>
+                <div class="campo-grupo"><label>Teléfono</label><input type="tel" placeholder="0000-0000"></div>
+                <div class="campo-grupo"><label>Correo electrónico</label><input type="email" placeholder="correo@ejemplo.com"></div>
+                <div class="campo-grupo"><label>Fecha de nacimiento</label><input type="date"></div>
+                <div class="modal-footer">
+                    <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-paciente')">Cancelar</button>
+                    <button class="btn-odent"><i class="bi bi-check-lg"></i> Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="modal-nuevo-pago">
+            <div class="modal-caja">
+                <div class="modal-header">
+                    <h3>Registrar pago</h3>
+                    <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-pago')"><i class="bi bi-x-lg"></i></button>
+                </div>
+
+                <div class="campo-grupo">
+                    <label>Cotización</label>
+                    <select>
+                        <?php foreach ($cotizaciones as $c): if ($c['estado'] === 'aprobada'): ?>
+                                <option value="<?= $c['id'] ?>"><?= $c['id'] ?> — <?= htmlspecialchars($c['paciente']) ?> (₡<?= number_format($c['total'], 0, ',', '.') ?>)</option>
+                        <?php endif;
+                        endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="campo-grupo"><label>Monto recibido (₡)</label><input type="number" placeholder="0"></div>
+
+                <div class="campo-grupo">
+                    <label>Método de pago</label>
+                    <select>
+                        <option>Efectivo</option>
+                        <option>Tarjeta débito</option>
+                        <option>Tarjeta crédito</option>
+                        <option>Sinpe Móvil</option>
+                        <option>Transferencia</option>
+                    </select>
+                </div>
+
+                <div class="campo-grupo"><label>Comprobante (opcional)</label><input type="text" placeholder="N.° comprobante o referencia"></div>
+
+                <div class="modal-footer">
+                    <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-pago')">Cancelar</button>
+                    <button class="btn-odent"><i class="bi bi-check-lg"></i> Registrar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="modal-nueva-cotizacion">
+            <div class="modal-caja">
+                <div class="modal-header">
+                    <h3>Nueva cotización</h3>
+                    <button class="modal-cerrar" onclick="cerrarModal('modal-nueva-cotizacion')"><i class="bi bi-x-lg"></i></button>
+                </div>
+
+                <div class="campo-grupo">
+                    <label>Paciente</label>
+                    <select>
+                        <option value="">Seleccione un paciente</option>
                         <?php foreach ($pacientes as $p): ?>
-                        <tr>
-                            <td><?= $p['id'] ?></td>
-                            <td><strong><?= htmlspecialchars($p['nombre']) ?></strong></td>
-                            <td><?= $p['cedula'] ?></td>
-                            <td><?= $p['telefono'] ?></td>
-                            <td><?= $p['correo'] ?></td>
-                            <td><span class="badge-estado badge-<?= $p['estado'] ?>"><?= ucfirst($p['estado']) ?></span></td>
-                            <td>
-                                <button class="btn-outline-odent" style="font-size:12px;padding:4px 10px;">
-                                    <i class="bi bi-pencil"></i> Editar
-                                </button>
-                            </td>
-                        </tr>
+                            <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nombre']) ?></option>
                         <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="pagina" id="pagina-cotizaciones">
-            <div class="panel-titulo" style="margin-bottom:20px;">
-                <h2>Cotizaciones</h2>
-                <button class="btn-odent" onclick="abrirModal('modal-nueva-cotizacion')">
-                    <i class="bi bi-file-earmark-plus"></i> Nueva cotización
-                </button>
-            </div>
-
-            <div class="tarjeta">
-                <table class="tabla-odent">
-                    <thead>
-                        <tr><th>ID</th><th>Paciente</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Acciones</th></tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($cotizaciones as $c): ?>
-                        <tr>
-                            <td><strong><?= $c['id'] ?></strong></td>
-                            <td><?= htmlspecialchars($c['paciente']) ?></td>
-                            <td><?= $c['fecha'] ?></td>
-                            <td>₡<?= number_format($c['total'],0,',','.') ?></td>
-                            <td>
-                                <span class="badge-estado badge-<?= $c['estado'] === 'aprobada' ? 'confirmada' : ($c['estado'] === 'rechazada' ? 'cancelada' : 'pendiente') ?>">
-                                    <?= ucfirst($c['estado']) ?>
-                                </span>
-                            </td>
-                            <td style="display:flex;gap:6px;">
-                                <button class="btn-outline-odent" style="font-size:12px;padding:4px 10px;"><i class="bi bi-eye"></i> Ver</button>
-                                <?php if($c['estado']==='aprobada'): ?>
-                                <button class="btn-odent" onclick="abrirModal('modal-nuevo-pago')" style="font-size:12px;padding:4px 10px;">
-                                    <i class="bi bi-cash"></i> Cobrar
-                                </button>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="pagina" id="pagina-pagos">
-            <div class="panel-titulo" style="margin-bottom:20px;">
-                <h2>Registro de pagos</h2>
-                <button class="btn-odent" onclick="abrirModal('modal-nuevo-pago')">
-                    <i class="bi bi-plus-lg"></i> Registrar pago
-                </button>
-            </div>
-
-            <div class="kpi-grid" style="margin-bottom:22px;">
-                <div class="kpi-card">
-                    <div class="kpi-icono verde"><i class="bi bi-cash-stack"></i></div>
-                    <div>
-                        <div class="kpi-numero">₡150K</div>
-                        <div class="kpi-etiqueta">Cobrado hoy</div>
-                    </div>
+                    </select>
                 </div>
-                <div class="kpi-card">
-                    <div class="kpi-icono amarillo"><i class="bi bi-hourglass"></i></div>
-                    <div>
-                        <div class="kpi-numero">₡60K</div>
-                        <div class="kpi-etiqueta">Pendiente de cobro</div>
-                    </div>
+
+                <div class="campo-grupo"><label>Tratamiento</label><input type="text" placeholder="Descripción del tratamiento"></div>
+                <div class="campo-grupo"><label>Monto (₡)</label><input type="number" placeholder="0" id="cot-monto"></div>
+                <div class="campo-grupo"><label>IVA (13%)</label><input type="text" id="cot-iva" readonly placeholder="Se calcula automáticamente"></div>
+                <div class="campo-grupo"><label>Total</label><input type="text" id="cot-total" readonly placeholder="Se calcula automáticamente"></div>
+                <div class="campo-grupo"><label>Observaciones</label><textarea rows="2" placeholder="Notas adicionales..."></textarea></div>
+
+                <div class="modal-footer">
+                    <button class="btn-outline-odent" onclick="cerrarModal('modal-nueva-cotizacion')">Cancelar</button>
+                    <button class="btn-odent"><i class="bi bi-check-lg"></i> Crear cotización</button>
                 </div>
             </div>
+        </div>
 
-            <div class="tarjeta">
-                <table class="tabla-odent">
-                    <thead>
-                        <tr><th>ID</th><th>Paciente</th><th>Fecha</th><th>Monto</th><th>Método</th><th>Cotización</th><th>Estado</th></tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($pagos as $p): ?>
-                        <tr>
-                            <td><strong><?= $p['id'] ?></strong></td>
-                            <td><?= htmlspecialchars($p['paciente']) ?></td>
-                            <td><?= $p['fecha'] ?></td>
-                            <td>₡<?= number_format($p['monto'],0,',','.') ?></td>
-                            <td><?= $p['metodo'] ?></td>
-                            <td><?= $p['cotizacion'] ?></td>
-                            <td><span class="badge-estado badge-<?= $p['estado'] ?>"><?= ucfirst($p['estado']) ?></span></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+    <?php endif; ?>
+
+    <!-- =============================================================
+     MODAL INVENTARIO
+============================================================= -->
+
+    <?php if ($esAsistenteDental): ?>
+
+        <!-- Registrar insumo -->
+        <div class="modal-overlay" id="modal-nuevo-insumo">
+            <div class="modal-caja">
+
+                <div class="modal-header">
+                    <h3>Registrar insumo</h3>
+
+                    <button
+                        class="modal-cerrar"
+                        onclick="cerrarModal('modal-nuevo-insumo')">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <form id="form-nuevo-insumo">
+
+                    <div class="campo-grupo">
+                        <label>Nombre *</label>
+                        <input
+                            type="text"
+                            id="insumo-nombre"
+                            name="nombre">
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Descripción *</label>
+                        <textarea
+                            id="insumo-descripcion"
+                            name="descripcion"
+                            rows="3"></textarea>
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Categoría *</label>
+
+                        <select
+                            id="insumo-categoria"
+                            name="categoria">
+
+                            <option value="">
+                                Seleccione una categoría
+                            </option>
+
+                            <option value="Protección">
+                                Protección
+                            </option>
+
+                            <option value="Higiene y desinfección">
+                                Higiene y desinfección
+                            </option>
+
+                            <option value="Material clínico">
+                                Material clínico
+                            </option>
+
+                            <option value="Anestesia">
+                                Anestesia
+                            </option>
+
+                            <option value="Restauración">
+                                Restauración
+                            </option>
+
+                            <option value="Endodoncia">
+                                Endodoncia
+                            </option>
+
+                            <option value="Impresión">
+                                Impresión
+                            </option>
+
+                            <option value="Otros">
+                                Otros
+                            </option>
+
+                        </select>
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Cantidad disponible *</label>
+
+                        <div style="display:flex;gap:8px;align-items:center;">
+
+                            <button
+                                type="button"
+                                class="btn-outline-odent"
+                                onclick="cambiarCantidad('insumo-cantidad', -1)">
+                                −
+                            </button>
+
+                            <input
+                                type="number"
+                                id="insumo-cantidad"
+                                name="cantidad_disponible"
+                                min="0"
+                                step="1"
+                                value="0"
+                                style="text-align:center;">
+
+                            <button
+                                type="button"
+                                class="btn-outline-odent"
+                                onclick="cambiarCantidad('insumo-cantidad', 1)">
+                                +
+                            </button>
+
+                        </div>
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Nivel mínimo de alerta *</label>
+
+                        <div style="display:flex;gap:8px;align-items:center;">
+
+                            <button
+                                type="button"
+                                class="btn-outline-odent"
+                                onclick="cambiarCantidad('insumo-minimo', -1)">
+                                −
+                            </button>
+
+                            <input
+                                type="number"
+                                id="insumo-minimo"
+                                name="nivel_minimo"
+                                min="0"
+                                step="1"
+                                value="0"
+                                style="text-align:center;">
+
+                            <button
+                                type="button"
+                                class="btn-outline-odent"
+                                onclick="cambiarCantidad('insumo-minimo', 1)">
+                                +
+                            </button>
+
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button
+                            type="button"
+                            class="btn-outline-odent"
+                            onclick="cerrarModal('modal-nuevo-insumo')">
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn-odent">
+                            <i class="bi bi-check-lg"></i>
+                            Guardar
+                        </button>
+
+                    </div>
+
+                </form>
+
             </div>
         </div>
 
-    </div>
 
-</div>
+        <!-- Editar insumo -->
+        <div class="modal-overlay" id="modal-editar-insumo">
+            <div class="modal-caja">
 
-<?php include ROOT_PATH . '/views/shared/agenda_modales.php'; ?>
+                <div class="modal-header">
+                    <h3>Editar insumo</h3>
 
-<div class="modal-overlay" id="modal-nuevo-paciente">
-    <div class="modal-caja">
-        <div class="modal-header">
-            <h3>Registrar paciente</h3>
-            <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-paciente')"><i class="bi bi-x-lg"></i></button>
-        </div>
-        <div class="campo-grupo"><label>Nombre completo</label><input type="text" placeholder="Nombre y apellidos"></div>
-        <div class="campo-grupo"><label>Cédula</label><input type="text" placeholder="0-0000-0000"></div>
-        <div class="campo-grupo"><label>Teléfono</label><input type="tel" placeholder="0000-0000"></div>
-        <div class="campo-grupo"><label>Correo electrónico</label><input type="email" placeholder="correo@ejemplo.com"></div>
-        <div class="campo-grupo"><label>Fecha de nacimiento</label><input type="date"></div>
-        <div class="modal-footer">
-            <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-paciente')">Cancelar</button>
-            <button class="btn-odent"><i class="bi bi-check-lg"></i> Guardar</button>
-        </div>
-    </div>
-</div>
+                    <button
+                        class="modal-cerrar"
+                        onclick="cerrarModal('modal-editar-insumo')">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
 
-<div class="modal-overlay" id="modal-nuevo-pago">
-    <div class="modal-caja">
-        <div class="modal-header">
-            <h3>Registrar pago</h3>
-            <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-pago')"><i class="bi bi-x-lg"></i></button>
-        </div>
-        <div class="campo-grupo">
-            <label>Cotización</label>
-            <select>
-                <?php foreach ($cotizaciones as $c): if($c['estado']==='aprobada'): ?>
-                <option value="<?= $c['id'] ?>"><?= $c['id'] ?> — <?= htmlspecialchars($c['paciente']) ?> (₡<?= number_format($c['total'],0,',','.') ?>)</option>
-                <?php endif; endforeach; ?>
-            </select>
-        </div>
-        <div class="campo-grupo"><label>Monto recibido (₡)</label><input type="number" placeholder="0"></div>
-        <div class="campo-grupo">
-            <label>Método de pago</label>
-            <select>
-                <option>Efectivo</option>
-                <option>Tarjeta débito</option>
-                <option>Tarjeta crédito</option>
-                <option>Sinpe Móvil</option>
-                <option>Transferencia</option>
-            </select>
-        </div>
-        <div class="campo-grupo"><label>Comprobante (opcional)</label><input type="text" placeholder="N.° comprobante o referencia"></div>
-        <div class="modal-footer">
-            <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-pago')">Cancelar</button>
-            <button class="btn-odent"><i class="bi bi-check-lg"></i> Registrar</button>
-        </div>
-    </div>
-</div>
+                <form id="form-editar-insumo">
 
-<div class="modal-overlay" id="modal-nueva-cotizacion">
-    <div class="modal-caja">
-        <div class="modal-header">
-            <h3>Nueva cotización</h3>
-            <button class="modal-cerrar" onclick="cerrarModal('modal-nueva-cotizacion')"><i class="bi bi-x-lg"></i></button>
-        </div>
-        <div class="campo-grupo">
-            <label>Paciente</label>
-            <select>
-                <option value="">Seleccione un paciente</option>
-                <?php foreach ($pacientes as $p): ?>
-                <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nombre']) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="campo-grupo"><label>Tratamiento</label><input type="text" placeholder="Descripción del tratamiento"></div>
-        <div class="campo-grupo"><label>Monto (₡)</label><input type="number" placeholder="0" id="cot-monto"></div>
-        <div class="campo-grupo"><label>IVA (13%)</label><input type="text" id="cot-iva" readonly placeholder="Se calcula automáticamente"></div>
-        <div class="campo-grupo"><label>Total</label><input type="text" id="cot-total" readonly placeholder="Se calcula automáticamente"></div>
-        <div class="campo-grupo"><label>Observaciones</label><textarea rows="2" placeholder="Notas adicionales..."></textarea></div>
-        <div class="modal-footer">
-            <button class="btn-outline-odent" onclick="cerrarModal('modal-nueva-cotizacion')">Cancelar</button>
-            <button class="btn-odent"><i class="bi bi-check-lg"></i> Crear cotización</button>
-        </div>
-    </div>
-</div>
+                    <input
+                        type="hidden"
+                        id="editar-insumo-id">
 
-<script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
-<script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
+                    <div class="campo-grupo">
+                        <label>Nombre *</label>
+
+                        <input
+                            type="text"
+                            id="editar-insumo-nombre">
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Descripción *</label>
+
+                        <textarea
+                            id="editar-insumo-descripcion"
+                            rows="3"></textarea>
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Categoría *</label>
+
+                        <select id="editar-insumo-categoria">
+
+                            <option value="">
+                                Seleccione una categoría
+                            </option>
+
+                            <option value="Protección">
+                                Protección
+                            </option>
+
+                            <option value="Higiene y desinfección">
+                                Higiene y desinfección
+                            </option>
+
+                            <option value="Material clínico">
+                                Material clínico
+                            </option>
+
+                            <option value="Anestesia">
+                                Anestesia
+                            </option>
+
+                            <option value="Restauración">
+                                Restauración
+                            </option>
+
+                            <option value="Endodoncia">
+                                Endodoncia
+                            </option>
+
+                            <option value="Impresión">
+                                Impresión
+                            </option>
+
+                            <option value="Otros">
+                                Otros
+                            </option>
+
+                        </select>
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Nivel mínimo de alerta *</label>
+
+                        <input
+                            type="number"
+                            id="editar-insumo-minimo"
+                            min="0">
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button
+                            type="button"
+                            class="btn-outline-odent"
+                            onclick="cerrarModal('modal-editar-insumo')">
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn-odent">
+                            <i class="bi bi-check-lg"></i>
+                            Guardar cambios
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+
+        <!-- Entrada / salida de inventario -->
+        <div class="modal-overlay" id="modal-movimiento-inventario">
+            <div class="modal-caja">
+
+                <div class="modal-header">
+
+                    <h3 id="movimiento-titulo">
+                        Movimiento de inventario
+                    </h3>
+
+                    <button
+                        class="modal-cerrar"
+                        onclick="cerrarModal('modal-movimiento-inventario')">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+
+                </div>
+
+                <form id="form-movimiento-inventario">
+
+                    <input
+                        type="hidden"
+                        id="movimiento-insumo-id">
+
+                    <input
+                        type="hidden"
+                        id="movimiento-tipo">
+
+                    <div class="campo-grupo">
+                        <label>Insumo</label>
+
+                        <input
+                            type="text"
+                            id="movimiento-insumo-nombre"
+                            readonly>
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Stock actual</label>
+
+                        <input
+                            type="number"
+                            id="movimiento-stock-actual"
+                            readonly>
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Cantidad *</label>
+
+                        <div style="display:flex;gap:8px;align-items:center;">
+
+                            <button
+                                type="button"
+                                class="btn-outline-odent"
+                                onclick="cambiarCantidad('movimiento-cantidad', -1)">
+                                −
+                            </button>
+
+                            <input
+                                type="number"
+                                id="movimiento-cantidad"
+                                min="1"
+                                step="1"
+                                value="1"
+                                style="text-align:center;">
+
+                            <button
+                                type="button"
+                                class="btn-outline-odent"
+                                onclick="cambiarCantidad('movimiento-cantidad', 1)">
+                                +
+                            </button>
+
+                        </div>
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Observación</label>
+
+                        <textarea
+                            id="movimiento-observacion"
+                            rows="3"
+                            placeholder="Ej. Compra de materiales, uso clínico, ajuste de inventario..."></textarea>
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button
+                            type="button"
+                            class="btn-outline-odent"
+                            onclick="cerrarModal('modal-movimiento-inventario')">
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn-odent"
+                            id="movimiento-boton">
+                            <i class="bi bi-check-lg"></i>
+                            Registrar
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+
+        <!-- Historial de movimientos -->
+        <div class="modal-overlay" id="modal-historial-inventario">
+
+            <div
+                class="modal-caja"
+                style="max-width:850px;">
+
+                <div class="modal-header">
+
+                    <div>
+                        <h3>Historial de movimientos</h3>
+
+                        <div
+                            id="historial-insumo-nombre"
+                            style="
+                            font-size:13px;
+                            color:var(--gris-azulado);
+                            margin-top:4px;
+                        ">
+                        </div>
+                    </div>
+
+                    <button
+                        class="modal-cerrar"
+                        onclick="cerrarModal('modal-historial-inventario')">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+
+                </div>
+
+                <div style="overflow-x:auto;">
+
+                    <table class="tabla-odent">
+
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Cantidad</th>
+                                <th>Anterior</th>
+                                <th>Resultante</th>
+                                <th>Observación</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="inventario-historial-lista">
+
+                            <tr>
+                                <td
+                                    colspan="6"
+                                    style="text-align:center;">
+                                    No hay movimientos registrados.
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn-outline-odent"
+                        onclick="cerrarModal('modal-historial-inventario')">
+                        Cerrar
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    <?php endif; ?>
+
+    <script>
+        function buscarPacienteTabla() {
+            const texto = document.getElementById('buscar-paciente').value.toLowerCase().trim();
+            const filas = document.querySelectorAll('#tabla-pacientes .fila-paciente');
+
+            filas.forEach(fila => {
+                const contenido = fila.textContent.toLowerCase();
+                fila.style.display = contenido.includes(texto) ? '' : 'none';
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const campo = document.getElementById('buscar-paciente');
+
+            if (campo) {
+                campo.addEventListener('input', buscarPacienteTabla);
+            }
+        });
+    </script>
+
+    <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
+    <script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
+
+    <?php if ($esAsistenteDental): ?>
+        <script src="<?= BASE_URL ?>/public/js/inventario.js?v=<?= @filemtime(ROOT_PATH . '/public/js/inventario.js') ?>"></script>
+    <?php endif; ?>
+
 </body>
+
 </html>
