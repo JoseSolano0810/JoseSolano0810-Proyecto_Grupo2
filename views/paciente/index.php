@@ -19,10 +19,9 @@ $pagina_activa = $pagina_activa ?? 'inicio';
 $proxima_cita = $proxima_cita ?? null;
 $mis_citas    = $mis_citas    ?? [];
 
-$mis_tratamientos = [
-    ['nombre'=>'Ortodoncia fase 2','progreso'=>72,'inicio'=>'10/03/2026','sesiones_total'=>12,'sesiones_realizadas'=>8,'estado'=>'proceso'],
-    ['nombre'=>'Limpieza semestral','progreso'=>100,'inicio'=>'28/07/2026','sesiones_total'=>1,'sesiones_realizadas'=>1,'estado'=>'completada'],
-];
+// Tratamientos reales del paciente (el controlador ya filtra por el paciente en sesión)
+$mis_tratamientos = $mis_tratamientos ?? [];
+$etiquetas_trat   = ['pendiente' => 'Pendiente', 'proceso' => 'En proceso', 'finalizado' => 'Finalizado', 'cancelado' => 'Cancelado'];
 
 $mis_pagos = [
     ['id'=>'PAG-001','fecha'=>'28/07/2026','concepto'=>'Limpieza dental','monto'=>50000,'metodo'=>'Tarjeta','estado'=>'completada'],
@@ -105,24 +104,27 @@ $saldo_pendiente = 60000;
                     <div class="panel-titulo">
                         <h3>Mis tratamientos</h3>
                     </div>
-                    <?php foreach ($mis_tratamientos as $t): ?>
-                    <div class="tratamiento-item">
-                        <div class="tratamiento-header">
-                            <span><?= htmlspecialchars($t['nombre']) ?></span>
-                            <span><?= $t['progreso'] ?>%</span>
-                        </div>
-                        <div style="font-size:12px;color:var(--gris-azulado);margin-bottom:6px;">
-                            <?= $t['sesiones_realizadas'] ?> de <?= $t['sesiones_total'] ?> sesiones
-                            — Inicio: <?= $t['inicio'] ?>
-                        </div>
-                        <div class="barra-progreso">
-                            <div class="barra-relleno" style="width:<?= $t['progreso'] ?>%;"></div>
-                        </div>
-                        <span class="badge-estado badge-<?= $t['estado'] ?>" style="margin-top:8px;display:inline-block;">
-                            <?= ucfirst($t['estado'] === 'proceso' ? 'En proceso' : 'Completado') ?>
-                        </span>
-                    </div>
-                    <?php endforeach; ?>
+                    <?php if (!$mis_tratamientos): ?>
+    <p style="color:var(--gris-azulado);font-size:14px;">Aún no tiene tratamientos registrados. Cuando su odontólogo cree un plan, lo verá aquí.</p>
+<?php endif; ?>
+<?php foreach (array_slice($mis_tratamientos, 0, 3) as $t): ?>
+<div class="tratamiento-item">
+    <div class="tratamiento-header">
+        <span><?= htmlspecialchars($t['nombre']) ?></span>
+        <span><?= (int) $t['progreso'] ?>%</span>
+    </div>
+    <div style="font-size:12px;color:var(--gris-azulado);margin-bottom:6px;">
+        <?= (int) $t['sesiones_realizadas'] ?> de <?= (int) $t['sesiones_total'] ?> sesiones
+        — Inicio: <?= $t['inicio'] ?>
+    </div>
+    <div class="barra-progreso">
+        <div class="barra-relleno" style="width:<?= (int) $t['progreso'] ?>%;"></div>
+    </div>
+    <span class="badge-estado badge-<?= htmlspecialchars($t['estado']) ?>" style="margin-top:8px;display:inline-block;">
+        <?= $etiquetas_trat[$t['estado']] ?? ucfirst($t['estado']) ?>
+    </span>
+</div>
+<?php endforeach; ?>
                 </div>
 
             </div>
