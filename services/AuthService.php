@@ -4,14 +4,14 @@ require_once ROOT_PATH . '/models/Bitacora.php';
 
 class AuthService
 {
-    /** USU-04 esc. 2: minutos de inactividad permitidos */
+    /** minutos de inactividad permitidos */
     public const MINUTOS_INACTIVIDAD = 30;
 
     public const ROLES = ['administrador', 'odontologo', 'recepcionista', 'asistente_dental', 'paciente'];
 
     public static function iniciar(): void
     {
-        // USU-04 esc. 3: evita caché de páginas privadas (botón "Atrás")
+        // evita caché de páginas privadas (botón "Atrás")
         if (!headers_sent()) {
             header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
             header('Pragma: no-cache');
@@ -32,7 +32,7 @@ class AuthService
         }
     }
 
-    /** USU-04 esc. 2: true si la sesión expiró por inactividad */
+    /** true si la sesión expiró por inactividad */
     private static function verificarInactividad(): bool
     {
         $ahora  = time();
@@ -154,7 +154,7 @@ class AuthService
         exit;
     }
 
-    /** USU-05 esc. 2: política de contraseñas. Devuelve mensaje de error o null */
+    /** Devuelve mensaje de error o null */
     public static function validarPoliticaContrasena(string $c): ?string
     {
         if (strlen($c) < 8 || !preg_match('/[A-Z]/', $c) || !preg_match('/[a-z]/', $c) || !preg_match('/\d/', $c)) {

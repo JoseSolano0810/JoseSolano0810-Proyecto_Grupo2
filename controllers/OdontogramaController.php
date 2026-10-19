@@ -10,7 +10,7 @@ class OdontogramaController
     public function __construct()
     {
         // Solo odontólogos y administradores pueden gestionar odontogramas.
-        AuthService::requerir(['odontologo', 'administrador']);
+        AuthService::requerir(['odontologo', 'administrador', 'asistente_dental', 'recepcionista']);
 
         require_once ROOT_PATH . '/models/Odontograma.php';
         $this->model = new Odontograma();

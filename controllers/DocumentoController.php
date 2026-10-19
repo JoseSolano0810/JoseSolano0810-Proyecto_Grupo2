@@ -8,7 +8,7 @@ class DocumentoController
 
     public function __construct()
     {
-        AuthService::requerir(['odontologo', 'administrador']);
+        AuthService::requerir(['odontologo', 'administrador', 'asistente_dental', 'recepcionista']);
         require_once ROOT_PATH . '/models/DocumentoClinico.php';
         $this->model = new DocumentoClinico();
     }

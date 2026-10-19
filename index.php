@@ -201,6 +201,11 @@ switch ($accion) {
         $ctrl->crear();
         break;
 
+    case 'pacientes.editarDatosBasicos':
+        $ctrl = new PacienteController();
+        $ctrl->editarDatosBasicos();
+        break;
+
     // ── Cotizaciones ──────────────────────────────────────────
     case 'cotizaciones.listar':
         $ctrl = new CotizacionController();

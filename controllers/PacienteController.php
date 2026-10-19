@@ -1,6 +1,7 @@
 <?php
 
 require_once ROOT_PATH . '/models/Paciente.php';
+require_once ROOT_PATH . '/models/Usuario.php';
 require_once ROOT_PATH . '/services/AuthService.php';
 
 class PacienteController
@@ -13,31 +14,99 @@ class PacienteController
         $this->model = new Paciente();
     }
 
+    /**
+     * Lista todos los pacientes desde la BD.
+     * Devuelve el formato que espera la vista recepcionista: id, nombre, cedula,
+     * telefono, correo, estado (activo/inactivo), más id_usuario para edición.
+     */
     public function listar(): array
     {
-        return [
-            ['id'=>1,'nombre'=>'Ana Rojas',     'cedula'=>'1-0234-5678','telefono'=>'8888-1111','correo'=>'ana.rojas@mail.com',     'edad'=>34,'ultima_visita'=>'15/07/2026','estado'=>'activo'],
-            ['id'=>2,'nombre'=>'Luis Vargas',   'cedula'=>'2-0345-6789','telefono'=>'8888-2222','correo'=>'luis.vargas@mail.com',    'edad'=>45,'ultima_visita'=>'20/07/2026','estado'=>'activo'],
-            ['id'=>3,'nombre'=>'Pedro Gómez',   'cedula'=>'1-0901-2345','telefono'=>'8888-3333','correo'=>'pedro.gomez@mail.com',    'edad'=>31,'ultima_visita'=>'10/07/2026','estado'=>'activo'],
-            ['id'=>4,'nombre'=>'María Solís',   'cedula'=>'1-0456-7890','telefono'=>'8888-4444','correo'=>'maria.solis@mail.com',    'edad'=>28,'ultima_visita'=>'05/07/2026','estado'=>'activo'],
-            ['id'=>5,'nombre'=>'Carlos Castro', 'cedula'=>'3-0123-4567','telefono'=>'8888-5555','correo'=>'carlos.castro@mail.com',  'edad'=>40,'ultima_visita'=>'01/06/2026','estado'=>'inactivo'],
-            ['id'=>6,'nombre'=>'Jorge Pérez',   'cedula'=>'3-0567-8901','telefono'=>'8888-6666','correo'=>'jorge.perez@mail.com',    'edad'=>52,'ultima_visita'=>'01/06/2026','estado'=>'inactivo'],
-            ['id'=>7,'nombre'=>'Sofía Torres',  'cedula'=>'1-0678-9012','telefono'=>'8888-7777','correo'=>'sofia.torres@mail.com',   'edad'=>19,'ultima_visita'=>'22/07/2026','estado'=>'activo'],
-        ];
+        $filas = $this->model->obtenerTodos();
+        return array_map(fn($p) => [
+            'id'         => $p['id_usuario'],
+            'id_usuario' => $p['id_usuario'],
+            'nombre'     => $p['nombre_completo'],
+            'cedula'     => $p['identificacion'] ?? '',
+            'telefono'   => $p['telefono']        ?? '',
+            'correo'     => $p['correo']           ?? '',
+            'usuario'    => $p['nombre_usuario']   ?? '',
+            'edad'       => $p['edad']             ?? null,
+            'estado'     => $p['estado_usuario']   ?? 'activo',
+        ], $filas);
     }
 
+    /**
+     * Recepcionista: crear nuevo paciente (crea usuario con rol paciente).
+     */
     public function crear(): void
     {
+        AuthService::requerir(['recepcionista', 'administrador']);
+        // Pendiente de implementar
         echo json_encode(['ok' => true, 'demo' => true]);
     }
 
+    /**
+     * Recepcionista: editar datos completos de un paciente.
+     */
     public function editar(): void
     {
+        AuthService::requerir(['recepcionista', 'administrador']);
+        // Pendiente de implementar
         echo json_encode(['ok' => true, 'demo' => true]);
+    }
+
+    /**
+     * Asistente dental: editar solo datos básicos del paciente
+     * (nombre, cédula, teléfono, correo, nombre_usuario).
+     * NO puede cambiar contraseña, rol ni estado.
+     */
+    public function editarDatosBasicos(): void
+    {
+        AuthService::requerir(['asistente_dental', 'recepcionista', 'administrador']);
+
+        $idUsuario = (int) ($_POST['id_usuario'] ?? 0);
+        $nombre    = trim($_POST['nombre']    ?? '');
+        $cedula    = trim($_POST['cedula']    ?? '');
+        $telefono  = trim($_POST['telefono']  ?? '');
+        $correo    = trim($_POST['correo']    ?? '');
+        $usuario   = trim($_POST['usuario']   ?? '');
+
+        if (!$idUsuario || !$nombre || !$cedula || !$correo || !$usuario) {
+            echo json_encode(['ok' => false, 'mensaje' => 'Faltan datos obligatorios.']);
+            return;
+        }
+
+        try {
+            $modelUsuario = new Usuario();
+
+            // Verificar unicidad de correo y nombre_usuario (excluyendo al propio usuario)
+            if ($modelUsuario->existeCorreo($correo, $idUsuario)) {
+                echo json_encode(['ok' => false, 'mensaje' => 'Ya existe otro usuario con ese correo.']);
+                return;
+            }
+            if ($modelUsuario->existeNombreUsuario($usuario, $idUsuario)) {
+                echo json_encode(['ok' => false, 'mensaje' => 'Ese nombre de usuario ya está en uso.']);
+                return;
+            }
+
+            $modelUsuario->actualizar($idUsuario, [
+                'cedula'   => $cedula,
+                'nombre'   => $nombre,
+                'telefono' => $telefono !== '' ? $telefono : null,
+                'correo'   => $correo,
+                'usuario'  => $usuario,
+            ]);
+
+            echo json_encode(['ok' => true, 'mensaje' => 'Datos actualizados correctamente.']);
+        } catch (Throwable $e) {
+            echo json_encode(['ok' => false, 'mensaje' => 'Error al actualizar: ' . $e->getMessage()]);
+        }
     }
 
     public function inactivar(): void
     {
+        AuthService::requerir(['recepcionista', 'administrador']);
+        // Pendiente de implementar
         echo json_encode(['ok' => true, 'demo' => true]);
     }
 }
