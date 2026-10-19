@@ -56,7 +56,8 @@
                     <div class="kpi-card">
                         <div class="kpi-icono amarillo"><i class="bi bi-clipboard2-pulse"></i></div>
                         <div>
-                            <div class="kpi-numero"><?= count($tratamientos) ?></div>
+                            <?php $trat_activos = array_values(array_filter($tratamientos, fn($t) => in_array($t['estado'], ['pendiente', 'proceso'], true))); ?>
+<div class="kpi-numero"><?= count($trat_activos) ?></div>
                             <div class="kpi-etiqueta">Tratamientos en curso</div>
                         </div>
                     </div>
@@ -94,7 +95,10 @@
                         <div class="panel-titulo">
                             <h3>Tratamientos activos</h3>
                         </div>
-                        <?php foreach ($tratamientos as $t): ?>
+                        <?php if (!$trat_activos): ?>
+    <p style="color:var(--gris-azulado);font-size:14px;">No hay tratamientos activos por ahora.</p>
+<?php endif; ?>
+<?php foreach (array_slice($trat_activos, 0, 6) as $t): ?>
                             <div class="tratamiento-item">
                                 <div class="tratamiento-header">
                                     <span><?= htmlspecialchars($t['paciente']) ?></span>
@@ -348,6 +352,9 @@
                         <div style="display:flex;gap:10px;flex-wrap:wrap;">
                             <button class="btn-outline-odent" onclick="abrirOdontograma()" id="btn-ver-odontograma" style="display:none;">
                                 <i class="bi bi-grid-3x3"></i> Odontograma
+                            </button>
+                                                        <button class="btn-outline-odent" onclick="treAbrirHistorial()" id="btn-ver-historial-trat" style="display:none;">
+                                <i class="bi bi-clipboard2-pulse"></i> Ver Historial de Tratamientos
                             </button>
                             <button class="btn-outline-odent" onclick="abrirDocumentos()" id="btn-ver-documentos" style="display:none;">
                                 <i class="bi bi-file-earmark-medical"></i> Documentos
@@ -1553,6 +1560,7 @@
                 _exp('btn-editar-exp').style.display          = 'none';
                 _exp('btn-ver-odontograma').style.display     = 'none';
                 _exp('btn-ver-documentos').style.display      = 'none';
+                _exp('btn-ver-historial-trat').style.display = 'none';
                 return;
             }
 
@@ -1571,6 +1579,7 @@
                     _exp('btn-editar-exp').style.display          = 'none';
                     _exp('btn-ver-odontograma').style.display     = 'none';
                     _exp('btn-ver-documentos').style.display      = 'none';
+                    _exp('btn-ver-historial-trat').style.display = 'none';
                 } else {
                     _expDatos = data;
                     expRenderizarExpediente(data, paciente);
@@ -1578,6 +1587,7 @@
                     _exp('btn-editar-exp').style.display          = '';
                     _exp('btn-ver-odontograma').style.display     = '';
                     _exp('btn-ver-documentos').style.display      = '';
+                    _exp('btn-ver-historial-trat').style.display = '';
                     expCargarAtenciones(data.id_expediente);
                 }
             } catch (e) {
