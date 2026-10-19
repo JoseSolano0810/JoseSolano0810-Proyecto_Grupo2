@@ -56,7 +56,8 @@
                     <div class="kpi-card">
                         <div class="kpi-icono amarillo"><i class="bi bi-clipboard2-pulse"></i></div>
                         <div>
-                            <div class="kpi-numero"><?= count($tratamientos) ?></div>
+                            <?php $trat_activos = array_values(array_filter($tratamientos, fn($t) => in_array($t['estado'], ['pendiente', 'proceso'], true))); ?>
+<div class="kpi-numero"><?= count($trat_activos) ?></div>
                             <div class="kpi-etiqueta">Tratamientos en curso</div>
                         </div>
                     </div>
@@ -94,7 +95,10 @@
                         <div class="panel-titulo">
                             <h3>Tratamientos activos</h3>
                         </div>
-                        <?php foreach ($tratamientos as $t): ?>
+                        <?php if (!$trat_activos): ?>
+    <p style="color:var(--gris-azulado);font-size:14px;">No hay tratamientos activos por ahora.</p>
+<?php endif; ?>
+<?php foreach (array_slice($trat_activos, 0, 6) as $t): ?>
                             <div class="tratamiento-item">
                                 <div class="tratamiento-header">
                                     <span><?= htmlspecialchars($t['paciente']) ?></span>
@@ -348,6 +352,9 @@
                         <div style="display:flex;gap:10px;flex-wrap:wrap;">
                             <button class="btn-outline-odent" onclick="abrirOdontograma()" id="btn-ver-odontograma" style="display:none;">
                                 <i class="bi bi-grid-3x3"></i> Odontograma
+                            </button>
+                                                        <button class="btn-outline-odent" onclick="treAbrirHistorial()" id="btn-ver-historial-trat" style="display:none;">
+                                <i class="bi bi-clipboard2-pulse"></i> Ver Historial de Tratamientos
                             </button>
                             <button class="btn-outline-odent" onclick="abrirDocumentos()" id="btn-ver-documentos" style="display:none;">
                                 <i class="bi bi-file-earmark-medical"></i> Documentos
@@ -688,37 +695,10 @@
                 </div>
             </div>
 
-            <!-- ───────────────── TRATAMIENTOS ───────────────── -->
+                        <!-- ───────────────── TRATAMIENTOS ───────────────── -->
             <div class="pagina" id="pagina-tratamientos">
-                <div class="panel-titulo" style="margin-bottom:20px;">
-                    <h2>Planes de tratamiento</h2>
-                    <button class="btn-odent" onclick="abrirModal('modal-nuevo-tratamiento')"><i class="bi bi-plus-lg"></i> Nuevo plan</button>
-                </div>
-                <div class="panel-grid col-2">
-                    <?php foreach ($pacientes as $p):
-                        $idx = $p['id'] - 1;
-                        $t   = $tratamientos[$idx] ?? ['tratamiento' => 'Sin plan activo', 'progreso' => 0];
-                    ?>
-                        <div class="tarjeta">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                                <div>
-                                    <h4><?= htmlspecialchars($p['nombre']) ?></h4>
-                                    <p style="font-size:13px;color:var(--gris-azulado);">Cédula: <?= $p['cedula'] ?></p>
-                                </div>
-                                <span class="badge-estado badge-<?= $p['estado'] ?>"><?= ucfirst($p['estado']) ?></span>
-                            </div>
-                            <div class="tratamiento-item">
-                                <div class="tratamiento-header"><span><?= htmlspecialchars($t['tratamiento']) ?></span><span><?= $t['progreso'] ?>%</span></div>
-                                <div class="barra-progreso" style="margin-bottom:12px;">
-                                    <div class="barra-relleno" style="width:<?= $t['progreso'] ?>%;"></div>
-                                </div>
-                            </div>
-                            <button class="btn-outline-odent" style="font-size:13px;padding:7px 14px;width:100%;"><i class="bi bi-eye"></i> Ver detalle</button>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+                <?php include ROOT_PATH . '/views/shared/tratamientos_pagina.php'; ?>
             </div>
-
             <!-- ───────────────── COTIZACIONES ───────────────── -->
             <div class="pagina" id="pagina-cotizaciones">
                 <div class="panel-titulo" style="margin-bottom:20px;">
@@ -882,31 +862,7 @@
 
     <?php include ROOT_PATH . '/views/shared/agenda_modales.php'; ?>
 
-    <!-- Modal nuevo tratamiento -->
-    <div class="modal-overlay" id="modal-nuevo-tratamiento">
-        <div class="modal-caja">
-            <div class="modal-header">
-                <h3>Nuevo plan de tratamiento</h3>
-                <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-tratamiento')"><i class="bi bi-x-lg"></i></button>
-            </div>
-            <div class="campo-grupo"><label>Paciente</label>
-                <select>
-                    <option value="">Seleccione un paciente</option>
-                    <?php foreach ($pacientes as $p): ?>
-                        <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nombre']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="campo-grupo"><label>Nombre del plan</label><input type="text" placeholder="Ej: Ortodoncia fase 1"></div>
-            <div class="campo-grupo"><label>Diagnóstico</label><textarea rows="3" placeholder="Descripción del diagnóstico..."></textarea></div>
-            <div class="campo-grupo"><label>Fecha de inicio</label><input type="date" value="<?= date('Y-m-d') ?>"></div>
-            <div class="modal-footer">
-                <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-tratamiento')">Cancelar</button>
-                <button class="btn-odent"><i class="bi bi-check-lg"></i> Crear plan</button>
-            </div>
-        </div>
-    </div>
-
+        <?php include ROOT_PATH . '/views/shared/tratamientos_modales.php'; ?>
     <!-- Modal nuevo paciente -->
     <div class="modal-overlay" id="modal-nuevo-paciente">
         <div class="modal-caja">
@@ -1317,6 +1273,7 @@
 
     <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
     <script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
+        <script src="<?= BASE_URL ?>/public/js/tratamientos.js?v=<?= @filemtime(ROOT_PATH . '/public/js/tratamientos.js') ?>"></script>
     <script>
         const BASE = '<?= BASE_URL ?>';
         let usuarioIdSeleccionado = null;
@@ -1603,6 +1560,7 @@
                 _exp('btn-editar-exp').style.display          = 'none';
                 _exp('btn-ver-odontograma').style.display     = 'none';
                 _exp('btn-ver-documentos').style.display      = 'none';
+                _exp('btn-ver-historial-trat').style.display = 'none';
                 return;
             }
 
@@ -1621,6 +1579,7 @@
                     _exp('btn-editar-exp').style.display          = 'none';
                     _exp('btn-ver-odontograma').style.display     = 'none';
                     _exp('btn-ver-documentos').style.display      = 'none';
+                    _exp('btn-ver-historial-trat').style.display = 'none';
                 } else {
                     _expDatos = data;
                     expRenderizarExpediente(data, paciente);
@@ -1628,6 +1587,7 @@
                     _exp('btn-editar-exp').style.display          = '';
                     _exp('btn-ver-odontograma').style.display     = '';
                     _exp('btn-ver-documentos').style.display      = '';
+                    _exp('btn-ver-historial-trat').style.display = '';
                     expCargarAtenciones(data.id_expediente);
                 }
             } catch (e) {
@@ -1974,6 +1934,7 @@
                 _odoPiezas = data.piezas ?? {};
                 // Actualizar DOM pieza por pieza
                 [...ODO_SUPERIOR, ...ODO_INFERIOR].forEach(_odoActualizarDomPieza);
+                if (typeof treOdontograma === 'function') treOdontograma(_odoExpediente.id_expediente);
             } catch(e) {
                 mostrarToast('Error al cargar el odontograma.', 'error');
             }

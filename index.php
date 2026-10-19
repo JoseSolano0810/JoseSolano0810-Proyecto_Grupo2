@@ -26,6 +26,7 @@ require_once ROOT_PATH . '/controllers/OdontogramaController.php';
 require_once ROOT_PATH . '/controllers/DocumentoController.php';
 require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/RecordatorioService.php';
+require_once ROOT_PATH . '/controllers/InventarioController.php';
 
 $accion = $_GET['accion'] ?? 'inicio';
 $metodo = $_SERVER['REQUEST_METHOD'];
@@ -70,6 +71,36 @@ switch ($accion) {
         (new BitacoraController())->listar();
         break;
 
+    //inventario 
+    // ── Inventario ─────────────────────────────────────────────
+    case 'inventario.listar':
+        (new InventarioController())->listar();
+        break;
+
+    case 'inventario.crear':
+        (new InventarioController())->crear();
+        break;
+
+    case 'inventario.editar':
+        (new InventarioController())->editar();
+        break;
+
+    case 'inventario.desactivar':
+        (new InventarioController())->desactivar();
+        break;
+
+    case 'inventario.activar':
+        (new InventarioController())->activar();
+        break;
+
+    case 'inventario.historial':
+        (new InventarioController())->historial();
+        break;
+
+    case 'inventario.movimiento':
+        (new InventarioController())->movimiento();
+        break;
+
     // panel * rol
     case 'panel':
     case 'demo':
@@ -84,7 +115,7 @@ switch ($accion) {
         header('Location: ' . BASE_URL . '/index.php?accion=panel');
         exit;
 
-    // ── Usuarios ──────────────────────────────────────────────
+        // ── Usuarios ──────────────────────────────────────────────
     case 'usuarios.listar':
         (new UsuarioController())->listar();
         break;
@@ -249,16 +280,38 @@ switch ($accion) {
         break;
 
     // ── Tratamientos ──────────────────────────────────────────
+        // ── Tratamientos ──────────────────────────────────────────
     case 'tratamientos.listar':
-        $ctrl = new TratamientoController();
-        echo json_encode($ctrl->listar());
+        (new TratamientoController())->listarJson();
+        break;
+
+    case 'tratamientos.detalle':
+        (new TratamientoController())->detalle();
+        break;
+
+    case 'tratamientos.catalogos':
+        (new TratamientoController())->catalogos();
         break;
 
     case 'tratamientos.crear':
-        $ctrl = new TratamientoController();
-        $ctrl->crear();
+        (new TratamientoController())->crear();
         break;
 
+    case 'tratamientos.estado':
+        (new TratamientoController())->actualizarEstado();
+        break;
+
+    case 'tratamientos.asociar':
+        (new TratamientoController())->asociar();
+        break;
+
+    case 'tratamientos.historial':
+        (new TratamientoController())->historial();
+        break;
+
+    case 'tratamientos.odontograma':
+        (new TratamientoController())->odontograma();
+        break;
     default:
         http_response_code(404);
         $ctrl = new LoginController();

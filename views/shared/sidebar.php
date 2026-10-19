@@ -1,4 +1,3 @@
-<?php ?>
 <aside class="sidebar" id="sidebar">
 
     <div class="sidebar-logo">
@@ -22,87 +21,142 @@
 
         <?php if ($rol === 'odontologo' || $rol === 'administrador'): ?>
 
-            <a class="sidebar-enlace <?= $pagina_activa === 'inicio'       ? 'activo' : '' ?>" onclick="mostrarPagina('inicio')">
+            <a class="sidebar-enlace <?= $pagina_activa === 'inicio' ? 'activo' : '' ?>" onclick="mostrarPagina('inicio')">
                 <i class="bi bi-speedometer2"></i> Inicio
             </a>
+
             <?php if ($rol === 'administrador'): ?>
-            <a class="sidebar-enlace <?= $pagina_activa === 'usuarios'     ? 'activo' : '' ?>" onclick="mostrarPagina('usuarios')">
-                <i class="bi bi-people"></i> Usuarios
-            </a>
+                <a class="sidebar-enlace <?= $pagina_activa === 'usuarios' ? 'activo' : '' ?>" onclick="mostrarPagina('usuarios')">
+                    <i class="bi bi-people"></i> Usuarios
+                </a>
             <?php endif; ?>
-            <a class="sidebar-enlace <?= $pagina_activa === 'agenda'       ? 'activo' : '' ?>" onclick="mostrarPagina('agenda')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'agenda' ? 'activo' : '' ?>" onclick="mostrarPagina('agenda')">
                 <i class="bi bi-calendar3"></i> Agenda
             </a>
-            <a class="sidebar-enlace <?= $pagina_activa === 'pacientes'    ? 'activo' : '' ?>" onclick="mostrarPagina('pacientes')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'pacientes' ? 'activo' : '' ?>" onclick="mostrarPagina('pacientes')">
                 <i class="bi bi-person-vcard"></i> Pacientes
             </a>
-            <a class="sidebar-enlace <?= $pagina_activa === 'expedientes'  ? 'activo' : '' ?>" onclick="mostrarPagina('expedientes')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'expedientes' ? 'activo' : '' ?>" onclick="mostrarPagina('expedientes')">
                 <i class="bi bi-folder2-open"></i> Expedientes
             </a>
-            <a class="sidebar-enlace <?= $pagina_activa === 'odontograma'  ? 'activo' : '' ?>" onclick="mostrarPagina('odontograma')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'odontograma' ? 'activo' : '' ?>" onclick="mostrarPagina('odontograma')">
                 <i class="bi bi-clipboard2-pulse"></i> Odontograma
             </a>
-            <a class="sidebar-enlace <?= $pagina_activa === 'documentos'   ? 'activo' : '' ?>" onclick="mostrarPagina('documentos')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'documentos' ? 'activo' : '' ?>" onclick="mostrarPagina('documentos')">
                 <i class="bi bi-file-earmark-medical"></i> Documentos
             </a>
+
             <a class="sidebar-enlace <?= $pagina_activa === 'tratamientos' ? 'activo' : '' ?>" onclick="mostrarPagina('tratamientos')">
                 <i class="bi bi-bandaid"></i> Tratamientos
             </a>
+
             <a class="sidebar-enlace <?= $pagina_activa === 'cotizaciones' ? 'activo' : '' ?>" onclick="mostrarPagina('cotizaciones')">
                 <i class="bi bi-receipt"></i> Cotizaciones
             </a>
-            <a class="sidebar-enlace <?= $pagina_activa === 'pagos'        ? 'activo' : '' ?>" onclick="mostrarPagina('pagos')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'pagos' ? 'activo' : '' ?>" onclick="mostrarPagina('pagos')">
                 <i class="bi bi-cash-coin"></i> Pagos
             </a>
-            <a class="sidebar-enlace <?= $pagina_activa === 'inventario'   ? 'activo' : '' ?>" onclick="mostrarPagina('inventario')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'inventario' ? 'activo' : '' ?>" onclick="mostrarPagina('inventario')">
                 <i class="bi bi-box-seam"></i> Inventario
             </a>
-            <a class="sidebar-enlace <?= $pagina_activa === 'reportes'     ? 'activo' : '' ?>" onclick="mostrarPagina('reportes')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'reportes' ? 'activo' : '' ?>" onclick="mostrarPagina('reportes')">
                 <i class="bi bi-bar-chart-line"></i> Reportes
             </a>
+
             <?php if ($rol === 'administrador'): ?>
-            <a class="sidebar-enlace <?= $pagina_activa === 'bitacora'     ? 'activo' : '' ?>" onclick="mostrarPagina('bitacora')">
-                <i class="bi bi-journal-text"></i> Bitácora
-            </a>
+                <a class="sidebar-enlace <?= $pagina_activa === 'bitacora' ? 'activo' : '' ?>" onclick="mostrarPagina('bitacora')">
+                    <i class="bi bi-journal-text"></i> Bitácora
+                </a>
             <?php endif; ?>
 
-        <?php elseif ($rol === 'recepcionista' || $rol === 'asistente_dental'): ?>
+
+        <?php elseif ($rol === 'recepcionista'): ?>
 
             <div class="sidebar-seccion-titulo">Principal</div>
-            <a class="sidebar-enlace <?= $pagina_activa === 'inicio'       ? 'activo' : '' ?>" onclick="mostrarPagina('inicio')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'inicio' ? 'activo' : '' ?>" onclick="mostrarPagina('inicio')">
                 <i class="bi bi-speedometer2"></i> Inicio
             </a>
-            <a class="sidebar-enlace <?= $pagina_activa === 'agenda'       ? 'activo' : '' ?>" onclick="mostrarPagina('agenda')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'agenda' ? 'activo' : '' ?>" onclick="mostrarPagina('agenda')">
                 <i class="bi bi-calendar2-week"></i> Agenda general
             </a>
+
             <div class="sidebar-seccion-titulo">Pacientes</div>
-            <a class="sidebar-enlace <?= $pagina_activa === 'pacientes'    ? 'activo' : '' ?>" onclick="mostrarPagina('pacientes')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'pacientes' ? 'activo' : '' ?>" onclick="mostrarPagina('pacientes')">
                 <i class="bi bi-people"></i> Pacientes
             </a>
+
             <div class="sidebar-seccion-titulo">Finanzas</div>
+
             <a class="sidebar-enlace <?= $pagina_activa === 'cotizaciones' ? 'activo' : '' ?>" onclick="mostrarPagina('cotizaciones')">
                 <i class="bi bi-receipt"></i> Cotizaciones
             </a>
-            <a class="sidebar-enlace <?= $pagina_activa === 'pagos'        ? 'activo' : '' ?>" onclick="mostrarPagina('pagos')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'pagos' ? 'activo' : '' ?>" onclick="mostrarPagina('pagos')">
                 <i class="bi bi-cash-coin"></i> Pagos
             </a>
+
+
+        <?php elseif ($rol === 'asistente_dental'): ?>
+
+            <div class="sidebar-seccion-titulo">Principal</div>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'inicio' ? 'activo' : '' ?>" onclick="mostrarPagina('inicio')">
+                <i class="bi bi-speedometer2"></i> Inicio
+            </a>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'agenda' ? 'activo' : '' ?>" onclick="mostrarPagina('agenda')">
+                <i class="bi bi-calendar2-week"></i> Agenda / Citas
+            </a>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'pacientes' ? 'activo' : '' ?>" onclick="mostrarPagina('pacientes')">
+                <i class="bi bi-people"></i> Pacientes
+            </a>
+
+            <div class="sidebar-seccion-titulo">Clínica</div>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'expedientes' ? 'activo' : '' ?>" onclick="mostrarPagina('expedientes')">
+                <i class="bi bi-folder2-open"></i> Expediente clínico
+            </a>
+
+            <div class="sidebar-seccion-titulo">Inventario</div>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'inventario' ? 'activo' : '' ?>" onclick="mostrarPagina('inventario')">
+                <i class="bi bi-box-seam"></i> Inventario
+            </a>
+
 
         <?php elseif ($rol === 'paciente'): ?>
 
             <div class="sidebar-seccion-titulo">Mi portal</div>
-            <a class="sidebar-enlace <?= $pagina_activa === 'inicio'       ? 'activo' : '' ?>" onclick="mostrarPagina('inicio')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'inicio' ? 'activo' : '' ?>" onclick="mostrarPagina('inicio')">
                 <i class="bi bi-house"></i> Inicio
             </a>
-            <a class="sidebar-enlace <?= $pagina_activa === 'citas'        ? 'activo' : '' ?>" onclick="mostrarPagina('citas')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'citas' ? 'activo' : '' ?>" onclick="mostrarPagina('citas')">
                 <i class="bi bi-calendar-check"></i> Mis citas
             </a>
+
             <a class="sidebar-enlace <?= $pagina_activa === 'tratamientos' ? 'activo' : '' ?>" onclick="mostrarPagina('tratamientos')">
                 <i class="bi bi-bandaid"></i> Mis tratamientos
             </a>
-            <a class="sidebar-enlace <?= $pagina_activa === 'pagos'        ? 'activo' : '' ?>" onclick="mostrarPagina('pagos')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'pagos' ? 'activo' : '' ?>" onclick="mostrarPagina('pagos')">
                 <i class="bi bi-wallet2"></i> Mis pagos
             </a>
-            <a class="sidebar-enlace <?= $pagina_activa === 'asistente'    ? 'activo' : '' ?>" onclick="mostrarPagina('asistente')">
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'asistente' ? 'activo' : '' ?>" onclick="mostrarPagina('asistente')">
                 <i class="bi bi-robot"></i> Asistente de triaje
             </a>
 
@@ -114,6 +168,7 @@
         <a class="sidebar-enlace" onclick="abrirCambiarContrasena()" style="cursor:pointer;">
             <i class="bi bi-key"></i> Cambiar contraseña
         </a>
+
         <a class="sidebar-enlace" href="<?= BASE_URL ?>/index.php?accion=logout">
             <i class="bi bi-box-arrow-right"></i> Cerrar sesión
         </a>
@@ -121,33 +176,52 @@
 
 </aside>
 
-<!--modal cambiar mi contraseña -->
+<!-- modal cambiar mi contraseña -->
 <div class="modal-overlay" id="modal-cambiar-contrasena">
     <div class="modal-caja" style="max-width:420px;">
+
         <div class="modal-header">
             <h3>Cambiar mi contraseña</h3>
-            <button class="modal-cerrar" onclick="cerrarModal('modal-cambiar-contrasena')"><i class="bi bi-x-lg"></i></button>
+            <button class="modal-cerrar" onclick="cerrarModal('modal-cambiar-contrasena')">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
-        <div class="campo-grupo"><label>Contraseña actual *</label>
-            <div class="input-icono"><i class="bi bi-lock"></i>
+
+        <div class="campo-grupo">
+            <label>Contraseña actual *</label>
+            <div class="input-icono">
+                <i class="bi bi-lock"></i>
                 <input type="password" id="cc-actual" autocomplete="current-password">
             </div>
         </div>
-        <div class="campo-grupo"><label>Nueva contraseña *</label>
-            <div class="input-icono"><i class="bi bi-key"></i>
+
+        <div class="campo-grupo">
+            <label>Nueva contraseña *</label>
+            <div class="input-icono">
+                <i class="bi bi-key"></i>
                 <input type="password" id="cc-nueva" autocomplete="new-password"
-                       placeholder="Mín. 8 caracteres, mayúscula, minúscula y número">
+                    placeholder="Mín. 8 caracteres, mayúscula, minúscula y número">
             </div>
         </div>
-        <div class="campo-grupo"><label>Confirmar nueva contraseña *</label>
-            <div class="input-icono"><i class="bi bi-lock-fill"></i>
+
+        <div class="campo-grupo">
+            <label>Confirmar nueva contraseña *</label>
+            <div class="input-icono">
+                <i class="bi bi-lock-fill"></i>
                 <input type="password" id="cc-confirmar" autocomplete="new-password">
             </div>
         </div>
+
         <div class="modal-footer">
-            <button class="btn-outline-odent" onclick="cerrarModal('modal-cambiar-contrasena')">Cancelar</button>
-            <button class="btn-odent" onclick="guardarCambioContrasena()"><i class="bi bi-check-lg"></i> Guardar cambios</button>
+            <button class="btn-outline-odent" onclick="cerrarModal('modal-cambiar-contrasena')">
+                Cancelar
+            </button>
+
+            <button class="btn-odent" onclick="guardarCambioContrasena()">
+                <i class="bi bi-check-lg"></i> Guardar cambios
+            </button>
         </div>
+
     </div>
 </div>
 

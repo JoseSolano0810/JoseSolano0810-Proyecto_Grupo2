@@ -2060,3 +2060,109 @@ button:disabled {
 .menu-acciones-item.peligro,
 .menu-acciones-item.peligro i { color: #B3261E; }
 .menu-acciones-item.peligro:hover { background: #FDECEA; }
+
+/* ═══════════════════════════════════════════════════════════
+   MÓDULO DE TRATAMIENTOS (TRA-01 … TRA-04)
+   ═══════════════════════════════════════════════════════════ */
+
+.badge-finalizado { background-color: #e8f4fd; color: #17324D; }
+.badge-cancelado  { background-color: #fde8e8; color: #C0392B; }
+.badge-estado i   { font-size: 11px; margin-right: 2px; }
+
+.tre-filtros {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    margin-bottom: 20px; padding: 14px 18px;
+}
+.tre-filtro-buscar { position: relative; flex: 1 1 260px; }
+.tre-filtro-buscar i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gris-azulado); }
+.tre-filtro-buscar input,
+.tre-filtros select {
+    width: 100%; border: 1.5px solid var(--borde); border-radius: var(--radio);
+    padding: 9px 14px; font-family: 'Inter', sans-serif; font-size: 14px; background: var(--blanco);
+}
+.tre-filtro-buscar input { padding-left: 36px; }
+.tre-filtros select { width: auto; min-width: 170px; }
+.tre-contador { margin-left: auto; font-size: 13px; color: var(--gris-azulado); }
+
+.tre-tarjeta-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+.tre-paciente { font-size: 13px; color: var(--gris-azulado); margin-top: 3px; }
+.tre-paciente small { color: var(--gris-azulado); }
+.tre-frase { font-size: 13px; color: var(--gris-azulado); margin: 8px 0 12px; }
+.tre-asoc { font-size: 12px; color: var(--verde-odent); margin: 10px 0 0; }
+.tre-sin-datos { font-size: 13px; color: var(--gris-azulado); }
+.barra-relleno.tre-cancelado { background: #d6d6d6; }
+
+.tre-piezas { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.tre-chip-pieza {
+    background: rgba(47, 127, 122, .12); color: var(--verde-odent);
+    border-radius: 12px; padding: 2px 9px; font-size: 12px; font-weight: 600;
+}
+
+.tre-meta {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    font-size: 13px; color: var(--gris-azulado); margin-bottom: 14px;
+}
+.tre-meta strong { color: var(--gris-texto); }
+.tre-meta-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 640px) { .tre-meta-4 { grid-template-columns: 1fr 1fr; } }
+
+.tre-acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.tre-acciones .btn-outline-odent { font-size: 13px; padding: 7px 12px; flex: 1 1 auto; }
+
+.tre-vacio {
+    grid-column: 1 / -1; text-align: center; padding: 44px 16px;
+    background: var(--blanco); border: 1px dashed var(--borde); border-radius: var(--radio);
+}
+.tre-vacio i { font-size: 38px; color: var(--verde-odent); opacity: .7; }
+.tre-vacio h4 { margin: 10px 0 6px; }
+.tre-vacio p { color: var(--gris-azulado); font-size: 14px; margin-bottom: 14px; }
+.tre-vacio-chico { padding: 26px 12px; }
+.tre-cargando { grid-column: 1 / -1; text-align: center; padding: 34px; color: var(--gris-azulado); }
+.tre-cargando .spinner-mini { border-color: rgba(47,127,122,.25); border-top-color: var(--verde-odent); margin-right: 6px; }
+
+.tre-detalle-cab { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.tre-sub { font-size: 13px; font-weight: 600; color: var(--azul-odent); margin: 18px 0 8px; }
+.tre-texto { font-size: 14px; white-space: pre-wrap; margin: 0; }
+
+.tre-timeline { border-left: 2px solid var(--borde); margin-left: 6px; padding-left: 16px; }
+.tre-linea { position: relative; padding-bottom: 14px; }
+.tre-linea-punto {
+    position: absolute; left: -23px; top: 4px; width: 10px; height: 10px;
+    border-radius: 50%; background: var(--verde-odent); border: 2px solid var(--blanco);
+}
+.tre-linea-cab { font-size: 14px; }
+.tre-linea-sub { font-size: 12px; color: var(--gris-azulado); }
+.tre-linea-obs { font-size: 13px; margin-top: 4px; background: var(--gris-claro); border-radius: 6px; padding: 6px 10px; }
+
+.tre-ayuda { color: var(--gris-azulado); font-size: 12px; }
+
+.tre-picker {
+    background: var(--blanco); border: 1px solid var(--borde);
+    border-radius: var(--radio); padding: 14px 10px;
+}
+.tre-picker .diente { width: 32px; height: 40px; }
+.tre-picker-etq { font-size: 11px; color: var(--gris-azulado); text-align: center; font-weight: 600; margin: 4px 0 8px; }
+.tre-picker-linea { border-top: 2px dashed var(--borde); margin: 6px 0 10px; }
+.tre-picker-resumen { font-size: 13px; color: var(--gris-azulado); margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+
+.tre-hist-filtro { display: flex; gap: 10px; margin-bottom: 14px; }
+.tre-hist-filtro select {
+    border: 1.5px solid var(--borde); border-radius: var(--radio);
+    padding: 9px 14px; font-family: 'Inter', sans-serif; font-size: 14px; background: var(--blanco);
+}
+
+/* Marca de tratamiento sobre el diente del odontograma */
+.diente.con-trat { box-shadow: 0 0 0 2px rgba(47, 127, 122, .35); }
+.diente.trat-proceso    { box-shadow: 0 0 0 2px rgba(245, 158, 11, .6); }
+.diente.trat-pendiente  { box-shadow: 0 0 0 2px rgba(23, 50, 77, .35); }
+.diente.trat-finalizado { box-shadow: 0 0 0 2px rgba(16, 185, 129, .6); }
+.tre-marca {
+    position: absolute; top: -8px; right: -8px;
+    background: var(--azul-odent); color: #fff; font-size: 9px; font-weight: 700;
+    border-radius: 10px; padding: 1px 5px; line-height: 1.3; pointer-events: none;
+}
+.diente.trat-finalizado .tre-marca { background: #10b981; }
+.diente.trat-proceso .tre-marca    { background: #f59e0b; }
+
+/* Portal del paciente */
+.tre-pac-obs { font-size: 13px; background: var(--gris-claro); border-radius: 8px; padding: 8px 12px; margin-top: 12px; }
