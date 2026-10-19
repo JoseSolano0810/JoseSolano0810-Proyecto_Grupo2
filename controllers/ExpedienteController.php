@@ -12,7 +12,7 @@ class ExpedienteController
 
     public function __construct()
     {
-        AuthService::requerir(['odontologo', 'administrador']);
+        AuthService::requerir(['odontologo', 'administrador', 'asistente_dental', 'recepcionista']);
         $this->paciente   = new Paciente();
         $this->expediente = new ExpedienteClinico();
     }
