@@ -96,6 +96,20 @@
                 <i class="bi bi-people"></i> Pacientes
             </a>
 
+            <div class="sidebar-seccion-titulo">Clínica</div>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'expedientes' ? 'activo' : '' ?>" onclick="mostrarPagina('expedientes')">
+                <i class="bi bi-folder2-open"></i> Expediente clínico
+            </a>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'odontograma' ? 'activo' : '' ?>" onclick="mostrarPagina('odontograma')">
+                <i class="bi bi-clipboard2-pulse"></i> Odontograma
+            </a>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'documentos' ? 'activo' : '' ?>" onclick="mostrarPagina('documentos')">
+                <i class="bi bi-file-earmark-medical"></i> Documentos
+            </a>
+
             <div class="sidebar-seccion-titulo">Finanzas</div>
 
             <a class="sidebar-enlace <?= $pagina_activa === 'cotizaciones' ? 'activo' : '' ?>" onclick="mostrarPagina('cotizaciones')">
@@ -127,6 +141,14 @@
 
             <a class="sidebar-enlace <?= $pagina_activa === 'expedientes' ? 'activo' : '' ?>" onclick="mostrarPagina('expedientes')">
                 <i class="bi bi-folder2-open"></i> Expediente clínico
+            </a>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'odontograma' ? 'activo' : '' ?>" onclick="mostrarPagina('odontograma')">
+                <i class="bi bi-clipboard2-pulse"></i> Odontograma
+            </a>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'documentos' ? 'activo' : '' ?>" onclick="mostrarPagina('documentos')">
+                <i class="bi bi-file-earmark-medical"></i> Documentos
             </a>
 
             <div class="sidebar-seccion-titulo">Inventario</div>
