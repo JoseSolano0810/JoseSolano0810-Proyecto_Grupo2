@@ -17,7 +17,8 @@
     $pagina_activa = $pagina_activa ?? 'inicio';
 
     $esRecepcionista   = $rol === 'recepcionista';
-    $esAsistenteDental = $rol === 'asistente_dental';
+    $esAsistenteDental = $rol === 'asistente_dental'
+        || in_array('asistente_dental', $roles_sesion ?? [], true);
 
     // Las citas vienen de la BD (CitaController::listar); nunca se simulan aquí
     $citas = $citas ?? [];
