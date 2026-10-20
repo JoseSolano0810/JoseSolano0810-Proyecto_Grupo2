@@ -56,7 +56,7 @@
                     <div class="kpi-card">
                         <div class="kpi-icono amarillo"><i class="bi bi-clipboard2-pulse"></i></div>
                         <div>
-                            <?php $trat_activos = array_values(array_filter($tratamientos, fn($t) => in_array($t['estado'], ['pendiente', 'proceso'], true))); ?>
+                            <?php $trat_activos = array_values(array_filter($tratamientos, fn($t) => in_array($t['estado'], ['pendiente', 'en_proceso'], true))); ?>
 <div class="kpi-numero"><?= count($trat_activos) ?></div>
                             <div class="kpi-etiqueta">Tratamientos en curso</div>
                         </div>
