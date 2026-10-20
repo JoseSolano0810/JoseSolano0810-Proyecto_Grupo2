@@ -1,98 +1,93 @@
 'use strict';
 /**
- * tratamientos.js — Módulo de Tratamientos (TRA-01 … TRA-04)
- * Depende de app.js (abrirModal, cerrarModal, mostrarToast, guardarJSON, window.ODENT).
+ * tratamientos.js — Módulo de tratamientos (TRA-01 … TRA-04)
+ * Depende de app.js: abrirModal, cerrarModal, mostrarToast, guardarJSON, window.ODENT
  */
 
-/* ══════════════════════════ Estado y utilidades ══════════════════════════ */
+/* ══════════════════════════ Constantes y utilidades ══════════════════════════ */
 
-const TRE_ESTADOS = {
+const TR_ESTADOS = {
     pendiente:  { texto: 'Pendiente',  icono: 'hourglass-split' },
-    proceso:    { texto: 'En proceso', icono: 'activity' },
+    en_proceso: { texto: 'En proceso', icono: 'activity' },
     finalizado: { texto: 'Finalizado', icono: 'check-circle' },
     cancelado:  { texto: 'Cancelado',  icono: 'x-circle' },
 };
-const TRE_SUPERIOR = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
-const TRE_INFERIOR = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
+const TR_SUPERIOR = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
+const TR_INFERIOR = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
 
-let _treLista = [];            // última lista cargada
-let _treActual = null;         // tratamiento abierto en un modal
-let _treCatalogoListo = false; // pacientes ya cargados en el select
-let _treTimerBusqueda = null;
+let _trLista = [];            // última lista cargada en la pantalla de tratamientos
+let _trMarcas = {};           // tratamientos por pieza del odontograma abierto
+let _trHistPaciente = null;   // paciente del historial abierto desde el expediente
 
-function _tre(id) { return document.getElementById(id); }
+function _$(id) { return document.getElementById(id); }
 
-function treEsc(v) {
+function trEsc(v) {
     return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function treBase() { return (window.ODENT && window.ODENT.base) || ''; }
-
-/** 'YYYY-MM-DD' → 'dd/mm/yyyy' (sin pasar por Date para evitar desfases de zona horaria). */
-function treFecha(iso) {
-    if (!iso) return '—';
-    const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
-    return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+function trBase() {
+    return (window.ODENT && window.ODENT.base) || (typeof BASE !== 'undefined' ? BASE : '');
 }
 
-function treFechaHora(iso) {
-    if (!iso) return '—';
-    const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
-    return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : iso;
+/** 'YYYY-MM-DD' → 'dd/mm/yyyy' sin pasar por Date (evita desfases de zona horaria) */
+function trFecha(iso) {
+    const m = String(iso ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : '—';
 }
 
-function treColones(n) {
-    return '₡' + Number(n || 0).toLocaleString('es-CR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-}
-
-function treHoyISO() {
+function trHoyISO() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function treBadge(estado) {
-    const e = TRE_ESTADOS[estado] || { texto: estado, icono: 'dot' };
-    return `<span class="badge-estado badge-${treEsc(estado)}"><i class="bi bi-${e.icono}"></i> ${e.texto}</span>`;
+/** Días desde hoy hasta una fecha 'YYYY-MM-DD' (negativo si ya pasó) */
+function trDiasHasta(iso) {
+    const hoy = new Date(trHoyISO() + 'T00:00:00');
+    const fin = new Date(iso + 'T00:00:00');
+    return Math.round((fin - hoy) / 86400000);
 }
 
-/** Frase amable según el avance y la fecha estimada. */
-function treFrase(t) {
+function trEstadoPill(estado) {
+    const e = TR_ESTADOS[estado] || { texto: estado, icono: 'dot' };
+    return `<span class="tr-estado tr-estado-${trEsc(estado)}"><i class="bi bi-${e.icono}"></i> ${e.texto}</span>`;
+}
+
+/** Frase amable según el estado, el avance y la fecha estimada */
+function trFrase(t) {
     if (t.estado === 'cancelado')  return 'Este plan fue cancelado.';
-    if (t.estado === 'finalizado') return '¡Tratamiento terminado! 🎉';
-    if (t.estado === 'pendiente' && t.sesiones_realizadas === 0) return 'Listo para comenzar.';
+    if (t.estado === 'finalizado') return '¡Tratamiento terminado! Buen trabajo.';
 
-    const falta = t.sesiones_total - t.sesiones_realizadas;
-    const base = falta <= 0 ? 'Todas las sesiones realizadas.'
-        : falta === 1 ? 'Solo falta 1 sesión.'
-        : `Faltan ${falta} sesiones.`;
-
-    const hoy = new Date(treHoyISO() + 'T00:00:00');
-    const fin = new Date(t.fecha_fin_estimada + 'T00:00:00');
-    const dias = Math.round((fin - hoy) / 86400000);
-    if (dias < 0)  return `${base} Superó la fecha estimada hace ${-dias} día${dias === -1 ? '' : 's'}.`;
-    if (dias === 0) return `${base} La fecha estimada es hoy.`;
-    if (dias <= 7) return `${base} Termina en ${dias} día${dias === 1 ? '' : 's'}.`;
-    return base;
+    const dias = trDiasHasta(t.fecha_fin_estimada);
+    if (t.estado === 'pendiente') {
+        const paraInicio = trDiasHasta(t.fecha_inicio);
+        if (paraInicio > 1)  return `Listo para comenzar el ${trFecha(t.fecha_inicio)}.`;
+        if (paraInicio === 1) return 'Listo para comenzar mañana.';
+        return 'Pendiente de iniciar.';
+    }
+    if (dias < 0)   return `Superó la fecha estimada hace ${-dias} día${dias === -1 ? '' : 's'}.`;
+    if (dias === 0) return 'La fecha estimada de finalización es hoy.';
+    if (dias <= 7)  return `Va por el ${t.progreso}% y termina en ${dias} día${dias === 1 ? '' : 's'}.`;
+    return `Va avanzando: ${t.progreso}% completado.`;
 }
 
-function treChipsPiezas(piezas) {
-    if (!piezas || !piezas.length) return '<span class="tre-sin-datos">Sin piezas</span>';
-    return piezas.map(p => `<span class="tre-chip-pieza">${p}</span>`).join('');
+function trChips(piezas) {
+    if (!piezas || !piezas.length) return '<span class="tr-sin-datos">Sin piezas</span>';
+    return piezas.map(p => `<span class="tr-chip">${p}</span>`).join('');
 }
 
-/** Llamada GET con manejo uniforme de errores. Devuelve el JSON o null. */
-async function treGet(accion, params = {}) {
+/** GET con manejo uniforme de errores. Devuelve el JSON o null (ya avisó al usuario). */
+async function trGet(accion, params = {}) {
     const qs = new URLSearchParams({ accion, ...params }).toString();
     try {
-        const res = await fetch(`${treBase()}/index.php?${qs}`, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+        const res = await fetch(`${trBase()}/index.php?${qs}`, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
         if (res.status === 401) {
             mostrarToast('Su sesión expiró. Inicie sesión nuevamente.', 'aviso');
-            setTimeout(() => location.href = treBase() + '/index.php?accion=logout&motivo=inactividad', 1500);
+            setTimeout(() => location.href = trBase() + '/index.php?accion=logout&motivo=inactividad', 1500);
             return null;
         }
         const data = await res.json();
-        if (data && data.ok === false) {
-            mostrarToast(data.error || 'No se pudo completar la consulta.', 'peligro', 6000);
+        if (!data.ok) {
+            mostrarToast(data.error || 'No pudimos completar la consulta.', 'peligro', 6000);
             return null;
         }
         return data;
@@ -104,473 +99,504 @@ async function treGet(accion, params = {}) {
 
 /* ══════════════════════════ Lista principal (TRA-02 esc. 1) ══════════════════════════ */
 
-function treProgreso(t) {
+function trTarjeta(t) {
+    const cancelado = t.estado === 'cancelado';
     return `
-        <div class="tratamiento-header"><span>${t.sesiones_realizadas} de ${t.sesiones_total} sesiones</span><span>${t.progreso}%</span></div>
-        <div class="barra-progreso"><div class="barra-relleno ${t.estado === 'cancelado' ? 'tre-cancelado' : ''}" style="width:${t.progreso}%;"></div></div>`;
-}
-
-function treTarjeta(t) {
-    const abierto = t.estado === 'pendiente' || t.estado === 'proceso';
-    return `
-    <div class="tarjeta tre-tarjeta">
-        <div class="tre-tarjeta-cab">
+    <div class="tarjeta tr-card ${cancelado ? 'cancelado' : ''}">
+        <div class="tr-card-cab">
             <div>
-                <h4>${treEsc(t.nombre)}</h4>
-                <p class="tre-paciente"><i class="bi bi-person"></i> ${treEsc(t.paciente)}</p>
+                <h4>${trEsc(t.nombre)}</h4>
+                <p class="tr-paciente"><i class="bi bi-person"></i> ${trEsc(t.paciente)}</p>
             </div>
-            ${treBadge(t.estado)}
+            ${trEstadoPill(t.estado)}
         </div>
-        ${treProgreso(t)}
-        <p class="tre-frase">${treEsc(treFrase(t))}</p>
-        <div class="tre-piezas">${treChipsPiezas(t.piezas)}</div>
-        <div class="tre-meta">
-            <div><strong>Inicio</strong><br>${treFecha(t.fecha_inicio)}</div>
-            <div><strong>Fin estimado</strong><br>${treFecha(t.fecha_fin_estimada)}</div>
-            <div><strong>Costo</strong><br>${treColones(t.costo_estimado)}</div>
-            <div><strong>Responsable</strong><br>${treEsc(t.odontologo)}</div>
+        <div>
+            <div class="tr-progreso-cab"><span>Avance</span><strong>${t.progreso}%</strong></div>
+            <div class="barra-progreso"><div class="barra-relleno" style="width:${t.progreso}%;"></div></div>
         </div>
-        ${t.id_expediente ? '<p class="tre-asoc"><i class="bi bi-link-45deg"></i> Vinculado al expediente y al odontograma</p>' : ''}
-        <div class="tre-acciones">
-            <button class="btn-outline-odent" onclick="treAbrirDetalle(${t.id_tratamiento})"><i class="bi bi-eye"></i> Ver detalle</button>
-            <button class="btn-outline-odent" onclick="treAbrirEstado(${t.id_tratamiento})"><i class="bi bi-pencil-square"></i> Estado</button>
-            ${abierto || !t.id_expediente ? `<button class="btn-outline-odent" onclick="treAbrirAsociar(${t.id_tratamiento})"><i class="bi bi-diagram-3"></i> ${t.id_expediente ? 'Reasociar' : 'Asociar'}</button>` : ''}
+        <p class="tr-frase">${trEsc(trFrase(t))}</p>
+        <div class="tr-piezas">${trChips(t.piezas)}</div>
+        <div class="tr-meta">
+            <div><strong>Inicio</strong><br>${trFecha(t.fecha_inicio)}</div>
+            <div><strong>Fin estimado</strong><br>${trFecha(t.fecha_fin_estimada)}</div>
+            <div><strong>Costo estimado</strong><br>${trEsc(t.costo_fmt)}</div>
+            <div><strong>Responsable</strong><br>${trEsc(t.odontologo)}</div>
+        </div>
+        <p class="tr-asoc ${t.asociado ? '' : 'pendiente'}"><i class="bi bi-link-45deg"></i>
+            ${t.asociado ? 'Vinculado al expediente y al odontograma' : 'Aún sin vincular al odontograma'}</p>
+        <div class="tr-acciones">
+            <button class="btn-outline-odent" onclick="trAbrirDetalle(${t.id})"><i class="bi bi-eye"></i> Ver detalle</button>
+            <button class="btn-outline-odent" onclick="trAbrirEstado(${t.id})"><i class="bi bi-pencil-square"></i> Actualizar estado</button>
+            ${cancelado ? '' : `<button class="btn-outline-odent" onclick="trAbrirAsociar(${t.id})"><i class="bi bi-diagram-3"></i> ${t.asociado ? 'Reasociar' : 'Asociar'}</button>`}
         </div>
     </div>`;
 }
 
-function treRenderLista(lista) {
-    const cont = _tre('trat-lista');
+function trRenderResumen(lista) {
+    const cont = _$('tr-resumen');
     if (!cont) return;
-    const cuenta = _tre('trat-contador');
+    if (!lista.length) { cont.innerHTML = ''; return; }
+
+    const cuenta = { pendiente: 0, en_proceso: 0, finalizado: 0, cancelado: 0 };
+    lista.forEach(t => { if (t.estado in cuenta) cuenta[t.estado]++; });
+
+    cont.innerHTML =
+        `<span class="tr-resumen-chip"><strong>${lista.length}</strong> en total</span>` +
+        Object.keys(cuenta).filter(k => cuenta[k] > 0).map(k =>
+            `<span class="tr-resumen-chip"><strong>${cuenta[k]}</strong> ${TR_ESTADOS[k].texto.toLowerCase()}</span>`).join('');
+}
+
+function trRenderLista(lista) {
+    const cont = _$('tr-lista');
+    if (!cont) return;
 
     if (!lista.length) {
-        const filtrando = (_tre('trat-buscar')?.value.trim() || _tre('trat-filtro-estado')?.value);
+        const filtrando = (_$('tr-buscar')?.value.trim() || _$('tr-filtro-estado')?.value);
         cont.innerHTML = `
-            <div class="tre-vacio">
+            <div class="tr-vacio">
                 <i class="bi bi-clipboard2-pulse"></i>
                 <h4>${filtrando ? 'No encontramos tratamientos con ese criterio' : 'Todavía no hay planes de tratamiento'}</h4>
                 <p>${filtrando ? 'Pruebe con otro nombre o quite el filtro de estado.' : 'Cree el primer plan para empezar a dar seguimiento a sus pacientes.'}</p>
-                ${filtrando ? '' : '<button class="btn-odent" onclick="treAbrirNuevo()"><i class="bi bi-plus-lg"></i> Crear el primer plan</button>'}
+                ${filtrando ? '' : '<button class="btn-odent" onclick="trAbrirNuevo()"><i class="bi bi-plus-lg"></i> Crear el primer plan</button>'}
             </div>`;
-        if (cuenta) cuenta.textContent = '';
+        trRenderResumen([]);
         return;
     }
-    cont.innerHTML = lista.map(treTarjeta).join('');
-    if (cuenta) cuenta.textContent = `${lista.length} tratamiento${lista.length === 1 ? '' : 's'}`;
+    cont.innerHTML = lista.map(trTarjeta).join('');
+    trRenderResumen(lista);
 }
 
-async function treCargar() {
-    const cont = _tre('trat-lista');
+async function trCargar() {
+    const cont = _$('tr-lista');
     if (!cont) return;
-    cont.innerHTML = '<div class="tre-cargando"><span class="spinner-mini"></span> Cargando tratamientos…</div>';
+    cont.innerHTML = '<div class="tr-vacio"><span class="spinner-mini"></span> Cargando los planes de tratamiento…</div>';
 
-    const data = await treGet('tratamientos.listar', {
-        q: _tre('trat-buscar')?.value.trim() || '',
-        estado: _tre('trat-filtro-estado')?.value || '',
+    const data = await trGet('tratamientos.listar', {
+        q: _$('tr-buscar')?.value.trim() || '',
+        estado: _$('tr-filtro-estado')?.value || '',
     });
     if (!data) {
-        cont.innerHTML = '<div class="tre-vacio"><i class="bi bi-wifi-off"></i><h4>No pudimos cargar los tratamientos</h4><button class="btn-outline-odent" onclick="treCargar()">Reintentar</button></div>';
+        cont.innerHTML = '<div class="tr-vacio"><i class="bi bi-wifi-off"></i><h4>No pudimos cargar los tratamientos</h4><button class="btn-outline-odent" onclick="trCargar()">Reintentar</button></div>';
         return;
     }
-    _treLista = Array.isArray(data) ? data : [];
-    treRenderLista(_treLista);
+    _trLista = data.data || [];
+    trRenderLista(_trLista);
 }
 
-function treBuscar() { clearTimeout(_treTimerBusqueda); treCargar(); }
-function treBuscarDiferido() { clearTimeout(_treTimerBusqueda); _treTimerBusqueda = setTimeout(treCargar, 350); }
-
-function treLimpiarFiltros() {
-    if (_tre('trat-buscar')) _tre('trat-buscar').value = '';
-    if (_tre('trat-filtro-estado')) _tre('trat-filtro-estado').value = '';
-    treCargar();
+function trLimpiarFiltros() {
+    if (_$('tr-buscar')) _$('tr-buscar').value = '';
+    if (_$('tr-filtro-estado')) _$('tr-filtro-estado').value = '';
+    trCargar();
 }
 
 /* ══════════════════════════ Selector de piezas (reutilizable) ══════════════════════════ */
 
-function treRenderPicker(idContenedor, seleccionadas = []) {
+function trRenderPicker(idContenedor, seleccionadas = []) {
     const sel = new Set(seleccionadas.map(Number));
     const fila = nums => nums.map(n =>
-        `<div class="diente tre-pieza ${sel.has(n) ? 'seleccionado' : ''}" data-pieza="${n}" role="button" tabindex="0"
-              onclick="treTogglePieza(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();treTogglePieza(this);}">
-            <i class="bi bi-circle-fill"></i><span>${n}</span></div>`).join('');
+        `<button type="button" class="tr-pieza ${sel.has(n) ? 'activa' : ''}" data-pieza="${n}"
+                 aria-pressed="${sel.has(n)}" onclick="trTogglePieza(this)">${n}</button>`).join('');
 
-    _tre(idContenedor).innerHTML = `
-        <p class="tre-picker-etq">MAXILAR SUPERIOR</p>
-        <div class="odontograma-fila">${fila(TRE_SUPERIOR)}</div>
-        <div class="tre-picker-linea"></div>
-        <div class="odontograma-fila">${fila(TRE_INFERIOR)}</div>
-        <p class="tre-picker-etq">MAXILAR INFERIOR</p>`;
-    treActualizarResumenPiezas(idContenedor);
+    _$(idContenedor).innerHTML = `
+        <p class="tr-picker-etq">MAXILAR SUPERIOR</p>
+        <div class="tr-picker-fila">${fila(TR_SUPERIOR)}</div>
+        <div class="tr-picker-linea"></div>
+        <div class="tr-picker-fila">${fila(TR_INFERIOR)}</div>
+        <p class="tr-picker-etq" style="margin:8px 0 0;">MAXILAR INFERIOR</p>`;
+    trActualizarResumenPiezas(idContenedor);
 }
 
-function treTogglePieza(el) {
-    el.classList.toggle('seleccionado');
-    const cont = el.closest('.tre-picker');
-    if (cont) treActualizarResumenPiezas(cont.id);
+function trTogglePieza(el) {
+    const activa = el.classList.toggle('activa');
+    el.setAttribute('aria-pressed', activa);
+    const cont = el.closest('.tr-picker');
+    if (cont) trActualizarResumenPiezas(cont.id);
 }
 
-function treLeerPiezas(idContenedor) {
-    return [...document.querySelectorAll(`#${idContenedor} .tre-pieza.seleccionado`)]
+function trLeerPiezas(idContenedor) {
+    return [...document.querySelectorAll(`#${idContenedor} .tr-pieza.activa`)]
         .map(el => Number(el.dataset.pieza)).sort((a, b) => a - b);
 }
 
-function treActualizarResumenPiezas(idContenedor) {
-    const resumen = _tre(idContenedor + '-resumen');
+function trActualizarResumenPiezas(idContenedor) {
+    const resumen = _$(idContenedor + '-resumen');
     if (!resumen) return;
-    const p = treLeerPiezas(idContenedor);
+    const p = trLeerPiezas(idContenedor);
     resumen.innerHTML = p.length
-        ? `Piezas seleccionadas (${p.length}): ${treChipsPiezas(p)}`
-        : 'Haga clic en las piezas dentales involucradas.';
+        ? `Piezas seleccionadas (${p.length}): ${trChips(p)}`
+        : 'Toque las piezas dentales involucradas en el tratamiento.';
+}
+
+/** Muestra u oculta el control de avance según el estado elegido ('nt' = nuevo, 'te' = estado) */
+function trAlCambiarEstado(prefijo) {
+    const grupo = _$(prefijo + '-progreso-grupo');
+    if (grupo) grupo.style.display = _$(prefijo + '-estado').value === 'en_proceso' ? '' : 'none';
 }
 
 /* ══════════════════════════ Nuevo plan (TRA-01) ══════════════════════════ */
 
-async function treCargarCatalogo() {
-    if (_treCatalogoListo) return true;
-    const data = await treGet('tratamientos.catalogos');
-    if (!data) return false;
-    const sel = _tre('nt-paciente');
-    sel.innerHTML = '<option value="">Seleccione un paciente</option>' +
-        (data.pacientes || []).map(p =>
-            `<option value="${p.id_paciente}">${treEsc(p.nombre_completo)} — ${treEsc(p.identificacion || 's/ced.')}</option>`).join('');
-    _treCatalogoListo = true;
-    if (!(data.pacientes || []).length) {
-        mostrarToast('Aún no hay pacientes con perfil clínico. Complételo desde Expedientes.', 'aviso', 6000);
+async function trCargarPacientes(idPreseleccionado = null) {
+    const data = await trGet('tratamientos.catalogos');
+    if (!data) return;
+
+    const pacientes = data.pacientes || [];
+    _$('nt-paciente').innerHTML = '<option value="">Seleccione un paciente</option>' +
+        pacientes.map(p => `<option value="${p.id}">${trEsc(p.nombre)} — ${trEsc(p.cedula || 's/ced.')}</option>`).join('');
+
+    if (!pacientes.length) {
+        mostrarToast('Todavía no hay pacientes activos. Regístrelos desde Usuarios con el rol de paciente.', 'info', 6000);
     }
-    return true;
+    if (idPreseleccionado) _$('nt-paciente').value = String(idPreseleccionado);
 }
 
-async function treAbrirNuevo(idPacientePreseleccionado = null) {
-    _tre('nt-paciente').value = '';
-    ['nt-nombre', 'nt-descripcion', 'nt-costo'].forEach(id => _tre(id).value = '');
-    _tre('nt-sesiones').value = 1;
-    _tre('nt-inicio').value = treHoyISO();
-    _tre('nt-fin').value = '';
-    _tre('nt-estado').value = 'pendiente';
-    treRenderPicker('nt-picker', []);
+async function trAbrirNuevo(idPaciente = null) {
+    ['nt-nombre', 'nt-descripcion', 'nt-costo', 'nt-observaciones'].forEach(id => _$(id).value = '');
+    _$('nt-inicio').value = trHoyISO();
+    _$('nt-fin').value = '';
+    _$('nt-estado').value = 'pendiente';
+    _$('nt-progreso').value = 25;
+    _$('nt-progreso-valor').textContent = '25%';
+    trAlCambiarEstado('nt');
+    trRenderPicker('nt-piezas', []);
     abrirModal('modal-nuevo-tratamiento');
 
-    if (await treCargarCatalogo() && idPacientePreseleccionado) {
-        _tre('nt-paciente').value = String(idPacientePreseleccionado);
-    }
-    _tre('nt-nombre').focus();
+    await trCargarPacientes(idPaciente);
+    _$('nt-nombre').focus();
 }
 
-async function treGuardarNuevo() {
+async function trGuardarNuevo() {
+    const estado = _$('nt-estado').value;
     const datos = {
-        id_paciente:        Number(_tre('nt-paciente').value) || 0,
-        nombre:             _tre('nt-nombre').value.trim(),
-        descripcion:        _tre('nt-descripcion').value.trim(),
-        costo_estimado:     _tre('nt-costo').value.trim(),
-        fecha_inicio:       _tre('nt-inicio').value,
-        fecha_fin_estimada: _tre('nt-fin').value,
-        estado:             _tre('nt-estado').value,
-        sesiones_total:     Number(_tre('nt-sesiones').value) || 0,
-        piezas:             treLeerPiezas('nt-picker'),
+        id_paciente:        Number(_$('nt-paciente').value) || 0,
+        nombre:             _$('nt-nombre').value.trim(),
+        descripcion:        _$('nt-descripcion').value.trim(),
+        costo_estimado:     _$('nt-costo').value.trim(),
+        fecha_inicio:       _$('nt-inicio').value,
+        fecha_fin_estimada: _$('nt-fin').value,
+        estado,
+        progreso:           estado === 'en_proceso' ? Number(_$('nt-progreso').value) : null,
+        observaciones:      _$('nt-observaciones').value.trim(),
+        piezas:             trLeerPiezas('nt-piezas'),
     };
 
-    // Escenario 2: avisar de inmediato qué falta (el servidor vuelve a validar)
+    // Escenario 2: decir de una vez todo lo que falta (el servidor vuelve a validar)
     const faltan = [];
-    if (!datos.id_paciente)       faltan.push('paciente');
-    if (!datos.nombre)            faltan.push('nombre del tratamiento');
-    if (!datos.piezas.length)     faltan.push('piezas dentales');
-    if (!datos.descripcion)       faltan.push('descripción');
-    if (datos.costo_estimado === '') faltan.push('costo estimado');
-    if (!datos.fecha_inicio)      faltan.push('fecha de inicio');
-    if (!datos.fecha_fin_estimada) faltan.push('fecha estimada de finalización');
+    if (!datos.id_paciente)            faltan.push('paciente');
+    if (!datos.nombre)                 faltan.push('nombre del tratamiento');
+    if (!datos.piezas.length)          faltan.push('piezas dentales');
+    if (!datos.descripcion)            faltan.push('descripción');
+    if (datos.costo_estimado === '')   faltan.push('costo estimado');
+    if (!datos.fecha_inicio)           faltan.push('fecha de inicio');
+    if (!datos.fecha_fin_estimada)     faltan.push('fecha estimada de finalización');
     if (faltan.length) {
-        return mostrarToast('Para guardar el tratamiento falta completar: ' + faltan.join(', ') + '.', 'aviso', 6000);
+        return mostrarToast('Para guardar el plan falta completar: ' + faltan.join(', ') + '.', 'aviso', 6000);
     }
     if (datos.fecha_fin_estimada < datos.fecha_inicio) {
-        return mostrarToast('La fecha estimada de finalización no puede ser anterior a la de inicio.', 'aviso', 6000);
+        return mostrarToast('La fecha estimada de finalización no puede ser anterior a la fecha de inicio.', 'aviso', 6000);
     }
 
     await guardarJSON('tratamientos.crear', datos, {
-        boton: _tre('nt-btn-guardar'),
+        boton: _$('nt-btn-guardar'),
         cerrarModal: 'modal-nuevo-tratamiento',
         exito: 'Listo, el plan de tratamiento quedó guardado.',
         recargar: ['inicio'],
-        alExito: () => treCargar(),
+        alExito: () => trCargar(),
     });
 }
 
-/** Escenario 3: descarta lo escrito y vuelve al listado sin guardar. */
-function treCancelarNuevo() {
+/** Escenario 3: descarta lo escrito y vuelve al listado sin guardar nada */
+function trCancelarNuevo() {
     cerrarModal('modal-nuevo-tratamiento');
 }
 
-/* ══════════════════════════ Detalle e historial del plan ══════════════════════════ */
+/* ══════════════════════════ Detalle del tratamiento ══════════════════════════ */
 
-function treLineaHistorial(h) {
-    const cambio = h.estado_anterior
-        ? `${(TRE_ESTADOS[h.estado_anterior] || {}).texto || h.estado_anterior} → <strong>${(TRE_ESTADOS[h.estado_nuevo] || {}).texto || h.estado_nuevo}</strong>`
-        : `Creado como <strong>${(TRE_ESTADOS[h.estado_nuevo] || {}).texto || h.estado_nuevo}</strong>`;
+function trLineaHistorial(h) {
     return `
-        <div class="tre-linea">
-            <div class="tre-linea-punto"></div>
-            <div>
-                <div class="tre-linea-cab">${cambio} · ${h.sesiones_realizadas} sesión(es)</div>
-                <div class="tre-linea-sub">${treFechaHora(h.created_at)} · ${treEsc(h.odontologo)}</div>
-                ${h.observaciones ? `<div class="tre-linea-obs">${treEsc(h.observaciones)}</div>` : ''}
-            </div>
+        <div class="tr-linea">
+            <div class="tr-linea-punto"></div>
+            <div class="tr-linea-cab">${trEsc(h.titulo)}</div>
+            <div class="tr-linea-sub">${trEsc(h.fecha)} · ${trEsc(h.usuario)}</div>
+            ${h.observaciones ? `<div class="tr-linea-obs">${trEsc(h.observaciones)}</div>` : ''}
         </div>`;
 }
 
-async function treAbrirDetalle(id) {
-    const data = await treGet('tratamientos.detalle', { id });
+async function trAbrirDetalle(id) {
+    const data = await trGet('tratamientos.detalle', { id });
     if (!data) return;
-    const t = data.tratamiento;
-    _treActual = t;
+    const t = data.data;
 
-    _tre('td-titulo').textContent = t.nombre;
-    _tre('td-cuerpo').innerHTML = `
-        <div class="tre-detalle-cab">
-            <div><p class="tre-paciente"><i class="bi bi-person"></i> ${treEsc(t.paciente)} <small>· ${treEsc(t.paciente_cedula || '')}</small></p></div>
-            ${treBadge(t.estado)}
-        </div>
-        ${treProgreso(t)}
-        <p class="tre-frase">${treEsc(treFrase(t))}</p>
-
-        <div class="tre-meta tre-meta-4">
-            <div><strong>Inicio</strong><br>${treFecha(t.fecha_inicio)}</div>
-            <div><strong>Fin estimado</strong><br>${treFecha(t.fecha_fin_estimada)}</div>
-            <div><strong>Costo estimado</strong><br>${treColones(t.costo_estimado)}</div>
-            <div><strong>Responsable</strong><br>${treEsc(t.odontologo)}</div>
+    _$('td-contenido').innerHTML = `
+        <div class="tr-detalle-cab">
+            <div>
+                <h4 style="margin:0 0 2px;color:var(--azul-odent);">${trEsc(t.nombre)}</h4>
+                <p class="tr-paciente"><i class="bi bi-person"></i> ${trEsc(t.paciente)}
+                    ${t.paciente_cedula ? `<small>· ${trEsc(t.paciente_cedula)}</small>` : ''}</p>
+            </div>
+            ${trEstadoPill(t.estado)}
         </div>
 
-        <h5 class="tre-sub">Piezas dentales</h5>
-        <div class="tre-piezas">${treChipsPiezas(t.piezas)}</div>
-        <p class="tre-asoc">${t.id_expediente
-            ? `<i class="bi bi-link-45deg"></i> Vinculado al expediente${t.asociado_at ? ' el ' + treFechaHora(t.asociado_at) : ''}`
-            : '<i class="bi bi-link-45deg"></i> Aún no está vinculado al expediente ni al odontograma'}</p>
+        <div class="tr-progreso-cab"><span>Avance</span><strong>${t.progreso}%</strong></div>
+        <div class="barra-progreso"><div class="barra-relleno" style="width:${t.progreso}%;"></div></div>
+        <p class="tr-frase" style="margin-top:8px;">${trEsc(trFrase(t))}</p>
 
-        <h5 class="tre-sub">Descripción</h5>
-        <p class="tre-texto">${treEsc(t.descripcion)}</p>
-        ${t.observaciones ? `<h5 class="tre-sub">Última observación</h5><p class="tre-texto">${treEsc(t.observaciones)}</p>` : ''}
+        <div class="tr-meta" style="margin-top:14px;">
+            <div><strong>Inicio</strong><br>${trFecha(t.fecha_inicio)}</div>
+            <div><strong>Fin estimado</strong><br>${trFecha(t.fecha_fin_estimada)}</div>
+            <div><strong>Costo estimado</strong><br>${trEsc(t.costo_fmt)}</div>
+            <div><strong>Odontólogo responsable</strong><br>${trEsc(t.odontologo)}</div>
+        </div>
 
-        <h5 class="tre-sub">Historial de cambios</h5>
-        <div class="tre-timeline">${(data.historial || []).map(treLineaHistorial).join('') || '<p class="tre-sin-datos">Sin movimientos.</p>'}</div>`;
+        <h5 class="tr-sub">Piezas dentales</h5>
+        <div class="tr-piezas">${trChips(t.piezas)}</div>
+        <p class="tr-asoc ${t.asociado ? '' : 'pendiente'}" style="margin-top:8px;"><i class="bi bi-link-45deg"></i>
+            ${t.asociado
+                ? 'Vinculado al expediente' + (t.asociado_el ? ' el ' + trEsc(t.asociado_el) : '') + ' y visible en el odontograma'
+                : 'Aún no está vinculado al expediente ni al odontograma'}</p>
 
-    const acciones = _tre('td-acciones');
-    if (acciones) acciones.style.display = window.TRE_PUEDE_EDITAR === false ? 'none' : '';
-    abrirModal('modal-trat-detalle');
+        <h5 class="tr-sub">Descripción</h5>
+        <p class="tr-texto">${trEsc(t.descripcion)}</p>
+        ${t.observaciones ? `<h5 class="tr-sub">Última observación</h5><p class="tr-texto">${trEsc(t.observaciones)}</p>` : ''}
+
+        <h5 class="tr-sub">Historial de cambios</h5>
+        <div class="tr-timeline">${(data.historial || []).map(trLineaHistorial).join('') || '<p class="tr-sin-datos">Todavía no hay movimientos.</p>'}</div>
+
+        <div class="tr-acciones" style="margin-top:18px;">
+            <button class="btn-outline-odent" onclick="trDesdeDetalle('estado', ${t.id})"><i class="bi bi-pencil-square"></i> Actualizar estado</button>
+            ${t.estado === 'cancelado' ? '' : `<button class="btn-outline-odent" onclick="trDesdeDetalle('asociar', ${t.id})"><i class="bi bi-diagram-3"></i> ${t.asociado ? 'Reasociar' : 'Asociar al odontograma'}</button>`}
+        </div>`;
+    abrirModal('modal-tr-detalle');
 }
 
-function treDesdeDetalle(accion) {
-    if (!_treActual) return;
-    const id = _treActual.id_tratamiento;
-    cerrarModal('modal-trat-detalle');
-    if (accion === 'estado') treAbrirEstado(id);
-    if (accion === 'asociar') treAbrirAsociar(id);
+function trDesdeDetalle(accion, id) {
+    cerrarModal('modal-tr-detalle');
+    if (accion === 'estado') trAbrirEstado(id);
+    if (accion === 'asociar') trAbrirAsociar(id);
+}
+
+/** Busca el tratamiento en la lista cargada o, si no está (p. ej. se abre desde otra pantalla), en el servidor */
+async function trObtener(id) {
+    const local = _trLista.find(x => x.id === id);
+    if (local) return local;
+    const data = await trGet('tratamientos.detalle', { id });
+    return data ? data.data : null;
 }
 
 /* ══════════════════════════ Actualizar estado (TRA-02 esc. 2 y 3) ══════════════════════════ */
 
-async function treAbrirEstado(id) {
-    let t = _treLista.find(x => x.id_tratamiento === id);
-    if (!t) {
-        const d = await treGet('tratamientos.detalle', { id });
-        if (!d) return;
-        t = d.tratamiento;
-    }
-    _treActual = t;
-    _tre('te-id').value = t.id_tratamiento;
-    _tre('te-titulo').textContent = t.nombre;
-    _tre('te-paciente').textContent = t.paciente;
-    _tre('te-estado').value = t.estado;
-    _tre('te-sesiones').value = t.sesiones_realizadas;
-    _tre('te-sesiones').max = t.sesiones_total;
-    _tre('te-sesiones-total').textContent = t.sesiones_total;
-    _tre('te-observaciones').value = '';
-    treEstadoCambio();
-    abrirModal('modal-trat-estado');
+async function trAbrirEstado(id) {
+    const t = await trObtener(id);
+    if (!t) return;
+
+    _$('te-id').value = t.id;
+    _$('te-resumen').innerHTML = `<strong>${trEsc(t.nombre)}</strong> · ${trEsc(t.paciente)}`;
+    _$('te-estado').value = t.estado;
+    const avance = (t.progreso > 0 && t.progreso < 100) ? t.progreso : 25;
+    _$('te-progreso').value = avance;
+    _$('te-progreso-valor').textContent = avance + '%';
+    _$('te-observaciones').value = '';
+    trAlCambiarEstado('te');
+    abrirModal('modal-tr-estado');
 }
 
-/** Ajusta la ayuda y los campos según el estado elegido. */
-function treEstadoCambio() {
-    const estado = _tre('te-estado').value;
-    const total = Number(_tre('te-sesiones').max) || 1;
-    const campo = _tre('te-sesiones');
-    const ayuda = _tre('te-ayuda');
-
-    if (estado === 'finalizado') {
-        campo.value = total;
-        campo.disabled = true;
-        ayuda.textContent = 'Al finalizar se marcan todas las sesiones como realizadas. Agregue una observación de cierre.';
-    } else if (estado === 'cancelado') {
-        campo.disabled = false;
-        ayuda.textContent = 'Cuéntenos el motivo de la cancelación en las observaciones (es obligatorio).';
-    } else {
-        campo.disabled = false;
-        ayuda.textContent = estado === 'pendiente'
-            ? 'El plan queda a la espera de comenzar.'
-            : 'Registre cuántas sesiones lleva el paciente.';
-    }
-}
-
-async function treGuardarEstado() {
-    const estado = _tre('te-estado').value;
-    const obs = _tre('te-observaciones').value.trim();
-    if ((estado === 'cancelado' || estado === 'finalizado') && !obs) {
-        return mostrarToast('Agregue una observación para ' + (estado === 'cancelado' ? 'cancelar' : 'finalizar') + ' el tratamiento.', 'aviso', 6000);
-    }
+async function trGuardarEstado() {
+    const estado = _$('te-estado').value;
     await guardarJSON('tratamientos.estado', {
-        id_tratamiento: Number(_tre('te-id').value),
+        id: Number(_$('te-id').value),
         estado,
-        sesiones_realizadas: Number(_tre('te-sesiones').value) || 0,
-        observaciones: obs,
+        progreso: estado === 'en_proceso' ? Number(_$('te-progreso').value) : null,
+        observaciones: _$('te-observaciones').value.trim(),
     }, {
-        boton: _tre('te-btn-guardar'),
-        cerrarModal: 'modal-trat-estado',
-        exito: estado === 'finalizado' ? '¡Tratamiento finalizado! Buen trabajo.' : 'Estado del tratamiento actualizado.',
+        boton: _$('te-btn-guardar'),
+        cerrarModal: 'modal-tr-estado',
+        exito: estado === 'finalizado' ? '¡Tratamiento finalizado! Buen trabajo.' : 'Listo, el tratamiento quedó actualizado.',
         recargar: ['inicio'],
-        alExito: () => { treCargar(); treRefrescarOdontogramaSiAbierto(); },
+        alExito: () => { trCargar(); trRefrescarOdontograma(); },
     });
-}
-
-/** TRA-02 esc. 3: descarta los cambios, la información anterior se conserva. */
-function treCancelarEstado() {
-    cerrarModal('modal-trat-estado');
 }
 
 /* ══════════════════════════ Asociar a expediente y odontograma (TRA-03) ══════════════════════════ */
 
-async function treAbrirAsociar(id) {
-    let t = _treLista.find(x => x.id_tratamiento === id);
-    if (!t) {
-        const d = await treGet('tratamientos.detalle', { id });
-        if (!d) return;
-        t = d.tratamiento;
-    }
-    _treActual = t;
-    _tre('ta-id').value = t.id_tratamiento;
-    _tre('ta-titulo').textContent = t.nombre;
-    _tre('ta-paciente').textContent = t.paciente;
-    treRenderPicker('ta-picker', t.piezas || []);
-    abrirModal('modal-trat-asociar');
+async function trAbrirAsociar(id) {
+    const t = await trObtener(id);
+    if (!t) return;
+
+    _$('ta-id').value = t.id;
+    _$('ta-resumen').innerHTML = `<strong>${trEsc(t.nombre)}</strong> · ${trEsc(t.paciente)}<br>
+        Marque las piezas involucradas. El avance del tratamiento se verá sobre cada diente del odontograma.`;
+    trRenderPicker('ta-piezas', t.piezas || []);
+    abrirModal('modal-tr-asociar');
 }
 
-async function treGuardarAsociar() {
-    const piezas = treLeerPiezas('ta-picker');
-    // Escenario 3: sin piezas no se asocia
+async function trGuardarAsociacion() {
+    const piezas = trLeerPiezas('ta-piezas');
+    // Escenario 3: sin piezas no se puede asociar
     if (!piezas.length) {
-        return mostrarToast('Debe seleccionar al menos una pieza dental antes de asociar el tratamiento.', 'aviso', 6000);
+        return mostrarToast('Debe seleccionar al menos una pieza dental antes de continuar.', 'aviso', 6000);
     }
     await guardarJSON('tratamientos.asociar', {
-        id_tratamiento: Number(_tre('ta-id').value),
+        id: Number(_$('ta-id').value),
         piezas,
     }, {
-        boton: _tre('ta-btn-guardar'),
-        cerrarModal: 'modal-trat-asociar',
-        exito: 'Tratamiento asociado al expediente y marcado en el odontograma.',
-        alExito: () => { treCargar(); treRefrescarOdontogramaSiAbierto(); },
+        boton: _$('ta-btn-guardar'),
+        cerrarModal: 'modal-tr-asociar',
+        exito: 'Listo: el tratamiento quedó asociado al expediente y al odontograma.',
+        alExito: () => { trCargar(); trRefrescarOdontograma(); },
     });
 }
 
 /* ══════════════════════════ Historial del paciente (TRA-04) ══════════════════════════ */
 
-let _treHistPaciente = null;   // { id_paciente, nombre }
-
-/** Se invoca desde el botón "Ver Historial de Tratamientos" del expediente. */
+/** Lo llama el botón "Ver Historial de Tratamientos" del expediente */
 function treAbrirHistorial() {
     const pac = (typeof _expPacienteActual !== 'undefined') ? _expPacienteActual : null;
     if (!pac || !pac.id_paciente) {
         return mostrarToast('Primero abra el expediente de un paciente.', 'aviso');
     }
-    _treHistPaciente = { id_paciente: pac.id_paciente, nombre: pac.nombre_completo };
-    _tre('th-paciente').textContent = pac.nombre_completo || '';
-    _tre('th-filtro').value = '';
-    abrirModal('modal-trat-historial');
-    treCargarHistorial();
+    if (!_$('modal-tr-historial')) {
+        return mostrarToast('Falta el formulario del historial. Revise tratamientos_modales.php.', 'peligro', 6000);
+    }
+    _trHistPaciente = { id_paciente: pac.id_paciente, nombre: pac.nombre_completo };
+    _$('th-paciente').textContent = pac.nombre_completo || '';
+    _$('th-filtro').value = '';
+    abrirModal('modal-tr-historial');
+    trCargarHistorial();
 }
 
-async function treCargarHistorial() {
-    if (!_treHistPaciente) return;
-    const cont = _tre('th-lista');
-    cont.innerHTML = '<div class="tre-cargando"><span class="spinner-mini"></span> Cargando historial…</div>';
+async function trCargarHistorial() {
+    if (!_trHistPaciente) return;
+    const cont = _$('th-lista');
+    cont.innerHTML = '<div class="tr-vacio"><span class="spinner-mini"></span> Cargando el historial…</div>';
 
-    const data = await treGet('tratamientos.historial', {
-        id_paciente: _treHistPaciente.id_paciente,
-        estado: _tre('th-filtro').value,
+    const data = await trGet('tratamientos.listar', {
+        id_paciente: _trHistPaciente.id_paciente,
+        estado: _$('th-filtro').value,
     });
-    if (!data) { cont.innerHTML = '<p class="tre-sin-datos">No se pudo cargar el historial.</p>'; return; }
-
-    if (!data.length) {
-        const filtrado = !!_tre('th-filtro').value;
-        cont.innerHTML = `<div class="tre-vacio tre-vacio-chico"><i class="bi bi-clipboard2"></i>
-            <h4>${filtrado ? 'No hay tratamientos con ese estado' : 'Este paciente no cuenta con tratamientos registrados'}</h4></div>`;
+    if (!data) {
+        cont.innerHTML = '<p class="tr-sin-datos" style="text-align:center;">No pudimos cargar el historial.</p>';
         return;
     }
-    cont.innerHTML = `<div class="tabla-scroll"><table class="tabla-odent">
-        <thead><tr><th>Tratamiento</th><th>Fechas</th><th>Odontólogo</th><th>Sesiones</th><th>Estado final</th></tr></thead>
-        <tbody>${data.map(t => `
+
+    const lista = data.data || [];
+    if (!lista.length) {
+        const filtrado = !!_$('th-filtro').value;
+        cont.innerHTML = `<div class="tr-vacio"><i class="bi bi-clipboard2"></i>
+            <h4>${filtrado ? 'No hay tratamientos con ese estado' : 'Este paciente aún no cuenta con tratamientos registrados'}</h4>
+            <p>${filtrado ? 'Pruebe con otro estado o quite el filtro.' : 'Cuando se cree un plan para este paciente aparecerá aquí.'}</p></div>`;
+        return;
+    }
+
+    cont.innerHTML = `<div class="tr-tabla-scroll"><table class="tabla-odent">
+        <thead><tr><th>Tratamiento</th><th>Fechas</th><th>Odontólogo responsable</th><th>Avance</th><th>Estado</th></tr></thead>
+        <tbody>${lista.map(t => `
             <tr>
-                <td><strong>${treEsc(t.nombre)}</strong><br><span class="tre-piezas">${treChipsPiezas(t.piezas)}</span></td>
-                <td>${treFecha(t.fecha_inicio)}<br><small>→ ${treFecha(t.fecha_fin_estimada)}</small></td>
-                <td>${treEsc(t.odontologo)}</td>
-                <td>${t.sesiones_realizadas}/${t.sesiones_total}</td>
-                <td>${treBadge(t.estado)}</td>
+                <td><strong>${trEsc(t.nombre)}</strong><div class="tr-piezas" style="margin-top:4px;">${trChips(t.piezas)}</div></td>
+                <td>${trFecha(t.fecha_inicio)}<br><small>hasta ${trFecha(t.fecha_fin_estimada)}</small></td>
+                <td>${trEsc(t.odontologo)}</td>
+                <td>${t.progreso}%</td>
+                <td>${trEstadoPill(t.estado)}</td>
             </tr>`).join('')}
         </tbody></table></div>`;
 }
 
-/** Desde el historial se puede saltar a crear un plan para ese mismo paciente. */
-function treNuevoDesdeHistorial() {
-    if (!_treHistPaciente) return;
-    const id = _treHistPaciente.id_paciente;
-    cerrarModal('modal-trat-historial');
+/** Desde el historial se puede crear un plan nuevo para ese mismo paciente */
+function trNuevoDesdeHistorial() {
+    if (!_trHistPaciente) return;
+    const id = _trHistPaciente.id_paciente;
+    cerrarModal('modal-tr-historial');
     mostrarPagina('tratamientos');
-    treAbrirNuevo(id);
+    trAbrirNuevo(id);
 }
 
 /* ══════════════════════════ Odontograma (TRA-03 esc. 2) ══════════════════════════ */
 
-let _treMarcasPiezas = {};
-
-/** Pinta en cada diente un indicador del tratamiento asociado. */
+/** Pinta sobre cada diente un punto con el estado del tratamiento. Lo llama el odontograma al cargar. */
 async function treOdontograma(idExpediente) {
     if (!idExpediente) return;
-    const data = await treGet('tratamientos.odontograma', { id_expediente: idExpediente });
+    const data = await trGet('tratamientos.odontograma', { id_expediente: idExpediente });
     if (!data) return;
-    _treMarcasPiezas = data.piezas || {};
+    _trMarcas = data.piezas || {};
 
     document.querySelectorAll('#pagina-odontograma .diente').forEach(el => {
-        el.classList.remove('con-trat', 'trat-pendiente', 'trat-proceso', 'trat-finalizado');
-        el.querySelector('.tre-marca')?.remove();
-        el.removeAttribute('data-trat-titulo');
+        el.querySelector('.tr-marca')?.remove();
+        el.removeAttribute('title');
     });
 
-    Object.entries(_treMarcasPiezas).forEach(([pieza, trats]) => {
+    const prioridad = { en_proceso: 3, pendiente: 2, finalizado: 1 };
+    Object.entries(_trMarcas).forEach(([pieza, lista]) => {
         const el = document.getElementById('diente-' + pieza);
-        if (!el || !trats.length) return;
-        // si hay varios, manda el más "activo": proceso > pendiente > finalizado
-        const prioridad = { proceso: 3, pendiente: 2, finalizado: 1 };
-        const principal = [...trats].sort((a, b) => (prioridad[b.estado] || 0) - (prioridad[a.estado] || 0))[0];
+        if (!el || !lista.length) return;
 
-        el.classList.add('con-trat', 'trat-' + principal.estado);
+        // si una pieza tiene varios planes, el punto muestra el más activo
+        const principal = [...lista].sort((a, b) => (prioridad[b.estado] || 0) - (prioridad[a.estado] || 0))[0];
         const marca = document.createElement('span');
-        marca.className = 'tre-marca';
-        marca.textContent = principal.estado === 'finalizado' ? '✓' : principal.progreso + '%';
+        marca.className = 'tr-marca tr-marca-' + principal.estado;
+        marca.textContent = principal.estado === 'finalizado' ? '✓' : '';
         el.appendChild(marca);
-        el.title = trats.map(t => `${t.nombre} — ${(TRE_ESTADOS[t.estado] || {}).texto || t.estado} (${t.progreso}%)`).join('\n');
+        el.title = lista.map(t => `${t.nombre} — ${(TR_ESTADOS[t.estado] || {}).texto || t.estado}`).join('\n');
     });
+
+    trAgregarLeyendaOdontograma();
 }
 
-function treRefrescarOdontogramaSiAbierto() {
-    if (typeof _odoExpediente !== 'undefined' && _odoExpediente && _tre('pagina-odontograma')?.classList.contains('activa')) {
+function trAgregarLeyendaOdontograma() {
+    const cont = document.querySelector('#pagina-odontograma .odontograma-container');
+    if (!cont || cont.querySelector('.tr-leyenda')) return;
+    cont.insertAdjacentHTML('beforeend', `
+        <div class="tr-leyenda">
+            <strong>Tratamientos:</strong>
+            <span><i style="background:#f59e0b;"></i> Pendiente</span>
+            <span><i style="background:#2563eb;"></i> En proceso</span>
+            <span><i style="background:var(--verde-odent);"></i> Finalizado</span>
+        </div>`);
+}
+
+function trRefrescarOdontograma() {
+    if (typeof _odoExpediente !== 'undefined' && _odoExpediente && _$('pagina-odontograma')?.classList.contains('activa')) {
         treOdontograma(_odoExpediente.id_expediente);
     }
 }
 
+/** En el panel de detalle de una pieza lista los tratamientos asociados a ella */
+function trPanelPieza(num) {
+    const panel = _$('odo-panel-edicion');
+    if (!panel) return;
+    let caja = _$('tr-odo-pieza');
+    if (!caja) {
+        caja = document.createElement('div');
+        caja.id = 'tr-odo-pieza';
+        panel.appendChild(caja);
+    }
+    const lista = _trMarcas[num] || [];
+    caja.innerHTML = lista.length ? `
+        <div class="tr-pieza-trat">
+            <h4>Tratamientos en esta pieza</h4>
+            ${lista.map(t => `<div class="tr-pieza-trat-item"><span>${trEsc(t.nombre)}</span>${trEstadoPill(t.estado)}</div>`).join('')}
+        </div>` : '';
+}
+
 /* ══════════════════════════ Arranque ══════════════════════════ */
 
-// Cada vez que se entra a la pestaña "Tratamientos" se recarga la lista.
-(function () {
-    const original = window.mostrarPagina;
-    if (typeof original !== 'function') return;
-    window.mostrarPagina = function (slug) {
-        original.apply(this, arguments);
-        if (slug === 'tratamientos' && _tre('trat-lista')) treCargar();
-    };
-})();
+/**
+ * Se engancha al terminar de cargar la página, porque el script de la vista redefine
+ * mostrarPagina y odoSeleccionarDiente después de este archivo.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    const paginaBase = window.mostrarPagina;
+    if (typeof paginaBase === 'function') {
+        window.mostrarPagina = function (slug) {
+            const r = paginaBase.apply(this, arguments);
+            if (slug === 'tratamientos') trCargar();
+            return r;
+        };
+    }
+
+    const seleccionarBase = window.odoSeleccionarDiente;
+    if (typeof seleccionarBase === 'function') {
+        window.odoSeleccionarDiente = function (num) {
+            const r = seleccionarBase.apply(this, arguments);
+            trPanelPieza(num);
+            return r;
+        };
+    }
+});
