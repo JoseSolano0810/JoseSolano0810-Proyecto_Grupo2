@@ -175,7 +175,7 @@
      INVENTARIO
 ====================================================== -->
 
-            <?php if ($esAsistenteDental): ?>
+            <?php if ($esRecepcionista || $esAsistenteDental): ?>
 
                 <div class="pagina" id="pagina-inventario">
 
@@ -872,7 +872,7 @@
      MODAL INVENTARIO
 ============================================================= -->
 
-    <?php if ($esAsistenteDental): ?>
+    <?php if ($esRecepcionista || $esAsistenteDental): ?>
 
         <!-- Registrar insumo -->
         <div class="modal-overlay" id="modal-nuevo-insumo">
@@ -1615,7 +1615,7 @@
     <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
     <script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
 
-    <?php if ($esAsistenteDental): ?>
+    <?php if ($esRecepcionista || $esAsistenteDental): ?>
         <script src="<?= BASE_URL ?>/public/js/inventario.js?v=<?= @filemtime(ROOT_PATH . '/public/js/inventario.js') ?>"></script>
     <?php endif; ?>
 

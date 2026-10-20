@@ -15,7 +15,7 @@ class InventarioController
 
     public function listar(): void
     {
-        AuthService::requerir(['asistente_dental', 'administrador']);
+        AuthService::requerir(['asistente_dental', 'recepcionista', 'administrador']);
 
         try {
             $insumos = $this->model->listar();
@@ -35,7 +35,7 @@ class InventarioController
 
     public function crear(): void
     {
-        AuthService::requerir(['asistente_dental', 'administrador']);
+        AuthService::requerir(['asistente_dental', 'recepcionista', 'administrador']);
 
         $datos = $this->entrada();
 
@@ -104,7 +104,7 @@ class InventarioController
 
     public function editar(): void
     {
-        AuthService::requerir(['asistente_dental', 'administrador']);
+        AuthService::requerir(['asistente_dental', 'recepcionista', 'administrador']);
 
         $datos = $this->entrada();
 
@@ -184,7 +184,7 @@ class InventarioController
 
     public function desactivar(): void
     {
-        AuthService::requerir(['asistente_dental', 'administrador']);
+        AuthService::requerir(['asistente_dental', 'recepcionista', 'administrador']);
 
         $datos = $this->entrada();
         $id = (int) ($datos['id_insumo'] ?? 0);
@@ -235,7 +235,7 @@ class InventarioController
 
     public function activar(): void
     {
-        AuthService::requerir(['asistente_dental', 'administrador']);
+        AuthService::requerir(['asistente_dental', 'recepcionista', 'administrador']);
 
         $datos = $this->entrada();
         $id = (int) ($datos['id_insumo'] ?? 0);
@@ -286,7 +286,7 @@ class InventarioController
 
     public function movimiento(): void
     {
-        AuthService::requerir(['asistente_dental', 'administrador']);
+        AuthService::requerir(['asistente_dental', 'recepcionista', 'administrador']);
 
         $datos = $this->entrada();
 
@@ -362,7 +362,7 @@ class InventarioController
 
     public function historial(): void
     {
-        AuthService::requerir(['asistente_dental', 'administrador']);
+        AuthService::requerir(['asistente_dental', 'recepcionista', 'administrador']);
 
         $id = (int) ($_GET['id_insumo'] ?? 0);
 
