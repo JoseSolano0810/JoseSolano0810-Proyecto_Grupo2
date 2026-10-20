@@ -284,18 +284,21 @@ switch ($accion) {
         (new DocumentoController())->eliminar();
         break;
 
-    // ── Tratamientos ──────────────────────────────────────────
         // ── Tratamientos ──────────────────────────────────────────
     case 'tratamientos.listar':
-        (new TratamientoController())->listarJson();
+        (new TratamientoController())->consultar();
+        break;
+
+    case 'tratamientos.catalogos':
+        (new TratamientoController())->catalogos();
         break;
 
     case 'tratamientos.detalle':
         (new TratamientoController())->detalle();
         break;
 
-    case 'tratamientos.catalogos':
-        (new TratamientoController())->catalogos();
+    case 'tratamientos.odontograma':
+        (new TratamientoController())->odontograma();
         break;
 
     case 'tratamientos.crear':
@@ -310,13 +313,6 @@ switch ($accion) {
         (new TratamientoController())->asociar();
         break;
 
-    case 'tratamientos.historial':
-        (new TratamientoController())->historial();
-        break;
-
-    case 'tratamientos.odontograma':
-        (new TratamientoController())->odontograma();
-        break;
     default:
         http_response_code(404);
         $ctrl = new LoginController();
