@@ -21,23 +21,23 @@
 
         <?php if ($rol === 'odontologo' || $rol === 'administrador'): ?>
 
+            <div class="sidebar-seccion-titulo">Principal</div>
+
             <a class="sidebar-enlace <?= $pagina_activa === 'inicio' ? 'activo' : '' ?>" onclick="mostrarPagina('inicio')">
                 <i class="bi bi-speedometer2"></i> Inicio
             </a>
-
-            <?php if ($rol === 'administrador'): ?>
-                <a class="sidebar-enlace <?= $pagina_activa === 'usuarios' ? 'activo' : '' ?>" onclick="mostrarPagina('usuarios')">
-                    <i class="bi bi-people"></i> Usuarios
-                </a>
-            <?php endif; ?>
 
             <a class="sidebar-enlace <?= $pagina_activa === 'agenda' ? 'activo' : '' ?>" onclick="mostrarPagina('agenda')">
                 <i class="bi bi-calendar3"></i> Agenda
             </a>
 
+            <div class="sidebar-seccion-titulo">Pacientes</div>
+
             <a class="sidebar-enlace <?= $pagina_activa === 'pacientes' ? 'activo' : '' ?>" onclick="mostrarPagina('pacientes')">
                 <i class="bi bi-person-vcard"></i> Pacientes
             </a>
+
+            <div class="sidebar-seccion-titulo">Clínica</div>
 
             <a class="sidebar-enlace <?= $pagina_activa === 'expedientes' ? 'activo' : '' ?>" onclick="mostrarPagina('expedientes')">
                 <i class="bi bi-folder2-open"></i> Expedientes
@@ -55,6 +55,8 @@
                 <i class="bi bi-bandaid"></i> Tratamientos
             </a>
 
+            <div class="sidebar-seccion-titulo">Finanzas</div>
+
             <a class="sidebar-enlace <?= $pagina_activa === 'cotizaciones' ? 'activo' : '' ?>" onclick="mostrarPagina('cotizaciones')">
                 <i class="bi bi-receipt"></i> Cotizaciones
             </a>
@@ -63,19 +65,31 @@
                 <i class="bi bi-cash-coin"></i> Pagos
             </a>
 
+            <div class="sidebar-seccion-titulo">Inventario</div>
+
             <a class="sidebar-enlace <?= $pagina_activa === 'inventario' ? 'activo' : '' ?>" onclick="mostrarPagina('inventario')">
                 <i class="bi bi-box-seam"></i> Inventario
             </a>
+
+            <div class="sidebar-seccion-titulo">Reportes</div>
 
             <a class="sidebar-enlace <?= $pagina_activa === 'reportes' ? 'activo' : '' ?>" onclick="mostrarPagina('reportes')">
                 <i class="bi bi-bar-chart-line"></i> Reportes
             </a>
 
             <?php if ($rol === 'administrador'): ?>
-                <a class="sidebar-enlace <?= $pagina_activa === 'bitacora' ? 'activo' : '' ?>" onclick="mostrarPagina('bitacora')">
-                    <i class="bi bi-journal-text"></i> Bitácora
-                </a>
+            <div class="sidebar-seccion-titulo">Administración</div>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'usuarios' ? 'activo' : '' ?>" onclick="mostrarPagina('usuarios')">
+                <i class="bi bi-people"></i> Usuarios
+            </a>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'bitacora' ? 'activo' : '' ?>" onclick="mostrarPagina('bitacora')">
+                <i class="bi bi-journal-text"></i> Bitácora
+            </a>
             <?php endif; ?>
+
+
 
 
         <?php elseif ($rol === 'recepcionista'): ?>
@@ -108,6 +122,12 @@
 
             <a class="sidebar-enlace <?= $pagina_activa === 'documentos' ? 'activo' : '' ?>" onclick="mostrarPagina('documentos')">
                 <i class="bi bi-file-earmark-medical"></i> Documentos
+            </a>
+
+            <div class="sidebar-seccion-titulo">Inventario</div>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'inventario' ? 'activo' : '' ?>" onclick="mostrarPagina('inventario')">
+                <i class="bi bi-box-seam"></i> Inventario
             </a>
 
             <div class="sidebar-seccion-titulo">Finanzas</div>
