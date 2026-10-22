@@ -13,7 +13,6 @@ class Paciente
         $this->asegurarTablas();
     }
 
-    /** Auto crea tablas modulo clínico si no existe */
     private function asegurarTablas(): void
     {
         if (self::$tablasListas) return;
@@ -38,11 +37,9 @@ class Paciente
         self::$tablasListas = true;
     }
 
-    /*  Consultas  */
-
     private const SELECT_BASE =
         "SELECT u.id_usuario, u.nombre_completo, u.identificacion,
-                u.telefono, u.correo, u.estado AS estado_usuario,
+                u.nombre_usuario, u.telefono, u.correo, u.estado AS estado_usuario,
                 p.id_paciente, p.fecha_nacimiento, p.sexo,
                 p.grupo_sanguineo, p.estado,
                 TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, CURDATE()) AS edad
@@ -54,14 +51,12 @@ class Paciente
              WHERE ur.id_usuario = u.id_usuario AND r.nombre = 'paciente'
          )";
 
-    /** Lista pacientes activos, con datos clínicos si existen*/
     public function obtenerTodos(): array
     {
         $stmt = $this->db->query(self::SELECT_BASE . " ORDER BY u.nombre_completo ASC");
         return $stmt->fetchAll();
     }
 
-    /** Busca por nombre, cédula o correo */
     public function buscar(string $termino): array
     {
         $stmt = $this->db->prepare(
@@ -74,7 +69,6 @@ class Paciente
         return $stmt->fetchAll();
     }
 
-    /** Devuelve paciente * id Us*/
     public function obtenerPorUsuario(int $idUsuario): ?array
     {
         $stmt = $this->db->prepare(
@@ -84,7 +78,6 @@ class Paciente
         return $stmt->fetch() ?: null;
     }
 
-    /** Devuelve un paciente por id pac*/
     public function obtenerPorId(int $idPaciente): ?array
     {
         $stmt = $this->db->prepare(
@@ -94,8 +87,6 @@ class Paciente
         return $stmt->fetch() ?: null;
     }
 
-
-    /** Crea o actualiza el perfil clínico de un paciente.*/
     public function crear(array $datos): int
     {
         $this->db->prepare(
@@ -112,7 +103,6 @@ class Paciente
             ($datos['grupo_sanguineo']  ?? '') !== '' ? $datos['grupo_sanguineo']  : null,
         ]);
 
-        /** Si fue INSERT devuelve lastInsertId, si fue UPDATE busca id */
         $nuevo = (int) $this->db->lastInsertId();
         if ($nuevo) return $nuevo;
 
@@ -121,7 +111,6 @@ class Paciente
         return (int) $stmt->fetchColumn();
     }
 
-    /** Actualiza datos clínicos perfil */
     public function actualizar(int $idPaciente, array $datos): void
     {
         $this->db->prepare(
@@ -136,7 +125,6 @@ class Paciente
         ]);
     }
 
-    /** Activa/inactiva el perfil clínico*/
     public function cambiarEstado(int $idPaciente, string $estado): void
     {
         $this->db->prepare(
@@ -144,7 +132,6 @@ class Paciente
         )->execute([$estado, $idPaciente]);
     }
 
-    /** Lista pacientes activos*/
     public function activos(): array
     {
         $stmt = $this->db->query(

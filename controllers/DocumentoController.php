@@ -1,7 +1,5 @@
 <?php
-/**
- * Endpoints para listar, subir, descargar y eliminar documentos clínicos.
- */
+
 class DocumentoController
 {
     private DocumentoClinico $model;
@@ -13,7 +11,6 @@ class DocumentoController
         $this->model = new DocumentoClinico();
     }
 
-    /* ── GET ?accion=documentos.listar&id_expediente=X ──────── */
     public function listar(): void
     {
         header('Content-Type: application/json; charset=utf-8');
@@ -27,7 +24,6 @@ class DocumentoController
 
             $docs = $this->model->listarPorExpediente($idExpediente);
 
-            // Agregar URL de descarga y tamaño legible para el frontend
             foreach ($docs as &$d) {
                 $d['url_descarga'] = BASE_URL . '/index.php?accion=documentos.descargar&id=' . $d['id_documento'];
                 $d['tamano_fmt']   = DocumentoClinico::formatearTamano((int)$d['tamano_bytes']);
@@ -41,7 +37,6 @@ class DocumentoController
         }
     }
 
-    /* ── POST ?accion=documentos.subir (multipart/form-data) ── */
     public function subir(): void
     {
         header('Content-Type: application/json; charset=utf-8');
@@ -82,7 +77,7 @@ class DocumentoController
                 'DOCUMENTO_SUBIDO',
                 "Documento #{$resultado['id_documento']} subido al expediente #{$idExpediente}: " . $_FILES['archivo']['name'],
                 $sesion['id'],
-                $sesion['nombre_usuario']
+                $sesion['usuario']
             );
 
             echo json_encode([
@@ -96,7 +91,6 @@ class DocumentoController
         }
     }
 
-    /* ── GET ?accion=documentos.descargar&id=X ──────────────── */
     public function descargar(): void
     {
         $idDocumento = (int)($_GET['id'] ?? 0);
@@ -120,7 +114,6 @@ class DocumentoController
             return;
         }
 
-        // Servir el archivo
         header('Content-Type: ' . $doc['tipo_mime']);
         header('Content-Disposition: attachment; filename="' . rawurlencode($doc['nombre_original']) . '"');
         header('Content-Length: ' . filesize($ruta));
@@ -129,7 +122,6 @@ class DocumentoController
         exit;
     }
 
-    /* ── POST ?accion=documentos.eliminar ───────────────────── */
     public function eliminar(): void
     {
         header('Content-Type: application/json; charset=utf-8');
@@ -157,7 +149,7 @@ class DocumentoController
                 'DOCUMENTO_ELIMINADO',
                 "Documento #{$idDocumento} eliminado del expediente #{$idExpediente}",
                 $sesion['id'],
-                $sesion['nombre_usuario']
+                $sesion['usuario']
             );
 
             echo json_encode(['ok' => true, 'mensaje' => 'Documento eliminado.']);
@@ -167,7 +159,6 @@ class DocumentoController
         }
     }
 
-    /* ── Helper ─────────────────────────────────────────────── */
     private function bodyJson(): array
     {
         $raw  = file_get_contents('php://input');

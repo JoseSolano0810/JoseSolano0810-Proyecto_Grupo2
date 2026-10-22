@@ -58,7 +58,6 @@ class ExpedienteClinico
         self::$tablasListas = true;
     }
 
-    /** Devuelve el expediente de un paciente * id */
     public function obtenerPorPaciente(int $idPaciente): ?array
     {
         $stmt = $this->db->prepare(
@@ -74,7 +73,15 @@ class ExpedienteClinico
         return $stmt->fetch() ?: null;
     }
 
-    /** Devuelve el expediente * id Exp*/
+    public function mapaPorPaciente(): array
+    {
+        $map = [];
+        foreach ($this->db->query("SELECT id_paciente, id_expediente FROM expediente_clinico") as $f) {
+            $map[(int) $f['id_paciente']] = (int) $f['id_expediente'];
+        }
+        return $map;
+    }
+
     public function obtenerPorId(int $idExpediente): ?array
     {
         $stmt = $this->db->prepare(
@@ -90,7 +97,6 @@ class ExpedienteClinico
         return $stmt->fetch() ?: null;
     }
 
-    /** crea expediente clínico de un paciente.*/
     public function crear(array $datos): int
     {
         $this->db->prepare(
@@ -110,7 +116,6 @@ class ExpedienteClinico
         return (int) $this->db->lastInsertId();
     }
 
-    /** actualiza datos expediente */
     public function actualizar(int $idExpediente, array $datos): void
     {
         $this->db->prepare(
@@ -133,9 +138,6 @@ class ExpedienteClinico
         ]);
     }
 
-    /*  Atenciones */
-
-    /** Lista todas las atenciones de un expediente, + reciente primero */
     public function atenciones(int $idExpediente): array
     {
         $stmt = $this->db->prepare(
@@ -149,7 +151,6 @@ class ExpedienteClinico
         return $stmt->fetchAll();
     }
 
-    /** Registra una atencion clínica */
     public function registrarAtencion(array $datos): int
     {
         $this->db->prepare(

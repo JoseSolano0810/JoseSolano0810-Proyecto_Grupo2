@@ -20,7 +20,6 @@
     $esAsistenteDental = $rol === 'asistente_dental'
         || in_array('asistente_dental', $roles_sesion ?? [], true);
 
-    // Las citas vienen de la BD (CitaController::listar); nunca se simulan aquí
     $citas = $citas ?? [];
 
     $pacientes = $pacientes ?? [];
@@ -171,63 +170,9 @@
 
             <?php include ROOT_PATH . '/views/shared/agenda_pagina.php'; ?>
 
-            <!-- =====================================================
-     INVENTARIO
-====================================================== -->
-
             <?php if ($esRecepcionista || $esAsistenteDental): ?>
 
-                <div class="pagina" id="pagina-inventario">
-
-                    <div class="panel-titulo" style="margin-bottom:20px;">
-                        <div>
-                            <h2>Inventario</h2>
-                            <p style="color:var(--gris-azulado);margin-top:5px;">
-                                Control de insumos odontológicos.
-                            </p>
-                        </div>
-
-                        <button class="btn-odent"
-                            onclick="abrirModal('modal-nuevo-insumo')">
-                            <i class="bi bi-plus-lg"></i> Registrar insumo
-                        </button>
-                    </div>
-
-
-                    <!-- Alertas de inventario -->
-                    <div id="inventario-alertas"
-                        style="display:none;margin-bottom:18px;">
-                    </div>
-
-
-                    <div class="tarjeta">
-
-                        <table class="tabla-odent">
-
-                            <thead>
-                                <tr>
-                                    <th>Insumo</th>
-                                    <th>Categoría</th>
-                                    <th>Disponible</th>
-                                    <th>Nivel mínimo</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-
-                            <tbody id="inventario-lista">
-                                <tr>
-                                    <td colspan="6" style="text-align:center;">
-                                        No hay insumos registrados.
-                                    </td>
-                                </tr>
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-                </div>
+                <?php include ROOT_PATH . '/views/shared/inventario_pagina.php'; ?>
 
             <?php endif; ?>
 
@@ -330,7 +275,6 @@
                 </div>
 
             <?php endif; ?>
-
 
             <?php if ($esRecepcionista): ?>
 
@@ -441,10 +385,9 @@
             <?php endif; ?>
 
             <?php if ($esRecepcionista || $esAsistenteDental): ?>
-        <!-- ───────────────── EXPEDIENTES (asistente_dental) ─── -->
+
         <div class="pagina" id="pagina-expedientes">
 
-            <!-- Vista: lista de pacientes -->
             <div id="exp-vista-lista">
                 <div class="panel-titulo" style="margin-bottom:20px;">
                     <div>
@@ -484,7 +427,6 @@
                 </div>
             </div>
 
-            <!-- Vista: detalle de expediente de un paciente -->
             <div id="exp-vista-detalle" style="display:none;">
                 <div class="panel-titulo" style="margin-bottom:20px;">
                     <div>
@@ -513,7 +455,6 @@
                     </div>
                 </div>
 
-                <!-- Sin expediente aún -->
                 <div id="exp-sin-expediente" style="display:none;">
                     <div class="tarjeta" style="text-align:center;padding:40px 20px;">
                         <i class="bi bi-folder2-open" style="font-size:48px;color:var(--gris-azulado);display:block;margin-bottom:16px;"></i>
@@ -527,7 +468,6 @@
                     </div>
                 </div>
 
-                <!-- Con expediente -->
                 <div id="exp-con-expediente" style="display:none;">
                     <div class="panel-grid col-2" style="margin-bottom:24px;">
                         <div class="tarjeta">
@@ -591,7 +531,6 @@
                         </div>
                     </div>
 
-                    <!-- Historial de atenciones -->
                     <div class="tarjeta">
                         <div class="panel-titulo" style="margin-bottom:16px;">
                             <h3><i class="bi bi-journal-medical" style="color:var(--azul-odent);margin-right:6px;"></i>Historial de atenciones</h3>
@@ -606,7 +545,6 @@
 
         </div>
 
-        <!-- ───────────────── ODONTOGRAMA (asistente_dental) ─── -->
         <div class="pagina" id="pagina-odontograma">
             <div class="panel-titulo" style="margin-bottom:6px;">
                 <div>
@@ -706,7 +644,6 @@
             </div>
         </div>
 
-        <!-- ───────────────── DOCUMENTOS (asistente_dental) ─── -->
         <div class="pagina" id="pagina-documentos">
 
             <div class="panel-titulo" style="margin-bottom:6px;">
@@ -768,7 +705,6 @@
             </div>
         </div>
 
-        <!-- Modal subir documento -->
             <?php endif; ?>
 
         </div>
@@ -868,474 +804,8 @@
 
     <?php endif; ?>
 
-    <!-- =============================================================
-     MODAL INVENTARIO
-============================================================= -->
-
     <?php if ($esRecepcionista || $esAsistenteDental): ?>
-
-        <!-- Registrar insumo -->
-        <div class="modal-overlay" id="modal-nuevo-insumo">
-            <div class="modal-caja">
-
-                <div class="modal-header">
-                    <h3>Registrar insumo</h3>
-
-                    <button
-                        class="modal-cerrar"
-                        onclick="cerrarModal('modal-nuevo-insumo')">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-
-                <form id="form-nuevo-insumo">
-
-                    <div class="campo-grupo">
-                        <label>Nombre *</label>
-                        <input
-                            type="text"
-                            id="insumo-nombre"
-                            name="nombre">
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Descripción *</label>
-                        <textarea
-                            id="insumo-descripcion"
-                            name="descripcion"
-                            rows="3"></textarea>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Categoría *</label>
-
-                        <select
-                            id="insumo-categoria"
-                            name="categoria">
-
-                            <option value="">
-                                Seleccione una categoría
-                            </option>
-
-                            <option value="Protección">
-                                Protección
-                            </option>
-
-                            <option value="Higiene y desinfección">
-                                Higiene y desinfección
-                            </option>
-
-                            <option value="Material clínico">
-                                Material clínico
-                            </option>
-
-                            <option value="Anestesia">
-                                Anestesia
-                            </option>
-
-                            <option value="Restauración">
-                                Restauración
-                            </option>
-
-                            <option value="Endodoncia">
-                                Endodoncia
-                            </option>
-
-                            <option value="Impresión">
-                                Impresión
-                            </option>
-
-                            <option value="Otros">
-                                Otros
-                            </option>
-
-                        </select>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Cantidad disponible *</label>
-
-                        <div style="display:flex;gap:8px;align-items:center;">
-
-                            <button
-                                type="button"
-                                class="btn-outline-odent"
-                                onclick="cambiarCantidad('insumo-cantidad', -1)">
-                                −
-                            </button>
-
-                            <input
-                                type="number"
-                                id="insumo-cantidad"
-                                name="cantidad_disponible"
-                                min="0"
-                                step="1"
-                                value="0"
-                                style="text-align:center;">
-
-                            <button
-                                type="button"
-                                class="btn-outline-odent"
-                                onclick="cambiarCantidad('insumo-cantidad', 1)">
-                                +
-                            </button>
-
-                        </div>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Nivel mínimo de alerta *</label>
-
-                        <div style="display:flex;gap:8px;align-items:center;">
-
-                            <button
-                                type="button"
-                                class="btn-outline-odent"
-                                onclick="cambiarCantidad('insumo-minimo', -1)">
-                                −
-                            </button>
-
-                            <input
-                                type="number"
-                                id="insumo-minimo"
-                                name="nivel_minimo"
-                                min="0"
-                                step="1"
-                                value="0"
-                                style="text-align:center;">
-
-                            <button
-                                type="button"
-                                class="btn-outline-odent"
-                                onclick="cambiarCantidad('insumo-minimo', 1)">
-                                +
-                            </button>
-
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-
-                        <button
-                            type="button"
-                            class="btn-outline-odent"
-                            onclick="cerrarModal('modal-nuevo-insumo')">
-                            Cancelar
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="btn-odent">
-                            <i class="bi bi-check-lg"></i>
-                            Guardar
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-        </div>
-
-
-        <!-- Editar insumo -->
-        <div class="modal-overlay" id="modal-editar-insumo">
-            <div class="modal-caja">
-
-                <div class="modal-header">
-                    <h3>Editar insumo</h3>
-
-                    <button
-                        class="modal-cerrar"
-                        onclick="cerrarModal('modal-editar-insumo')">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-
-                <form id="form-editar-insumo">
-
-                    <input
-                        type="hidden"
-                        id="editar-insumo-id">
-
-                    <div class="campo-grupo">
-                        <label>Nombre *</label>
-
-                        <input
-                            type="text"
-                            id="editar-insumo-nombre">
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Descripción *</label>
-
-                        <textarea
-                            id="editar-insumo-descripcion"
-                            rows="3"></textarea>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Categoría *</label>
-
-                        <select id="editar-insumo-categoria">
-
-                            <option value="">
-                                Seleccione una categoría
-                            </option>
-
-                            <option value="Protección">
-                                Protección
-                            </option>
-
-                            <option value="Higiene y desinfección">
-                                Higiene y desinfección
-                            </option>
-
-                            <option value="Material clínico">
-                                Material clínico
-                            </option>
-
-                            <option value="Anestesia">
-                                Anestesia
-                            </option>
-
-                            <option value="Restauración">
-                                Restauración
-                            </option>
-
-                            <option value="Endodoncia">
-                                Endodoncia
-                            </option>
-
-                            <option value="Impresión">
-                                Impresión
-                            </option>
-
-                            <option value="Otros">
-                                Otros
-                            </option>
-
-                        </select>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Nivel mínimo de alerta *</label>
-
-                        <input
-                            type="number"
-                            id="editar-insumo-minimo"
-                            min="0">
-                    </div>
-
-                    <div class="modal-footer">
-
-                        <button
-                            type="button"
-                            class="btn-outline-odent"
-                            onclick="cerrarModal('modal-editar-insumo')">
-                            Cancelar
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="btn-odent">
-                            <i class="bi bi-check-lg"></i>
-                            Guardar cambios
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-        </div>
-
-
-        <!-- Entrada / salida de inventario -->
-        <div class="modal-overlay" id="modal-movimiento-inventario">
-            <div class="modal-caja">
-
-                <div class="modal-header">
-
-                    <h3 id="movimiento-titulo">
-                        Movimiento de inventario
-                    </h3>
-
-                    <button
-                        class="modal-cerrar"
-                        onclick="cerrarModal('modal-movimiento-inventario')">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-
-                </div>
-
-                <form id="form-movimiento-inventario">
-
-                    <input
-                        type="hidden"
-                        id="movimiento-insumo-id">
-
-                    <input
-                        type="hidden"
-                        id="movimiento-tipo">
-
-                    <div class="campo-grupo">
-                        <label>Insumo</label>
-
-                        <input
-                            type="text"
-                            id="movimiento-insumo-nombre"
-                            readonly>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Stock actual</label>
-
-                        <input
-                            type="number"
-                            id="movimiento-stock-actual"
-                            readonly>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Cantidad *</label>
-
-                        <div style="display:flex;gap:8px;align-items:center;">
-
-                            <button
-                                type="button"
-                                class="btn-outline-odent"
-                                onclick="cambiarCantidad('movimiento-cantidad', -1)">
-                                −
-                            </button>
-
-                            <input
-                                type="number"
-                                id="movimiento-cantidad"
-                                min="1"
-                                step="1"
-                                value="1"
-                                style="text-align:center;">
-
-                            <button
-                                type="button"
-                                class="btn-outline-odent"
-                                onclick="cambiarCantidad('movimiento-cantidad', 1)">
-                                +
-                            </button>
-
-                        </div>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Observación</label>
-
-                        <textarea
-                            id="movimiento-observacion"
-                            rows="3"
-                            placeholder="Ej. Compra de materiales, uso clínico, ajuste de inventario..."></textarea>
-                    </div>
-
-                    <div class="modal-footer">
-
-                        <button
-                            type="button"
-                            class="btn-outline-odent"
-                            onclick="cerrarModal('modal-movimiento-inventario')">
-                            Cancelar
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="btn-odent"
-                            id="movimiento-boton">
-                            <i class="bi bi-check-lg"></i>
-                            Registrar
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-        </div>
-
-
-        <!-- Historial de movimientos -->
-        <div class="modal-overlay" id="modal-historial-inventario">
-
-            <div
-                class="modal-caja"
-                style="max-width:850px;">
-
-                <div class="modal-header">
-
-                    <div>
-                        <h3>Historial de movimientos</h3>
-
-                        <div
-                            id="historial-insumo-nombre"
-                            style="
-                            font-size:13px;
-                            color:var(--gris-azulado);
-                            margin-top:4px;
-                        ">
-                        </div>
-                    </div>
-
-                    <button
-                        class="modal-cerrar"
-                        onclick="cerrarModal('modal-historial-inventario')">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-
-                </div>
-
-                <div style="overflow-x:auto;">
-
-                    <table class="tabla-odent">
-
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Tipo</th>
-                                <th>Cantidad</th>
-                                <th>Anterior</th>
-                                <th>Resultante</th>
-                                <th>Observación</th>
-                            </tr>
-                        </thead>
-
-                        <tbody id="inventario-historial-lista">
-
-                            <tr>
-                                <td
-                                    colspan="6"
-                                    style="text-align:center;">
-                                    No hay movimientos registrados.
-                                </td>
-                            </tr>
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-                <div class="modal-footer">
-
-                    <button
-                        type="button"
-                        class="btn-outline-odent"
-                        onclick="cerrarModal('modal-historial-inventario')">
-                        Cerrar
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
+        <?php include ROOT_PATH . '/views/shared/inventario_modales.php'; ?>
 
     <?php endif; ?>
 
@@ -1361,7 +831,6 @@
 
     <?php if ($esRecepcionista || $esAsistenteDental): ?>
 
-        <!-- Modal editar datos básicos de paciente (recepcionista / asistente_dental) -->
         <div class="modal-overlay" id="modal-pac-editar-basico">
             <div class="modal-caja" style="max-width:480px;">
                 <div class="modal-header">
@@ -1425,7 +894,6 @@
             </div>
         </div>
 
-        <!-- Modal confirmar eliminación documento -->
         <div class="modal-overlay" id="modal-doc-confirmar-eliminar">
             <div class="modal-caja" style="max-width:420px;">
                 <div class="modal-header">
@@ -1445,7 +913,6 @@
             </div>
         </div>
 
-        <!-- Modal crear expediente -->
         <div class="modal-overlay" id="modal-exp-crear">
             <div class="modal-caja">
                 <div class="modal-header">
@@ -1487,7 +954,6 @@
             </div>
         </div>
 
-        <!-- Modal editar expediente -->
         <div class="modal-overlay" id="modal-exp-editar">
             <div class="modal-caja">
                 <div class="modal-header">
@@ -1530,7 +996,6 @@
             </div>
         </div>
 
-        <!-- Modal editar datos del paciente -->
         <div class="modal-overlay" id="modal-editar-paciente">
             <div class="modal-caja">
                 <div class="modal-header">
@@ -1578,7 +1043,6 @@
             </div>
         </div>
 
-        <!-- Modal registrar atención -->
         <div class="modal-overlay" id="modal-exp-atencion">
             <div class="modal-caja">
                 <div class="modal-header">
@@ -1610,7 +1074,7 @@
             </div>
         </div>
 
-    <?php endif; /* $esRecepcionista || $esAsistenteDental */ ?>
+    <?php endif; ?>
 
     <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
     <script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
@@ -1621,9 +1085,6 @@
 
     <?php if ($esRecepcionista || $esAsistenteDental): ?>
     <script>
-        /* ═══════════════════════════════════════════════════════════
-           MÓDULO PACIENTES — edición básica (recepcionista / asistente_dental)
-           ═══════════════════════════════════════════════════════════ */
 
         const BASE = '<?= BASE_URL ?>';
 
@@ -1673,7 +1134,6 @@
                 } else {
                     mostrarToast('Datos del paciente actualizados.', 'exito');
                     cerrarModal('modal-pac-editar-basico');
-                    // Actualizar la fila en la tabla sin recargar la página
                     const filas = document.querySelectorAll('#tabla-pacientes .fila-paciente');
                     filas.forEach(fila => {
                         const celdas = fila.querySelectorAll('td');
@@ -1693,10 +1153,6 @@
                 btn.innerHTML = '<i class="bi bi-check-lg"></i> Guardar cambios';
             }
         }
-
-        /* ═══════════════════════════════════════════════════════════
-           MÓDULO EXPEDIENTES CLÍNICOS (asistente_dental)
-           ═══════════════════════════════════════════════════════════ */
 
         const escapar = t => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -1719,8 +1175,6 @@
                     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gris-azulado);">No se encontraron pacientes.</td></tr>';
                     return;
                 }
-                // Guardamos los objetos paciente en un mapa global para evitar
-                // problemas de escaping con comillas en atributos HTML.
                 window._expPacientesData = {};
                 tbody.innerHTML = data.map((p, i) => {
                     const key = 'pac_' + (p.id_usuario ?? i);
@@ -1745,7 +1199,7 @@
                             </span>
                         </td>
                         <td>
-                            ${p.id_paciente
+                            ${p.id_expediente
                                 ? '<span class="badge-estado badge-completada"><i class="bi bi-check-circle"></i> Creado</span>'
                                 : '<span class="badge-estado badge-pendiente"><i class="bi bi-dash-circle"></i> Sin expediente</span>'}
                         </td>
@@ -1896,12 +1350,26 @@
             if (vistaLista)   vistaLista.style.display   = '';
         }
 
+        async function _expRefrescarPaciente() {
+            const ref = _expPacienteActual;
+            if (!ref) return;
+            try {
+                const res  = await fetch(`${BASE}/index.php?accion=expedientes.pacientes&q=${encodeURIComponent(ref.identificacion || ref.nombre_completo || '')}`, { headers: { Accept: 'application/json' } });
+                const data = await res.json();
+                const nuevo = Array.isArray(data) ? data.find(x => String(x.id_usuario) === String(ref.id_usuario)) : null;
+                expAbrirPaciente(nuevo || ref);
+            } catch (e) {
+                expAbrirPaciente(ref);
+            }
+        }
+
         async function guardarCrearExpediente() {
             if (!validarCampos(['ec-motivo'], 'El motivo de consulta es obligatorio.')) return;
-            if (!_expPacienteActual?.id_paciente) return mostrarToast('No se identificó al paciente.', 'error');
+            if (!_expPacienteActual) return mostrarToast('No se identificó al paciente.', 'error');
 
             await guardarJSON('expedientes.crear', {
                 id_paciente:           _expPacienteActual.id_paciente,
+                id_usuario:           _expPacienteActual.id_usuario,
                 motivo_consulta:       _exp('ec-motivo').value.trim(),
                 alergias:              _exp('ec-alergias').value.trim(),
                 enfermedades:          _exp('ec-enfermedades').value.trim(),
@@ -1912,7 +1380,7 @@
                 boton: document.querySelector('#modal-exp-crear .modal-footer .btn-odent'),
                 cerrarModal: 'modal-exp-crear',
                 exito: 'Expediente creado exitosamente.',
-                alExito: () => expAbrirPaciente(_expPacienteActual)
+                alExito: () => _expRefrescarPaciente()
             });
         }
 
@@ -2025,32 +1493,16 @@
 
         let _navegandoDesdeExpediente = false;
 
-        /* ── Override window.mostrarPagina + arranque al cargar ──────────────
-           El script inline parsea ANTES de que DOMContentLoaded dispare,
-           y app.js ya está cargado porque su <script src> precede a este bloque.
-           Overridear window.mostrarPagina aquí captura los clics del sidebar.
-           Para la restauración inicial (sessionStorage/hash), app.js llama
-           mostrarPagina() por su nombre de scope local — no pasa por window —
-           así que usamos el MutationObserver para ese caso, conectándolo con
-           setTimeout(0) dentro de DOMContentLoaded para que corra DESPUÉS del
-           listener de app.js que ya cambió la clase. ── */
-
-        /* 1) Override para clics del sidebar */
         const _mostrarPaginaOriginal = window.mostrarPagina;
         window.mostrarPagina = function (slug) {
             if (typeof _mostrarPaginaOriginal === 'function') _mostrarPaginaOriginal(slug);
             _despacharSlug(slug);
         };
 
-        /* 2) Arranque inmediato — este script está al final del body, el DOM ya existe
-           y DOMContentLoaded ya disparó (app.js corrió su listener antes que nosotros).
-           Usamos setTimeout(0) para ceder el turno y dejar que app.js termine de
-           restaurar la página activa antes de leerla. */
         setTimeout(function () {
             const activa = document.querySelector('.pagina.activa');
             if (activa) _despacharSlug(activa.id.replace('pagina-', ''));
 
-            /* Observar futuros cambios de página */
             const obs = new MutationObserver(function (muts) {
                 muts.forEach(function (m) {
                     if (m.attributeName === 'class') {
@@ -2088,10 +1540,6 @@
                 docIniciar();
             }
         }
-
-        /* ═══════════════════════════════════════════════════════════
-           MÓDULO ODONTOGRAMA (asistente_dental)
-           ═══════════════════════════════════════════════════════════ */
 
         let _odoExpediente  = null;
         let _odoPiezas      = {};
@@ -2263,6 +1711,7 @@
         function _odoRenderizarListaPacientes(lista, filtro) {
             const contenedor = document.getElementById('odo-lista-pacientes');
             const termino    = filtro.trim().toLowerCase();
+            lista = lista.filter(p => p.id_expediente);
             const filtrados  = termino ? lista.filter(p => (p.nombre_completo || '').toLowerCase().includes(termino)) : lista;
 
             if (!filtrados.length) {
@@ -2316,10 +1765,6 @@
                 btn.innerHTML = '<i class="bi bi-clipboard2-pulse"></i> Ver odontograma';
             }
         }
-
-        /* ═══════════════════════════════════════════════════════════
-           MÓDULO DOCUMENTOS CLÍNICOS (asistente_dental)
-           ═══════════════════════════════════════════════════════════ */
 
         let _docExpediente      = null;
         let _docIdAEliminar     = null;
@@ -2509,6 +1954,7 @@
         function _docRenderizarListaPacientes(lista, filtro) {
             const contenedor = document.getElementById('doc-lista-pacientes');
             const termino    = filtro.trim().toLowerCase();
+            lista = lista.filter(p => p.id_expediente);
             const filtrados  = termino ? lista.filter(p => (p.nombre_completo || '').toLowerCase().includes(termino)) : lista;
 
             if (!filtrados.length) {
@@ -2563,7 +2009,7 @@
             }
         }
     </script>
-    <?php endif; /* $esRecepcionista || $esAsistenteDental JS */ ?>
+    <?php endif; ?>
 
 </body>
 
