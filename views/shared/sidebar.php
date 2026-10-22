@@ -65,11 +65,13 @@
                 <i class="bi bi-cash-coin"></i> Pagos
             </a>
 
+            <?php if ($rol === 'administrador'): ?>
             <div class="sidebar-seccion-titulo">Inventario</div>
 
             <a class="sidebar-enlace <?= $pagina_activa === 'inventario' ? 'activo' : '' ?>" onclick="mostrarPagina('inventario')">
                 <i class="bi bi-box-seam"></i> Inventario
             </a>
+            <?php endif; ?>
 
             <div class="sidebar-seccion-titulo">Reportes</div>
 
@@ -88,9 +90,6 @@
                 <i class="bi bi-journal-text"></i> Bitácora
             </a>
             <?php endif; ?>
-
-
-
 
         <?php elseif ($rol === 'recepcionista'): ?>
 
@@ -140,7 +139,6 @@
                 <i class="bi bi-cash-coin"></i> Pagos
             </a>
 
-
         <?php elseif ($rol === 'asistente_dental'): ?>
 
             <div class="sidebar-seccion-titulo">Principal</div>
@@ -176,7 +174,6 @@
             <a class="sidebar-enlace <?= $pagina_activa === 'inventario' ? 'activo' : '' ?>" onclick="mostrarPagina('inventario')">
                 <i class="bi bi-box-seam"></i> Inventario
             </a>
-
 
         <?php elseif ($rol === 'paciente'): ?>
 
@@ -218,7 +215,6 @@
 
 </aside>
 
-<!-- modal cambiar mi contraseña -->
 <div class="modal-overlay" id="modal-cambiar-contrasena">
     <div class="modal-caja" style="max-width:420px;">
 
