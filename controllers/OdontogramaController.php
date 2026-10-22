@@ -1,22 +1,18 @@
 <?php
-/**
- * OdontogramaController.php — CLI-03 / CLI-04
- * Endpoints AJAX para leer y guardar el odontograma de un expediente.
- */
+
 class OdontogramaController
 {
     private Odontograma $model;
 
     public function __construct()
     {
-        // Solo odontólogos y administradores pueden gestionar odontogramas.
+
         AuthService::requerir(['odontologo', 'administrador', 'asistente_dental', 'recepcionista']);
 
         require_once ROOT_PATH . '/models/Odontograma.php';
         $this->model = new Odontograma();
     }
 
-    /* ── GET ?accion=odontograma.obtener&id_expediente=X ────── */
     public function obtener(): void
     {
         header('Content-Type: application/json; charset=utf-8');
@@ -41,7 +37,6 @@ class OdontogramaController
         }
     }
 
-    /* ── POST ?accion=odontograma.guardar ───────────────────── */
     public function guardar(): void
     {
         header('Content-Type: application/json; charset=utf-8');
@@ -71,13 +66,12 @@ class OdontogramaController
                 return;
             }
 
-            // Bitácora
             $sesion = AuthService::usuarioActual();
             Bitacora::registrar(
                 'ODONTOGRAMA_EDITADO',
                 "Pieza {$numeroPieza} → {$estado} (expediente #{$idExpediente})",
                 $sesion['id'],
-                $sesion['nombre_usuario']
+                $sesion['usuario']
             );
 
             echo json_encode([
@@ -91,7 +85,6 @@ class OdontogramaController
         }
     }
 
-    /* ── Helper: leer body JSON ─────────────────────────────── */
     private function bodyJson(): array
     {
         $raw = file_get_contents('php://input');
