@@ -27,6 +27,7 @@ require_once ROOT_PATH . '/controllers/DocumentoController.php';
 require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/RecordatorioService.php';
 require_once ROOT_PATH . '/controllers/InventarioController.php';
+require_once ROOT_PATH . '/controllers/AsistenteController.php';
 
 $accion = $_GET['accion'] ?? 'inicio';
 $metodo = $_SERVER['REQUEST_METHOD'];
@@ -99,6 +100,23 @@ switch ($accion) {
 
     case 'inventario.movimiento':
         (new InventarioController())->movimiento();
+        break;
+
+    // ── Asistente inteligente del paciente (ASI-01 a ASI-03) ──
+    case 'asistente.consulta':
+        (new AsistenteController())->consultar();
+        break;
+
+    case 'asistente.catalogos':
+        (new AsistenteController())->catalogos();
+        break;
+
+    case 'asistente.reporte.enviar':
+        (new AsistenteController())->enviarReporte();
+        break;
+
+    case 'asistente.reporte.cancelar':
+        (new AsistenteController())->cancelarReporte();
         break;
 
     // panel * rol
