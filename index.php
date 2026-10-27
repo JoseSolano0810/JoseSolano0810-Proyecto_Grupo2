@@ -126,7 +126,6 @@ switch ($accion) {
         cargarPanel(AuthService::usuarioActual());
         break;
 
-    // cambiar rol activo (usuarios con más de un rol)
     case 'cambiar_rol':
         AuthService::requerir(AuthService::ROLES);
         AuthService::cambiarRolActivo($_GET['rol'] ?? '');
@@ -357,10 +356,14 @@ function cargarPanel(array $sesion): void
             $tratamientos = (new TratamientoController())->listar();
             $usuarios_sistema = [];
             $roles            = [];
+            $cotizaciones     = [];
+            $pagos            = [];
             if ($rol === 'administrador') {
                 $datos            = (new UsuarioController())->datosVista();
                 $usuarios_sistema = $datos['usuarios'];
                 $roles            = $datos['roles'];
+                $cotizaciones     = (new CotizacionController())->listar();
+                $pagos            = (new PagoController())->listar();
             }
 
             require ROOT_PATH . '/views/odontologo/index.php';
