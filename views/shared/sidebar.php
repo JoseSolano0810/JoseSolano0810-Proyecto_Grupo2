@@ -196,7 +196,7 @@
             </a>
 
             <a class="sidebar-enlace <?= $pagina_activa === 'asistente' ? 'activo' : '' ?>" onclick="mostrarPagina('asistente')">
-                <i class="bi bi-robot"></i> Asistente de triaje
+                <i class="bi bi-robot"></i> Asistente inteligente
             </a>
 
         <?php endif; ?>

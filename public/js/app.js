@@ -48,7 +48,7 @@ const titulos = {
     cotizaciones:  'Cotizaciones',
     pagos:         'Pagos',
     citas:         'Mis citas',
-    asistente:     'Asistente de triaje',
+    asistente:     'Asistente inteligente',
     inventario:    'Inventario',
     insumos:       'Control de insumos',
     usuarios:      'Usuarios',
@@ -156,67 +156,6 @@ function iniciarCalculoIVA() {
         document.getElementById('cot-iva').value   = fmt(iva);
         document.getElementById('cot-total').value = fmt(total);
     });
-}
-
-const respuestasChat = {
-    'dolor':       'El dolor dental puede indicar caries profunda, infección o un nervio expuesto. Le recomendamos programar una cita lo antes posible. ¿Es el dolor constante o solo al masticar?',
-    'muela':       'Si el dolor de muela es intenso y persistente, podría necesitar atención urgente. Intente no tomar antiinflamatorios por más de 2 días sin evaluación profesional.',
-    'cayó':        '¡Importante! Si se cayó un diente permanente, manténgalo húmedo (en leche o solución salina) y acuda a la clínica en menos de 2 horas para posible reimplante.',
-    'cita':        `Su próxima cita programada es el 14 de agosto de 2026 a las 9:00 a.m. con el Dr. Méndez para control de ortodoncia.`,
-    'encía':       'Las encías inflamadas pueden ser señal de gingivitis o periodontitis. Un cepillado suave y enjuague con agua salina puede ayudar, pero se recomienda revisión profesional.',
-    'bracket':     'Si se rompió un bracket, no es una emergencia, pero debe notificar a su odontólogo para reagendar o repararlo en la próxima cita.',
-    'emergencia':  '🚨 En caso de emergencia dental severa (hemorragia, trauma, dolor intenso), llame directamente a la clínica o acuda a urgencias.',
-    'default':     'Entiendo su consulta. Para darle la mejor orientación, ¿podría describirme más detalladamente su situación o síntoma? También puede solicitar una cita para evaluación presencial.',
-};
-
-function obtenerRespuesta(texto) {
-    const t = texto.toLowerCase();
-    if (t.includes('cayó') || t.includes('cayo'))  return respuestasChat['cayó'];
-    if (t.includes('dolor') && t.includes('muela')) return respuestasChat['muela'];
-    if (t.includes('dolor'))                         return respuestasChat['dolor'];
-    if (t.includes('cita'))                          return respuestasChat['cita'];
-    if (t.includes('encía') || t.includes('encia')) return respuestasChat['encía'];
-    if (t.includes('bracket'))                       return respuestasChat['bracket'];
-    if (t.includes('emergencia'))                    return respuestasChat['emergencia'];
-    return respuestasChat['default'];
-}
-
-function enviarMensajeChat() {
-    const input = document.getElementById('chat-input-texto');
-    const mensajes = document.getElementById('chat-mensajes');
-    if (!input || !mensajes) return;
-
-    const texto = input.value.trim();
-    if (!texto) return;
-
-    const msgUsuario = document.createElement('div');
-    msgUsuario.className = 'mensaje usuario';
-    msgUsuario.textContent = texto;
-    mensajes.appendChild(msgUsuario);
-
-    setTimeout(() => {
-        const msgBot = document.createElement('div');
-        msgBot.className = 'mensaje bot';
-        msgBot.innerHTML = obtenerRespuesta(texto);
-        mensajes.appendChild(msgBot);
-        mensajes.scrollTop = mensajes.scrollHeight;
-    }, 600);
-
-    input.value = '';
-    mensajes.scrollTop = mensajes.scrollHeight;
-
-}
-
-function preguntaRapida(pregunta) {
-    const input = document.getElementById('chat-input-texto');
-    if (input) {
-        input.value = pregunta;
-        enviarMensajeChat();
-    }
-}
-
-function chatEnter(e) {
-    if (e.key === 'Enter') enviarMensajeChat();
 }
 
 /* ── Toasts apilables (éxito / error / aviso / info) ───────── */
