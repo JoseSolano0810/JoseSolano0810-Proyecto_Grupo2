@@ -255,11 +255,11 @@
                 </div>
                 <div class="tarjeta">
                     <div style="display:flex;gap:10px;margin-bottom:18px;">
-                        <input type="text" placeholder="Buscar por nombre o cédula..."
+                        <input type="text" id="buscar-paciente" placeholder="Buscar por nombre o cédula..."
                             style="border:1.5px solid var(--borde);border-radius:8px;padding:8px 14px;font-size:14px;flex:1;">
-                        <button class="btn-odent"><i class="bi bi-search"></i> Buscar</button>
+                        <button type="button" class="btn-odent" onclick="buscarPacienteTabla()"><i class="bi bi-search"></i> Buscar</button>
                     </div>
-                    <table class="tabla-odent">
+                    <table class="tabla-odent" id="tabla-pacientes">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -273,17 +273,27 @@
                         </thead>
                         <tbody>
                             <?php foreach ($pacientes as $p): ?>
-                                <tr>
+                                <tr class="fila-paciente">
                                     <td><?= $p['id'] ?></td>
                                     <td><strong><?= htmlspecialchars($p['nombre']) ?></strong></td>
-                                    <td><?= $p['cedula'] ?></td>
-                                    <td><?= $p['telefono'] ?></td>
-                                    <td><?= $p['correo'] ?></td>
-                                    <td><span class="badge-estado badge-<?= $p['estado'] ?>"><?= ucfirst($p['estado']) ?></span></td>
+                                    <td><?= htmlspecialchars($p['cedula']) ?></td>
+                                    <td><?= htmlspecialchars($p['telefono'] ?: '—') ?></td>
+                                    <td><?= htmlspecialchars($p['correo']) ?></td>
+                                    <td><span class="badge-estado badge-<?= $p['estado'] === 'activo' ? 'confirmada' : 'cancelada' ?>"><?= ucfirst($p['estado']) ?></span></td>
                                     <td>
-                                        <button class="btn-outline-odent" style="font-size:12px;padding:4px 10px;">
+                                        <?php if ($rol === 'administrador'): ?>
+                                        <button class="btn-outline-odent" style="font-size:12px;padding:4px 10px;"
+                                            onclick='pacAbrirEditar(<?= htmlspecialchars(json_encode([
+                                                "id_usuario" => $p["id_usuario"] ?? $p["id"],
+                                                "nombre"     => $p["nombre"],
+                                                "cedula"     => $p["cedula"],
+                                                "telefono"   => $p["telefono"] ?? "",
+                                                "correo"     => $p["correo"],
+                                                "usuario"    => $p["usuario"] ?? "",
+                                            ]), ENT_QUOTES) ?>)'>
                                             <i class="bi bi-pencil"></i> Editar
                                         </button>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -706,6 +716,11 @@
                                     </td>
                                     <td style="display:flex;gap:6px;">
                                         <button class="btn-outline-odent" style="font-size:12px;padding:4px 10px;"><i class="bi bi-eye"></i> Ver</button>
+                                        <?php if ($rol === 'administrador' && $c['estado'] === 'aprobada'): ?>
+                                            <button class="btn-odent" onclick="abrirModal('modal-nuevo-pago')" style="font-size:12px;padding:4px 10px;">
+                                                <i class="bi bi-cash"></i> Cobrar
+                                            </button>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -717,6 +732,11 @@
             <div class="pagina" id="pagina-pagos">
                 <div class="panel-titulo" style="margin-bottom:20px;">
                     <h2>Registro de pagos</h2>
+                    <?php if ($rol === 'administrador'): ?>
+                    <button class="btn-odent" onclick="abrirModal('modal-nuevo-pago')">
+                        <i class="bi bi-plus-lg"></i> Registrar pago
+                    </button>
+                    <?php endif; ?>
                 </div>
                 <div class="kpi-grid" style="margin-bottom:22px;">
                     <div class="kpi-card">
@@ -822,6 +842,7 @@
     </div>
 
           <?php include ROOT_PATH . '/views/shared/tratamientos_modales.php'; ?>
+    <?php include ROOT_PATH . '/views/shared/agenda_modales.php'; ?>
     <?php if ($rol === 'administrador'): ?>
         <?php include ROOT_PATH . '/views/shared/inventario_modales.php'; ?>
     <?php endif; ?>
@@ -1030,6 +1051,80 @@
         </div>
     </div>
 
+    <?php if ($rol === 'administrador'): ?>
+    <div class="modal-overlay" id="modal-nuevo-pago">
+        <div class="modal-caja">
+            <div class="modal-header">
+                <h3>Registrar pago</h3>
+                <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-pago')"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="campo-grupo">
+                <label>Cotización</label>
+                <select>
+                    <?php foreach ($cotizaciones as $c): if ($c['estado'] === 'aprobada'): ?>
+                        <option value="<?= $c['id'] ?>"><?= $c['id'] ?> — <?= htmlspecialchars($c['paciente']) ?> (₡<?= number_format($c['total'], 0, ',', '.') ?>)</option>
+                    <?php endif; endforeach; ?>
+                </select>
+            </div>
+            <div class="campo-grupo"><label>Monto recibido (₡)</label><input type="number" placeholder="0"></div>
+            <div class="campo-grupo">
+                <label>Método de pago</label>
+                <select>
+                    <option>Efectivo</option>
+                    <option>Tarjeta débito</option>
+                    <option>Tarjeta crédito</option>
+                    <option>Sinpe Móvil</option>
+                    <option>Transferencia</option>
+                </select>
+            </div>
+            <div class="campo-grupo"><label>Comprobante (opcional)</label><input type="text" placeholder="N.° comprobante o referencia"></div>
+            <div class="modal-footer">
+                <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-pago')">Cancelar</button>
+                <button class="btn-odent"><i class="bi bi-check-lg"></i> Registrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-pac-editar-basico">
+        <div class="modal-caja" style="max-width:480px;">
+            <div class="modal-header">
+                <h3><i class="bi bi-person-gear" style="color:var(--azul-odent);margin-right:6px;"></i>Editar paciente</h3>
+                <button class="modal-cerrar" onclick="cerrarModal('modal-pac-editar-basico')"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <input type="hidden" id="pac-edit-id-usuario">
+            <div class="campo-grupo">
+                <label>Nombre completo *</label>
+                <input type="text" id="pac-edit-nombre" maxlength="150" autocomplete="off">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="campo-grupo">
+                    <label>Identificación *</label>
+                    <input type="text" id="pac-edit-cedula" maxlength="30" autocomplete="off">
+                </div>
+                <div class="campo-grupo">
+                    <label>Teléfono</label>
+                    <input type="text" id="pac-edit-telefono" maxlength="20" autocomplete="off">
+                </div>
+            </div>
+            <div class="campo-grupo">
+                <label>Correo electrónico *</label>
+                <input type="email" id="pac-edit-correo" maxlength="150" autocomplete="off">
+            </div>
+            <div class="campo-grupo">
+                <label>Nombre de usuario *</label>
+                <input type="text" id="pac-edit-usuario" maxlength="60" autocomplete="off"
+                    placeholder="Sin espacios ni caracteres especiales">
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline-odent" onclick="cerrarModal('modal-pac-editar-basico')">Cancelar</button>
+                <button class="btn-odent" id="pac-edit-btn-guardar" onclick="pacGuardarEditar()">
+                    <i class="bi bi-check-lg"></i> Guardar cambios
+                </button>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <div class="modal-overlay" id="modal-nueva-cotizacion">
         <div class="modal-caja">
             <div class="modal-header">
@@ -1226,6 +1321,80 @@
         const BASE = '<?= BASE_URL ?>';
         let usuarioIdSeleccionado = null;
         let estadoActualSeleccionado = null;
+
+        function buscarPacienteTabla() {
+            const texto = (document.getElementById('buscar-paciente')?.value || '').toLowerCase().trim();
+            document.querySelectorAll('#tabla-pacientes .fila-paciente').forEach(fila => {
+                fila.style.display = fila.textContent.toLowerCase().includes(texto) ? '' : 'none';
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('buscar-paciente')?.addEventListener('input', buscarPacienteTabla);
+        });
+
+        function pacAbrirEditar(paciente) {
+            document.getElementById('pac-edit-id-usuario').value = paciente.id_usuario;
+            document.getElementById('pac-edit-nombre').value     = paciente.nombre   || '';
+            document.getElementById('pac-edit-cedula').value     = paciente.cedula   || '';
+            document.getElementById('pac-edit-telefono').value   = paciente.telefono || '';
+            document.getElementById('pac-edit-correo').value     = paciente.correo   || '';
+            document.getElementById('pac-edit-usuario').value    = paciente.usuario  || '';
+            abrirModal('modal-pac-editar-basico');
+        }
+
+        async function pacGuardarEditar() {
+            const idUsuario = document.getElementById('pac-edit-id-usuario').value;
+            const nombre    = document.getElementById('pac-edit-nombre').value.trim();
+            const cedula    = document.getElementById('pac-edit-cedula').value.trim();
+            const telefono  = document.getElementById('pac-edit-telefono').value.trim();
+            const correo    = document.getElementById('pac-edit-correo').value.trim();
+            const usuario   = document.getElementById('pac-edit-usuario').value.trim();
+
+            if (!nombre || !cedula || !correo || !usuario) {
+                mostrarToast('Complete todos los campos obligatorios.', 'aviso');
+                return;
+            }
+
+            const btn = document.getElementById('pac-edit-btn-guardar');
+            btn.disabled = true;
+            btn.textContent = 'Guardando…';
+
+            try {
+                const form = new FormData();
+                form.append('id_usuario', idUsuario);
+                form.append('nombre',     nombre);
+                form.append('cedula',     cedula);
+                form.append('telefono',   telefono);
+                form.append('correo',     correo);
+                form.append('usuario',    usuario);
+
+                const res  = await fetch(`${BASE}/index.php?accion=pacientes.editarDatosBasicos`, { method: 'POST', body: form });
+                const data = await res.json();
+
+                if (!data.ok) {
+                    mostrarToast(data.mensaje || 'Error al guardar.', 'error');
+                } else {
+                    mostrarToast('Datos del paciente actualizados.', 'exito');
+                    cerrarModal('modal-pac-editar-basico');
+                    document.querySelectorAll('#tabla-pacientes .fila-paciente').forEach(fila => {
+                        const celdas = fila.querySelectorAll('td');
+                        if (celdas[0]?.textContent.trim() === String(idUsuario)) {
+                            celdas[1].innerHTML = '<strong></strong>';
+                            celdas[1].firstChild.textContent = nombre;
+                            celdas[2].textContent = cedula;
+                            celdas[3].textContent = telefono || '—';
+                            celdas[4].textContent = correo;
+                        }
+                    });
+                }
+            } catch (e) {
+                mostrarToast('Error de conexión.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-lg"></i> Guardar cambios';
+            }
+        }
 
         function abrirNuevoUsuario() {
             ['nu-nombre', 'nu-cedula', 'nu-telefono', 'nu-correo', 'nu-usuario', 'nu-contrasena', 'nu-rol']
