@@ -71,7 +71,6 @@ class ClasificadorPrioridad
         return trim(preg_replace('/\s+/', ' ', $texto) ?? '');
     }
 
-    /** true si la descripción (ya normalizada) contiene alguna de las frases */
     private static function menciona(string $descripcion, array $frases): bool
     {
         foreach ($frases as $frase) {
@@ -83,10 +82,6 @@ class ClasificadorPrioridad
         return false;
     }
 
-    /**
-     * Indicaciones generales para pasar la noche cuando la clínica está cerrada.
-     * No nombra medicamentos: cada persona sabe a qué es alérgica.
-     */
     private static function consejosFueraDeHorario(array $reporte): array
     {
         $desc       = self::normalizar((string) ($reporte['descripcion'] ?? ''));
@@ -95,7 +90,6 @@ class ClasificadorPrioridad
 
         $consejos = [];
 
-        // Situaciones puntuales (primero, son las más delicadas)
         if (self::menciona($desc, ['diente caido', 'se cayo el diente', 'se me cayo un diente', 'golpe', 'trauma', 'accidente', 'diente roto', 'se me quebro'])) {
             $consejos[] = 'Si se salió un diente completo, tómelo por la corona (la parte blanca), sin tocar la raíz ni frotarlo. Guárdelo en leche fría o suero; no lo ponga en agua. Entre más pronto reciba atención, más posibilidades hay de salvarlo, así que acuda a urgencias sin esperar a mañana.';
             $consejos[] = 'Si el golpe fue fuerte en la cabeza, o hay mareo, vómito o pérdida del conocimiento, acuda a urgencias.';
@@ -107,7 +101,6 @@ class ClasificadorPrioridad
             $consejos[] = 'No aplique calor sobre la zona. Si la hinchazón crece rápido, tiene fiebre, o le cuesta abrir la boca, tragar o respirar, acuda a urgencias aunque sea de noche.';
         }
 
-        // Según la zona indicada
         switch ($zona) {
             case 'diente':
                 $consejos[] = 'Evite masticar del lado afectado y los alimentos muy fríos, calientes o duros.';
@@ -135,7 +128,6 @@ class ClasificadorPrioridad
                 $consejos[] = 'Evite los alimentos muy fríos, calientes o duros mientras la molestia continúe.';
         }
 
-        // Dolor
         if ($intensidad >= 5) {
             $consejos[] = 'Para el dolor, puede tomar un analgésico que usted ya sepa que tolera, siguiendo la dosis indicada en su empaque. Si tiene alergias, está embarazada o toma otros medicamentos y no está seguro de qué tomar, mejor no se automedique.';
         }
