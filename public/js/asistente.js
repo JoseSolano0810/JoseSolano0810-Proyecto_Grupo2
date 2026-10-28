@@ -468,7 +468,7 @@
             caja.appendChild(ul);
         }
 
-        if (nivel !== 'normal') caja.appendChild(bloqueContacto());
+        if (nivel === 'prioritario') caja.appendChild(bloqueContacto());
 
         caja.appendChild(el('small', null, 'Reporte N.º ' + r.id_reporte + ' registrado.'));
         burbujaBot('Su reporte fue enviado a la clínica.', caja);
