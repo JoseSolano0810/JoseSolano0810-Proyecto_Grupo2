@@ -961,25 +961,25 @@ h4 {
 }
 
 .diente {
-    width: 36px;
-    height: 44px;
+    width: 40px;
+    height: 62px;
     border: 1.5px solid var(--borde);
     border-radius: 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     cursor: pointer;
     font-size: 10px;
     color: var(--gris-azulado);
-    background: var(--blanco);
+    background-color: var(--blanco);
     transition: all var(--transicion);
     position: relative;
 }
 
 .diente:hover {
     border-color: var(--verde-odent);
-    background: rgba(47, 127, 122, .06);
+    background-color: rgba(47, 127, 122, .06);
 }
 
 .diente.sano {
@@ -988,49 +988,65 @@ h4 {
 
 .diente.caries {
     border-color: #C0392B;
-    background: rgba(192, 57, 43, .08);
+    background-color: rgba(192, 57, 43, .08);
 }
 
 .diente.corona {
     border-color: #f59e0b;
-    background: rgba(245, 158, 11, .08);
+    background-color: rgba(245, 158, 11, .08);
 }
 
 .diente.ausente {
     border-color: var(--gris-azulado);
-    background: var(--fondo-odent);
+    background-color: var(--fondo-odent);
     opacity: .5;
 }
 
 .diente.endodoncia {
     border-color: #7c3aed;
-    background: rgba(139, 92, 246, .1);
+    background-color: rgba(139, 92, 246, .1);
 }
 
 .diente.extraccion {
     border-color: #ef4444;
-    background: rgba(239, 68, 68, .08);
+    background-color: rgba(239, 68, 68, .08);
     opacity: .7;
 }
 
 .diente.implante {
     border-color: #10b981;
-    background: rgba(16, 185, 129, .1);
+    background-color: rgba(16, 185, 129, .1);
 }
 
 .diente.seleccionado {
     border-color: var(--azul-odent);
-    background: rgba(23, 50, 77, .08);
+    background-color: rgba(23, 50, 77, .08);
     box-shadow: 0 0 0 2px rgba(23, 50, 77, .2);
 }
+
+.diente {
+    background-repeat: no-repeat;
+    background-position: center bottom 3px;
+    background-size: auto 40px;
+}
+.diente.d-incisivo.sup { background-image: url('../img/dientes/incisivo-sup.svg'); }
+.diente.d-incisivo.inf { background-image: url('../img/dientes/incisivo-inf.svg'); }
+.diente.d-canino.sup   { background-image: url('../img/dientes/canino-sup.svg'); }
+.diente.d-canino.inf   { background-image: url('../img/dientes/canino-inf.svg'); }
+.diente.d-premolar.sup { background-image: url('../img/dientes/premolar-sup.svg'); }
+.diente.d-premolar.inf { background-image: url('../img/dientes/premolar-inf.svg'); }
+.diente.d-molar.sup    { background-image: url('../img/dientes/molar-sup.svg'); }
+.diente.d-molar.inf    { background-image: url('../img/dientes/molar-inf.svg'); }
 
 .diente i {
     font-size: 14px;
 }
 
 .diente span {
-    font-size: 9px;
-    color: var(--gris-azulado);
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 2px;
+    color: var(--azul-odent);
 }
 
 .leyenda-odontograma {
@@ -2140,7 +2156,7 @@ button:disabled {
     background: var(--blanco); border: 1px solid var(--borde);
     border-radius: var(--radio); padding: 14px 10px;
 }
-.tre-picker .diente { width: 32px; height: 40px; }
+.tre-picker .diente { width: 34px; height: 54px; background-size: auto 32px; }
 .tre-picker-etq { font-size: 11px; color: var(--gris-azulado); text-align: center; font-weight: 600; margin: 4px 0 8px; }
 .tre-picker-linea { border-top: 2px dashed var(--borde); margin: 6px 0 10px; }
 .tre-picker-resumen { font-size: 13px; color: var(--gris-azulado); margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }

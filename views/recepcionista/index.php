@@ -1558,8 +1558,10 @@
 
         function _odoRenderizarDiente(num) {
             const estado = _odoEstado(num);
-            return `<div class="diente ${estado}" id="diente-${num}" onclick="odoSeleccionarDiente(${num})">
-                        <i class="bi bi-circle-fill" style="font-size:10px;"></i>
+            const u = num % 10;
+            const tipo = u <= 2 ? 'incisivo' : u === 3 ? 'canino' : u <= 5 ? 'premolar' : 'molar';
+            const arc = ODO_SUPERIOR.includes(num) ? 'sup' : 'inf';
+            return `<div class="diente d-${tipo} ${arc} ${estado}" id="diente-${num}" onclick="odoSeleccionarDiente(${num})" title="Pieza ${num}">
                         <span>${num}</span>
                     </div>`;
         }
