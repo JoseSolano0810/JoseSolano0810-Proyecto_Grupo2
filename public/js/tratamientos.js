@@ -193,9 +193,10 @@ function trLimpiarFiltros() {
 
 function trRenderPicker(idContenedor, seleccionadas = []) {
     const sel = new Set(seleccionadas.map(Number));
+    const tipoDe = n => { const u = n % 10; return u <= 2 ? 'incisivo' : u === 3 ? 'canino' : u <= 5 ? 'premolar' : 'molar'; };
     const fila = nums => nums.map(n =>
-        `<button type="button" class="tr-pieza ${sel.has(n) ? 'activa' : ''}" data-pieza="${n}"
-                 aria-pressed="${sel.has(n)}" onclick="trTogglePieza(this)">${n}</button>`).join('');
+        `<button type="button" class="tr-pieza d-${tipoDe(n)} ${TR_SUPERIOR.includes(n) ? 'sup' : 'inf'} ${sel.has(n) ? 'activa' : ''}" data-pieza="${n}"
+                 title="Pieza ${n}" aria-pressed="${sel.has(n)}" onclick="trTogglePieza(this)"><span>${n}</span></button>`).join('');
 
     _$(idContenedor).innerHTML = `
         <p class="tr-picker-etq">MAXILAR SUPERIOR</p>
