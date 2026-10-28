@@ -76,7 +76,9 @@ class ClasificadorPrioridad
         return match ($prioridad) {
             'urgente' => [
                 'titulo'   => 'Atención urgente',
-                'mensaje'  => 'Su situación requiere atención inmediata. Comuníquese con la clínica o acuda ahora mismo. '
+                'mensaje'  => 'Su situación requiere atención inmediata. Comuníquese con la clínica al '
+                            . (defined('CLINICA_TELEFONO') && CLINICA_TELEFONO !== '' ? CLINICA_TELEFONO : 'número de la clínica')
+                            . ' o acuda ahora mismo. '
                             . 'Si tiene dificultad para respirar o tragar, o sangrado que no se detiene, acuda a urgencias.',
                 'consejos' => [],
             ],
