@@ -1029,14 +1029,14 @@ h4 {
     background-position: center bottom 3px;
     background-size: auto 40px;
 }
-.diente.d-incisivo.sup { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 28 40 36%22%3E%3Cpath d=%22M9 32 Q9 30 12 30 L28 30 Q31 30 31 32 L30 58 Q29 62 25 62 L15 62 Q11 62 10 58 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E"); }
-.diente.d-incisivo.inf { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 36%22%3E%3Cg transform=%22translate%280%2C64%29 scale%281%2C-1%29%22%3E%3Cpath d=%22M9 32 Q9 30 12 30 L28 30 Q31 30 31 32 L30 58 Q29 62 25 62 L15 62 Q11 62 10 58 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3C/g%3E%3C/svg%3E"); }
-.diente.d-canino.sup   { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 28 40 36%22%3E%3Cpath d=%22M10 32 Q10 30 13 30 L27 30 Q30 30 30 32 L29 54 Q28 62 20 62 Q12 62 11 54 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E"); }
-.diente.d-canino.inf   { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 36%22%3E%3Cg transform=%22translate%280%2C64%29 scale%281%2C-1%29%22%3E%3Cpath d=%22M10 32 Q10 30 13 30 L27 30 Q30 30 30 32 L29 54 Q28 62 20 62 Q12 62 11 54 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3C/g%3E%3C/svg%3E"); }
-.diente.d-premolar.sup { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 28 40 36%22%3E%3Cpath d=%22M8 33 Q8 30 11 30 L29 30 Q32 30 32 33 L31 56 Q30 62 26 62 L22 58 L20 61 L18 58 L14 62 Q10 62 9 56 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M20 36 L20 52%22 fill=%22none%22 stroke=%22%23b7c2cc%22 stroke-width=%221.2%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E"); }
-.diente.d-premolar.inf { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 36%22%3E%3Cg transform=%22translate%280%2C64%29 scale%281%2C-1%29%22%3E%3Cpath d=%22M8 33 Q8 30 11 30 L29 30 Q32 30 32 33 L31 56 Q30 62 26 62 L22 58 L20 61 L18 58 L14 62 Q10 62 9 56 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M20 36 L20 52%22 fill=%22none%22 stroke=%22%23b7c2cc%22 stroke-width=%221.2%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/g%3E%3C/svg%3E"); }
-.diente.d-molar.sup    { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 28 40 36%22%3E%3Cpath d=%22M5 33 Q5 30 8 30 L32 30 Q35 30 35 33 L35 55 Q34 62 28 62 L24 58 L20 61 L16 58 L12 62 Q6 62 5 55 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M12 38 L20 46 L28 38 M20 46 L20 56%22 fill=%22none%22 stroke=%22%23b7c2cc%22 stroke-width=%221.2%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E"); }
-.diente.d-molar.inf    { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 36%22%3E%3Cg transform=%22translate%280%2C64%29 scale%281%2C-1%29%22%3E%3Cpath d=%22M5 33 Q5 30 8 30 L32 30 Q35 30 35 33 L35 55 Q34 62 28 62 L24 58 L20 61 L16 58 L12 62 Q6 62 5 55 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M12 38 L20 46 L28 38 M20 46 L20 56%22 fill=%22none%22 stroke=%22%23b7c2cc%22 stroke-width=%221.2%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/g%3E%3C/svg%3E"); }
+.diente.d-incisivo.sup, .tr-pieza.d-incisivo.sup { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 28 40 36%22%3E%3Cpath d=%22M9 32 Q9 30 12 30 L28 30 Q31 30 31 32 L30 58 Q29 62 25 62 L15 62 Q11 62 10 58 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E"); }
+.diente.d-incisivo.inf, .tr-pieza.d-incisivo.inf { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 36%22%3E%3Cg transform=%22translate%280%2C64%29 scale%281%2C-1%29%22%3E%3Cpath d=%22M9 32 Q9 30 12 30 L28 30 Q31 30 31 32 L30 58 Q29 62 25 62 L15 62 Q11 62 10 58 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3C/g%3E%3C/svg%3E"); }
+.diente.d-canino.sup, .tr-pieza.d-canino.sup   { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 28 40 36%22%3E%3Cpath d=%22M10 32 Q10 30 13 30 L27 30 Q30 30 30 32 L29 54 Q28 62 20 62 Q12 62 11 54 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E"); }
+.diente.d-canino.inf, .tr-pieza.d-canino.inf   { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 36%22%3E%3Cg transform=%22translate%280%2C64%29 scale%281%2C-1%29%22%3E%3Cpath d=%22M10 32 Q10 30 13 30 L27 30 Q30 30 30 32 L29 54 Q28 62 20 62 Q12 62 11 54 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3C/g%3E%3C/svg%3E"); }
+.diente.d-premolar.sup, .tr-pieza.d-premolar.sup { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 28 40 36%22%3E%3Cpath d=%22M8 33 Q8 30 11 30 L29 30 Q32 30 32 33 L31 56 Q30 62 26 62 L22 58 L20 61 L18 58 L14 62 Q10 62 9 56 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M20 36 L20 52%22 fill=%22none%22 stroke=%22%23b7c2cc%22 stroke-width=%221.2%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E"); }
+.diente.d-premolar.inf, .tr-pieza.d-premolar.inf { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 36%22%3E%3Cg transform=%22translate%280%2C64%29 scale%281%2C-1%29%22%3E%3Cpath d=%22M8 33 Q8 30 11 30 L29 30 Q32 30 32 33 L31 56 Q30 62 26 62 L22 58 L20 61 L18 58 L14 62 Q10 62 9 56 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M20 36 L20 52%22 fill=%22none%22 stroke=%22%23b7c2cc%22 stroke-width=%221.2%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/g%3E%3C/svg%3E"); }
+.diente.d-molar.sup, .tr-pieza.d-molar.sup    { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 28 40 36%22%3E%3Cpath d=%22M5 33 Q5 30 8 30 L32 30 Q35 30 35 33 L35 55 Q34 62 28 62 L24 58 L20 61 L16 58 L12 62 Q6 62 5 55 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M12 38 L20 46 L28 38 M20 46 L20 56%22 fill=%22none%22 stroke=%22%23b7c2cc%22 stroke-width=%221.2%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/svg%3E"); }
+.diente.d-molar.inf, .tr-pieza.d-molar.inf    { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 36%22%3E%3Cg transform=%22translate%280%2C64%29 scale%281%2C-1%29%22%3E%3Cpath d=%22M5 33 Q5 30 8 30 L32 30 Q35 30 35 33 L35 55 Q34 62 28 62 L24 58 L20 61 L16 58 L12 62 Q6 62 5 55 Z%22 fill=%22%23ffffff%22 stroke=%22%238a99a8%22 stroke-width=%221.6%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M12 38 L20 46 L28 38 M20 46 L20 56%22 fill=%22none%22 stroke=%22%23b7c2cc%22 stroke-width=%221.2%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/%3E%3C/g%3E%3C/svg%3E"); }
 
 .diente i {
     font-size: 14px;
@@ -2429,11 +2429,29 @@ button:disabled {
     padding: 0;
     transition: all var(--transicion);
 }
+.tr-pieza[class*="d-"] {
+    width: 38px;
+    height: 58px;
+    border-radius: 4px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--azul-odent);
+    background-repeat: no-repeat;
+    background-position: center bottom 3px;
+    background-size: auto 36px;
+}
+.tr-pieza[class*="d-"] span { margin-top: 3px; }
 .tr-pieza:hover { border-color: var(--azul-odent); color: var(--azul-odent); }
 .tr-pieza.activa {
-    background: var(--azul-odent);
-    border-color: var(--azul-odent);
-    color: var(--blanco);
+    background-color: rgba(47, 127, 122, .18);
+    border-color: var(--verde-odent);
+    border-width: 2px;
+    box-shadow: 0 0 0 2px rgba(47, 127, 122, .25);
+    color: var(--verde-odent);
 }
 .tr-pieza:focus-visible { outline: 2px solid var(--verde-odent); outline-offset: 2px; }
 
