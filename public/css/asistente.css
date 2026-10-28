@@ -180,6 +180,8 @@
     margin-top: 4px;
 }
 
+.asi-btn[hidden] { display: none; }
+
 .asi-bloqueado { opacity: .55; pointer-events: none; }
 
 .asi-btn {

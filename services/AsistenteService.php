@@ -225,14 +225,21 @@ class AsistenteService
 
     /* ── Respuestas comunes ─────────────────────────────────── */
 
-    /** ASI-01 esc. 3: nunca se inventan datos */
     private function sinDatos(string $detalle): array
     {
+        $clinica = self::estadoClinica();
+        $tel     = defined('CLINICA_TELEFONO') ? trim((string) CLINICA_TELEFONO) : '';
+        $cierre  = $clinica['abierta']
+            ? ' Le recomiendo comunicarse con la clínica para más información.'
+            : ' La clínica está cerrada ahora (atendemos ' . $clinica['horario'] . '). Para más información, llame'
+              . ($tel !== '' ? ' al ' . $tel : '') . ' ' . $clinica['proxima'] . '.';
         return [
             'tipo'     => 'sin_datos',
             'titulo'   => 'Sin información disponible',
-            'mensaje'  => $detalle . ' Le recomiendo comunicarse con la clínica para más información.',
+            'mensaje'  => $detalle . $cierre,
             'contacto' => self::contacto(),
+            'clinica_abierta'  => $clinica['abierta'],
+            'proxima_apertura' => $clinica['proxima'],
         ];
     }
 
@@ -245,10 +252,6 @@ class AsistenteService
         ];
     }
 
-    /**
-     * Indica si la clínica está atendiendo ahora y, si no, cuándo vuelve a abrir.
-     * Usa CLINICA_HORA_APERTURA, CLINICA_HORA_CIERRE y CLINICA_DIAS_ATENCION.
-     */
     public static function estadoClinica(?DateTimeImmutable $ahora = null): array
     {
         $ahora    = $ahora ?? new DateTimeImmutable('now');
@@ -264,7 +267,6 @@ class AsistenteService
         $laboral = in_array($hoy, $dias, true);
         $abierta = $laboral && $hora >= $apertura && $hora < $cierre;
 
-        // Texto del horario: "de lunes a viernes, de 9:30 a. m. a 6:00 p. m."
         $consecutivos = count($dias) > 1 && ($dias[count($dias) - 1] - $dias[0] === count($dias) - 1);
         if ($consecutivos) {
             $textoDias = 'de ' . $nombres[$dias[0]] . ' a ' . $nombres[$dias[count($dias) - 1]];
@@ -273,7 +275,6 @@ class AsistenteService
         }
         $horario = $textoDias . ', de ' . self::formatoHora($apertura) . ' a ' . self::formatoHora($cierre);
 
-        // Próxima apertura
         $proxima = '';
         if (!$abierta) {
             $cuando = '';

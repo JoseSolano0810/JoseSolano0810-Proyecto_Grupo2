@@ -49,7 +49,7 @@
 
     function burbujaBot(...hijos) {
         const m = el('div', 'asi-msg asi-bot');
-        hijos.forEach(h => m.appendChild(typeof h === 'string' ? document.createTextNode(h) : h));
+        hijos.filter(Boolean).forEach(h => m.appendChild(typeof h === 'string' ? document.createTextNode(h) : h));
         $mensajes.appendChild(m);
         bajar();
         return m;
@@ -121,7 +121,8 @@
 
     /* ── Contacto con la clínica ────────────────────────────── */
 
-    function bloqueContacto() {
+    function bloqueContacto(abierta) {
+        if (abierta === false) return null;
         const c = el('div', 'asi-contacto');
         if (TELEFONO) {
             const a = el('a', 'asi-btn asi-btn-primario');
@@ -205,7 +206,7 @@
         const caja = el('div', 'asi-sin-datos');
         caja.appendChild(icono('info-circle'));
         caja.appendChild(el('span', null, r.mensaje));
-        burbujaBot(caja, bloqueContacto());
+        burbujaBot(caja, bloqueContacto(r.clinica_abierta !== false));
     }
 
     function pintarSugerencia(r) {
@@ -471,9 +472,6 @@
             caja.appendChild(ul);
         }
 
-        // Con la clínica abierta: en urgente basta el botón "Llamar ahora" de la alerta superior;
-        // en prioritario se muestra el botón de llamada dentro del resultado.
-        // Con la clínica cerrada no se ofrece llamar: se dan indicaciones y la hora de apertura.
         const abierta = r.clinica_abierta !== false;
         if (nivel === 'prioritario' && abierta) caja.appendChild(bloqueContacto());
 
