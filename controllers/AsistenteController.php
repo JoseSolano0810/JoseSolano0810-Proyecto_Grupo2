@@ -138,7 +138,8 @@ class AsistenteController
 
         Bitacora::registrar('ASISTENTE_REPORTE', "Reporte #{$id} registrado con prioridad {$clasif['prioridad']}");
 
-        $o = ClasificadorPrioridad::orientacion($clasif['prioridad']);
+        $clinica = AsistenteService::estadoClinica();
+        $o = ClasificadorPrioridad::orientacion($clasif['prioridad'], $reporte, $clinica);
 
         $this->responder([
             'ok'          => true,
@@ -148,6 +149,8 @@ class AsistenteController
             'mensaje'     => $o['mensaje'],
             'consejos'    => $o['consejos'],
             'contacto'    => AsistenteService::contacto(),
+            'clinica_abierta'  => $clinica['abierta'],
+            'proxima_apertura' => $clinica['proxima'],
         ]);
     }
 

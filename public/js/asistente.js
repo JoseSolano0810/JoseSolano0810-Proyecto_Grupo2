@@ -11,6 +11,9 @@
     const $atajos   = document.getElementById('asi-atajos');
     const $barra    = document.getElementById('asi-barra-flujo');
     const $alerta   = document.getElementById('asi-alerta-urgente');
+    const $alertaTexto   = $alerta.querySelector('.asi-alerta-texto span');
+    const $alertaLlamar  = $alerta.querySelector('a.asi-btn-peligro');
+    const alertaTextoOriginal = $alertaTexto.innerHTML;
 
     const TELEFONO = (app.dataset.telefono || '').trim();
     const CLINICA  = app.dataset.clinica || 'la clínica';
@@ -468,15 +471,34 @@
             caja.appendChild(ul);
         }
 
-        if (nivel === 'prioritario') caja.appendChild(bloqueContacto());
+        // Con la clínica abierta: en urgente basta el botón "Llamar ahora" de la alerta superior;
+        // en prioritario se muestra el botón de llamada dentro del resultado.
+        // Con la clínica cerrada no se ofrece llamar: se dan indicaciones y la hora de apertura.
+        const abierta = r.clinica_abierta !== false;
+        if (nivel === 'prioritario' && abierta) caja.appendChild(bloqueContacto());
 
         caja.appendChild(el('small', null, 'Reporte N.º ' + r.id_reporte + ' registrado.'));
         burbujaBot('Su reporte fue enviado a la clínica.', caja);
 
         if (nivel === 'urgente') {
+            if (abierta) {
+                $alertaTexto.innerHTML = alertaTextoOriginal;
+                if ($alertaLlamar) $alertaLlamar.hidden = false;
+            } else {
+                $alertaTexto.textContent = 'La clínica está cerrada ahora. Siga las indicaciones de abajo y llame'
+                    + (TELEFONO ? ' al ' + TELEFONO : '') + ' ' + (r.proxima_apertura || 'cuando abra')
+                    + ((r.proxima_apertura || '').endsWith('.') ? ' ' : '. ')
+                    + 'Si es grave, acuda a urgencias o llame al 911.';
+                if ($alertaLlamar) $alertaLlamar.hidden = true;
+            }
             $alerta.hidden = false;
             $alerta.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            if (typeof mostrarToast === 'function') mostrarToast('Su reporte es urgente. Llame de inmediato a la clínica' + (TELEFONO ? ' al ' + TELEFONO : '') + '.', 'peligro', 8000);
+            if (typeof mostrarToast === 'function') {
+                mostrarToast(abierta
+                    ? 'Su reporte es urgente. Llame de inmediato a la clínica' + (TELEFONO ? ' al ' + TELEFONO : '') + '.'
+                    : 'Su reporte es urgente. La clínica está cerrada: siga las indicaciones y, si es grave, acuda a urgencias o llame al 911.',
+                    'peligro', 8000);
+            }
         }
     }
 
