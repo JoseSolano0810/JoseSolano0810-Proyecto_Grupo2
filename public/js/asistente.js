@@ -123,7 +123,7 @@
         if (TELEFONO) {
             const a = el('a', 'asi-btn asi-btn-primario');
             a.href = 'tel:' + TELEFONO.replace(/[^0-9+]/g, '');
-            a.append(icono('telephone-fill'), document.createTextNode(' Llamar a ' + CLINICA));
+            a.append(icono('telephone-fill'), document.createTextNode(' Llamar a ' + CLINICA + ' (' + TELEFONO + ')'));
             c.appendChild(a);
         } else {
             c.append(icono('telephone'), document.createTextNode(' Comuníquese con la recepción de ' + CLINICA + '.'));
@@ -476,7 +476,7 @@
         if (nivel === 'urgente') {
             $alerta.hidden = false;
             $alerta.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            if (typeof mostrarToast === 'function') mostrarToast('Su reporte es urgente. Comuníquese con la clínica de inmediato.', 'peligro', 8000);
+            if (typeof mostrarToast === 'function') mostrarToast('Su reporte es urgente. Llame de inmediato a la clínica' + (TELEFONO ? ' al ' + TELEFONO : '') + '.', 'peligro', 8000);
         }
     }
 

@@ -17,7 +17,7 @@ $asi_telefono = defined('CLINICA_TELEFONO') ? trim((string) CLINICA_TELEFONO) : 
             <i class="bi bi-exclamation-octagon-fill"></i>
             <div class="asi-alerta-texto">
                 <strong>Atención urgente</strong>
-                <span>Comuníquese con la clínica o acuda de inmediato.</span>
+                <span>Comuníquese con la clínica al <strong><?= htmlspecialchars($asi_telefono) ?></strong> o acuda de inmediato.</span>
             </div>
             <?php if ($asi_telefono !== ''): ?>
                 <a class="asi-btn asi-btn-peligro" href="tel:<?= htmlspecialchars(preg_replace('/[^0-9+]/', '', $asi_telefono)) ?>">
@@ -51,11 +51,5 @@ $asi_telefono = defined('CLINICA_TELEFONO') ? trim((string) CLINICA_TELEFONO) : 
             <input type="text" id="asi-texto" maxlength="300" placeholder="Escriba su consulta…" aria-label="Escriba su consulta">
             <button type="submit" id="asi-enviar" aria-label="Enviar"><i class="bi bi-send-fill"></i></button>
         </form>
-
-        <div class="alerta aviso" style="margin:12px 0 0;">
-            <i class="bi bi-exclamation-triangle"></i>
-            Este asistente es orientativo y no reemplaza una valoración profesional.
-            En una emergencia, comuníquese directamente con la clínica.
-        </div>
     </div>
 </div>
