@@ -245,6 +245,67 @@ class AsistenteService
         ];
     }
 
+    /**
+     * Indica si la clínica está atendiendo ahora y, si no, cuándo vuelve a abrir.
+     * Usa CLINICA_HORA_APERTURA, CLINICA_HORA_CIERRE y CLINICA_DIAS_ATENCION.
+     */
+    public static function estadoClinica(?DateTimeImmutable $ahora = null): array
+    {
+        $ahora    = $ahora ?? new DateTimeImmutable('now');
+        $apertura = defined('CLINICA_HORA_APERTURA') ? (string) CLINICA_HORA_APERTURA : '09:30';
+        $cierre   = defined('CLINICA_HORA_CIERRE')   ? (string) CLINICA_HORA_CIERRE   : '18:00';
+        $dias     = defined('CLINICA_DIAS_ATENCION') ? (array) CLINICA_DIAS_ATENCION  : [1, 2, 3, 4, 5];
+        sort($dias);
+
+        $nombres = [1 => 'lunes', 2 => 'martes', 3 => 'miércoles', 4 => 'jueves', 5 => 'viernes', 6 => 'sábado', 7 => 'domingo'];
+
+        $hoy     = (int) $ahora->format('N');
+        $hora    = $ahora->format('H:i');
+        $laboral = in_array($hoy, $dias, true);
+        $abierta = $laboral && $hora >= $apertura && $hora < $cierre;
+
+        // Texto del horario: "de lunes a viernes, de 9:30 a. m. a 6:00 p. m."
+        $consecutivos = count($dias) > 1 && ($dias[count($dias) - 1] - $dias[0] === count($dias) - 1);
+        if ($consecutivos) {
+            $textoDias = 'de ' . $nombres[$dias[0]] . ' a ' . $nombres[$dias[count($dias) - 1]];
+        } else {
+            $textoDias = implode(', ', array_map(fn($d) => $nombres[$d] ?? '', $dias));
+        }
+        $horario = $textoDias . ', de ' . self::formatoHora($apertura) . ' a ' . self::formatoHora($cierre);
+
+        // Próxima apertura
+        $proxima = '';
+        if (!$abierta) {
+            $cuando = '';
+            if ($laboral && $hora < $apertura) {
+                $cuando = 'hoy';
+            } else {
+                for ($i = 1; $i <= 7; $i++) {
+                    $d = (($hoy - 1 + $i) % 7) + 1;
+                    if (in_array($d, $dias, true)) {
+                        $cuando = $i === 1 ? 'mañana' : 'el ' . $nombres[$d];
+                        break;
+                    }
+                }
+            }
+            $proxima = trim($cuando . ' a las ' . self::formatoHora($apertura));
+        }
+
+        return [
+            'abierta'  => $abierta,
+            'horario'  => $horario,
+            'proxima'  => $proxima,
+            'telefono' => defined('CLINICA_TELEFONO') ? (string) CLINICA_TELEFONO : '',
+        ];
+    }
+
+    private static function formatoHora(string $hhmm): string
+    {
+        [$h, $m] = array_map('intval', explode(':', $hhmm) + [0, 0]);
+        $h12 = $h % 12 ?: 12;
+        return $h12 . ':' . sprintf('%02d', $m) . ' ' . ($h >= 12 ? 'p. m.' : 'a. m.');
+    }
+
     public static function contacto(): array
     {
         return [

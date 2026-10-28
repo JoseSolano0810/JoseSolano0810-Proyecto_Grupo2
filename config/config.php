@@ -34,4 +34,7 @@ date_default_timezone_set('America/Costa_Rica');
 define('RECORDATORIO_HORAS_ANTES', 24);
 define('CLINICA_NOMBRE', 'Odent Centro Odontológico');
 define('CLINICA_TELEFONO', '2263 2010');
+define('CLINICA_HORA_APERTURA', '09:30');
+define('CLINICA_HORA_CIERRE',   '18:00');
+define('CLINICA_DIAS_ATENCION', [1, 2, 3, 4, 5, 6]);
 define('MAIL_REMITENTE', 'no-responder@' . (explode(':', $host)[0] ?: 'localhost'));
