@@ -496,7 +496,7 @@
             if (typeof mostrarToast === 'function') {
                 mostrarToast(abierta
                     ? 'Su reporte es urgente. Llame de inmediato a la clínica' + (TELEFONO ? ' al ' + TELEFONO : '') + '.'
-                    : 'Su reporte es urgente. La clínica está cerrada: siga las indicaciones y, si es grave, acuda a urgencias o llame al 911.',
+                    : 'Su reporte es urgente. La clínica está cerrada. Siga las indicaciones y, si es grave, acuda a urgencias o llame al 911.',
                     'peligro', 8000);
             }
         }

@@ -115,7 +115,7 @@ class AsistenteController
         if ($faltantes) {
             $this->responder([
                 'ok'        => false,
-                'error'     => 'Faltan datos para enviar el reporte: ' . implode(' ', $faltantes),
+                'error'     => 'Faltan datos para enviar el reporte. ' . implode(' ', $faltantes),
                 'faltantes' => $faltantes,
             ], 422);
         }
