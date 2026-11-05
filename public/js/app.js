@@ -49,6 +49,7 @@ const titulos = {
     pagos:         'Pagos',
     citas:         'Mis citas',
     asistente:     'Asistente inteligente',
+        'asistente-reportes': 'Reportes del asistente',
     inventario:    'Inventario',
     insumos:       'Control de insumos',
     usuarios:      'Usuarios',
