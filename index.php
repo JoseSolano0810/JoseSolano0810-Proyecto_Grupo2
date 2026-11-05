@@ -28,6 +28,7 @@ require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/RecordatorioService.php';
 require_once ROOT_PATH . '/controllers/InventarioController.php';
 require_once ROOT_PATH . '/controllers/AsistenteController.php';
+   require_once ROOT_PATH . '/controllers/AsistenteReportesController.php';
 
 $accion = $_GET['accion'] ?? 'inicio';
 $metodo = $_SERVER['REQUEST_METHOD'];
@@ -116,6 +117,14 @@ switch ($accion) {
         break;
 
     case 'asistente.reporte.cancelar':
+               // ── Reportes del asistente para recepción / asistente dental (ASI-04) ──
+       case 'asistente.reportes.listar':
+           (new AsistenteReportesController())->listar();
+           break;
+
+       case 'asistente.reportes.detalle':
+           (new AsistenteReportesController())->detalle();
+           break;
         (new AsistenteController())->cancelarReporte();
         break;
 
