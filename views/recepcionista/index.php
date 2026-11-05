@@ -173,6 +173,7 @@
             <?php if ($esRecepcionista || $esAsistenteDental): ?>
 
                 <?php include ROOT_PATH . '/views/shared/inventario_pagina.php'; ?>
+                  <?php include ROOT_PATH . '/views/shared/asistente_reportes_pagina.php'; ?>
 
             <?php endif; ?>
 
@@ -806,6 +807,7 @@
 
     <?php if ($esRecepcionista || $esAsistenteDental): ?>
         <?php include ROOT_PATH . '/views/shared/inventario_modales.php'; ?>
+          <?php include ROOT_PATH . '/views/shared/asistente_reportes_modales.php'; ?>
 
     <?php endif; ?>
 
@@ -1081,6 +1083,7 @@
 
     <?php if ($esRecepcionista || $esAsistenteDental): ?>
         <script src="<?= BASE_URL ?>/public/js/inventario.js?v=<?= @filemtime(ROOT_PATH . '/public/js/inventario.js') ?>"></script>
+          <script src="<?= BASE_URL ?>/public/js/asistente_reportes.js?v=<?= @filemtime(ROOT_PATH . '/public/js/asistente_reportes.js') ?>"></script>
     <?php endif; ?>
 
     <?php if ($esRecepcionista || $esAsistenteDental): ?>
