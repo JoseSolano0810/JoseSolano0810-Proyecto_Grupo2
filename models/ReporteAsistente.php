@@ -146,6 +146,12 @@ class ReporteAsistente
         $params = [];
 
         if (!empty($f['id_usuario'])) { $sql .= " AND r.id_usuario = ?"; $params[] = (int) $f['id_usuario']; }
+
+                if (($f['q'] ?? '') !== '') {
+            $sql .= " AND (u.nombre_completo LIKE ? OR u.identificacion LIKE ?)";
+            $like = '%' . $f['q'] . '%';
+            array_push($params, $like, $like);
+        }
         if (!empty($f['prioridad']) && in_array($f['prioridad'], self::PRIORIDADES, true)) {
             $sql .= " AND r.prioridad = ?";
             $params[] = $f['prioridad'];
