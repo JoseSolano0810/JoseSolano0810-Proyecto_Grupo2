@@ -123,6 +123,11 @@
                 <i class="bi bi-file-earmark-medical"></i> Documentos
             </a>
 
+                        <div class="sidebar-seccion-titulo">Asistente inteligente</div>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'asistente-reportes' ? 'activo' : '' ?>" onclick="mostrarPagina('asistente-reportes')">
+                <i class="bi bi-robot"></i> Reportes del asistente
+            </a>
             <div class="sidebar-seccion-titulo">Inventario</div>
 
             <a class="sidebar-enlace <?= $pagina_activa === 'inventario' ? 'activo' : '' ?>" onclick="mostrarPagina('inventario')">
@@ -169,6 +174,11 @@
                 <i class="bi bi-file-earmark-medical"></i> Documentos
             </a>
 
+                        <div class="sidebar-seccion-titulo">Asistente inteligente</div>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'asistente-reportes' ? 'activo' : '' ?>" onclick="mostrarPagina('asistente-reportes')">
+                <i class="bi bi-robot"></i> Reportes del asistente
+            </a>
             <div class="sidebar-seccion-titulo">Inventario</div>
 
             <a class="sidebar-enlace <?= $pagina_activa === 'inventario' ? 'activo' : '' ?>" onclick="mostrarPagina('inventario')">
