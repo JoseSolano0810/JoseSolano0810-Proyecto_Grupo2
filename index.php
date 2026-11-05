@@ -29,6 +29,7 @@ require_once ROOT_PATH . '/services/RecordatorioService.php';
 require_once ROOT_PATH . '/controllers/InventarioController.php';
 require_once ROOT_PATH . '/controllers/AsistenteController.php';
    require_once ROOT_PATH . '/controllers/AsistenteReportesController.php';
+   require_once ROOT_PATH . '/controllers/AsistenteSolicitudController.php';
 
 $accion = $_GET['accion'] ?? 'inicio';
 $metodo = $_SERVER['REQUEST_METHOD'];
@@ -117,7 +118,20 @@ switch ($accion) {
         break;
 
     case 'asistente.reporte.cancelar':
-               // ── Reportes del asistente para recepción / asistente dental (ASI-04) ──
+            // ── Solicitud de cita desde un reporte del asistente (ASI-05) ──
+    case 'asistente.disponibilidad':
+        (new AsistenteSolicitudController())->disponibilidad();
+        break;
+
+    case 'asistente.solicitud.crear':
+        (new AsistenteSolicitudController())->crear();
+        break;
+
+    case 'asistente.solicitud.cancelar':
+        (new AsistenteSolicitudController())->cancelar();
+        break;       
+        
+        // ── Reportes del asistente para recepción / asistente dental (ASI-04) ──
        case 'asistente.reportes.listar':
            (new AsistenteReportesController())->listar();
            break;
