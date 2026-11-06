@@ -27,6 +27,10 @@ require_once ROOT_PATH . '/controllers/DocumentoController.php';
 require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/RecordatorioService.php';
 require_once ROOT_PATH . '/controllers/InventarioController.php';
+require_once ROOT_PATH . '/controllers/AsistenteController.php';
+  require_once ROOT_PATH . '/controllers/ReporteController.php';
+   require_once ROOT_PATH . '/controllers/AsistenteReportesController.php';
+   require_once ROOT_PATH . '/controllers/AsistenteSolicitudController.php';
 
 $accion = $_GET['accion'] ?? 'inicio';
 $metodo = $_SERVER['REQUEST_METHOD'];
@@ -101,6 +105,58 @@ switch ($accion) {
         (new InventarioController())->movimiento();
         break;
 
+    // ── Asistente inteligente del paciente (ASI-01 a ASI-03) ──
+    case 'asistente.consulta':
+        (new AsistenteController())->consultar();
+        break;
+
+    case 'asistente.catalogos':
+        (new AsistenteController())->catalogos();
+        break;
+
+    case 'asistente.reporte.enviar':
+        (new AsistenteController())->enviarReporte();
+        break;
+
+        case 'asistente.reporte.cancelar':
+        (new AsistenteController())->cancelarReporte();
+        break;
+
+    // ── Solicitud de cita desde un reporte del asistente (ASI-05) ──
+    case 'asistente.disponibilidad':
+        (new AsistenteSolicitudController())->disponibilidad();
+        break;
+
+    case 'asistente.solicitud.crear':
+        (new AsistenteSolicitudController())->crear();
+        break;
+
+    case 'asistente.solicitud.cancelar':
+        (new AsistenteSolicitudController())->cancelar();
+        break;
+
+    // ── Reportes del asistente para recepción / asistente dental (ASI-04) ──
+    case 'asistente.reportes.listar':
+        (new AsistenteReportesController())->listar();
+        break;
+
+    case 'asistente.reportes.detalle':
+        (new AsistenteReportesController())->detalle();
+        break;
+
+    // ── Bandeja de solicitudes de cita para el personal (ASI-05) ──
+    case 'asistente.solicitudes.listar':
+        (new AsistenteReportesController())->solicitudes();
+        break;
+
+    case 'asistente.solicitudes.programada':
+        (new AsistenteReportesController())->programada();
+        break;
+
+    case 'asistente.solicitudes.descartar':
+        (new AsistenteReportesController())->descartar();
+        break;
+
     // panel * rol
     case 'panel':
     case 'demo':
@@ -108,7 +164,6 @@ switch ($accion) {
         cargarPanel(AuthService::usuarioActual());
         break;
 
-    // cambiar rol activo (usuarios con más de un rol)
     case 'cambiar_rol':
         AuthService::requerir(AuthService::ROLES);
         AuthService::cambiarRolActivo($_GET['rol'] ?? '');
@@ -323,6 +378,12 @@ switch ($accion) {
         (new TratamientoController())->odontograma();
         break;
     default:
+          // ── Reportes del administrador (REP-01 y REP-02) ──────────
+      case 'reportes.citas':
+          (new ReporteController())->citas();
+          break;
+          
+        default:
         http_response_code(404);
         $ctrl = new LoginController();
         $ctrl->mostrar();
@@ -348,10 +409,14 @@ function cargarPanel(array $sesion): void
             $tratamientos = (new TratamientoController())->listar();
             $usuarios_sistema = [];
             $roles            = [];
+            $cotizaciones     = [];
+            $pagos            = [];
             if ($rol === 'administrador') {
                 $datos            = (new UsuarioController())->datosVista();
                 $usuarios_sistema = $datos['usuarios'];
                 $roles            = $datos['roles'];
+                $cotizaciones     = (new CotizacionController())->listar();
+                $pagos            = (new PagoController())->listar();
             }
 
             require ROOT_PATH . '/views/odontologo/index.php';

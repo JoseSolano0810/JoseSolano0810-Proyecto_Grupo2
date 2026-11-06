@@ -35,7 +35,6 @@
                 </div>
             </header>
 
-            <!-- ───────────────── INICIO ───────────────── -->
             <div class="pagina activa" id="pagina-inicio">
 
                 <div class="kpi-grid">
@@ -56,7 +55,7 @@
                     <div class="kpi-card">
                         <div class="kpi-icono amarillo"><i class="bi bi-clipboard2-pulse"></i></div>
                         <div>
-                            <?php $trat_activos = array_values(array_filter($tratamientos, fn($t) => in_array($t['estado'], ['pendiente', 'proceso'], true))); ?>
+                            <?php $trat_activos = array_values(array_filter($tratamientos, fn($t) => in_array($t['estado'], ['pendiente', 'en_proceso'], true))); ?>
 <div class="kpi-numero"><?= count($trat_activos) ?></div>
                             <div class="kpi-etiqueta">Tratamientos en curso</div>
                         </div>
@@ -115,7 +114,6 @@
 
             </div>
 
-            <!-- ───────────────── USUARIOS ───────────────── -->
             <div class="pagina" id="pagina-usuarios">
 
                 <div class="panel-titulo" style="margin-bottom:20px;">
@@ -246,10 +244,8 @@
                 </div>
             </div>
 
-            <!-- ───────────────── AGENDA  ───────────────── -->
             <?php include ROOT_PATH . '/views/shared/agenda_pagina.php'; ?>
 
-            <!-- ───────────────── PACIENTES ───────────────── -->
             <div class="pagina" id="pagina-pacientes">
                 <div class="panel-titulo" style="margin-bottom:20px;">
                     <h2>Registro de pacientes</h2>
@@ -259,11 +255,11 @@
                 </div>
                 <div class="tarjeta">
                     <div style="display:flex;gap:10px;margin-bottom:18px;">
-                        <input type="text" placeholder="Buscar por nombre o cédula..."
+                        <input type="text" id="buscar-paciente" placeholder="Buscar por nombre o cédula..."
                             style="border:1.5px solid var(--borde);border-radius:8px;padding:8px 14px;font-size:14px;flex:1;">
-                        <button class="btn-odent"><i class="bi bi-search"></i> Buscar</button>
+                        <button type="button" class="btn-odent" onclick="buscarPacienteTabla()"><i class="bi bi-search"></i> Buscar</button>
                     </div>
-                    <table class="tabla-odent">
+                    <table class="tabla-odent" id="tabla-pacientes">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -277,17 +273,27 @@
                         </thead>
                         <tbody>
                             <?php foreach ($pacientes as $p): ?>
-                                <tr>
+                                <tr class="fila-paciente">
                                     <td><?= $p['id'] ?></td>
                                     <td><strong><?= htmlspecialchars($p['nombre']) ?></strong></td>
-                                    <td><?= $p['cedula'] ?></td>
-                                    <td><?= $p['telefono'] ?></td>
-                                    <td><?= $p['correo'] ?></td>
-                                    <td><span class="badge-estado badge-<?= $p['estado'] ?>"><?= ucfirst($p['estado']) ?></span></td>
+                                    <td><?= htmlspecialchars($p['cedula']) ?></td>
+                                    <td><?= htmlspecialchars($p['telefono'] ?: '—') ?></td>
+                                    <td><?= htmlspecialchars($p['correo']) ?></td>
+                                    <td><span class="badge-estado badge-<?= $p['estado'] === 'activo' ? 'confirmada' : 'cancelada' ?>"><?= ucfirst($p['estado']) ?></span></td>
                                     <td>
-                                        <button class="btn-outline-odent" style="font-size:12px;padding:4px 10px;">
+                                        <?php if ($rol === 'administrador'): ?>
+                                        <button class="btn-outline-odent" style="font-size:12px;padding:4px 10px;"
+                                            onclick='pacAbrirEditar(<?= htmlspecialchars(json_encode([
+                                                "id_usuario" => $p["id_usuario"] ?? $p["id"],
+                                                "nombre"     => $p["nombre"],
+                                                "cedula"     => $p["cedula"],
+                                                "telefono"   => $p["telefono"] ?? "",
+                                                "correo"     => $p["correo"],
+                                                "usuario"    => $p["usuario"] ?? "",
+                                            ]), ENT_QUOTES) ?>)'>
                                             <i class="bi bi-pencil"></i> Editar
                                         </button>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -296,10 +302,8 @@
                 </div>
             </div>
 
-            <!-- ───────────────── EXPEDIENTES  ─── -->
             <div class="pagina" id="pagina-expedientes">
 
-                <!-- Vista: lista de pacientes -->
                 <div id="exp-vista-lista">
                     <div class="panel-titulo" style="margin-bottom:20px;">
                         <div>
@@ -339,7 +343,6 @@
                     </div>
                 </div>
 
-                <!-- Vista: detalle de expediente de un paciente -->
                 <div id="exp-vista-detalle" style="display:none;">
                     <div class="panel-titulo" style="margin-bottom:20px;">
                         <div>
@@ -371,7 +374,6 @@
                         </div>
                     </div>
 
-                    <!-- Sin expediente aún -->
                     <div id="exp-sin-expediente" style="display:none;">
                         <div class="tarjeta" style="text-align:center;padding:40px 20px;">
                             <i class="bi bi-folder2-open" style="font-size:48px;color:var(--gris-azulado);display:block;margin-bottom:16px;"></i>
@@ -385,7 +387,6 @@
                         </div>
                     </div>
 
-                    <!-- Con expediente -->
                     <div id="exp-con-expediente" style="display:none;">
                         <div class="panel-grid col-2" style="margin-bottom:24px;">
                             <div class="tarjeta">
@@ -449,7 +450,6 @@
                             </div>
                         </div>
 
-                        <!-- Historial de atenciones -->
                         <div class="tarjeta">
                             <div class="panel-titulo" style="margin-bottom:16px;">
                                 <h3><i class="bi bi-journal-medical" style="color:var(--azul-odent);margin-right:6px;"></i>Historial de atenciones</h3>
@@ -464,9 +464,8 @@
 
             </div>
 
-            <!-- ───────────────── ODONTOGRAMA ───────────────── -->
             <div class="pagina" id="pagina-odontograma">
-                <!-- Cabecera dinámica -->
+
                 <div class="panel-titulo" style="margin-bottom:6px;">
                     <div>
                         <button class="btn-outline-odent" id="odo-btn-volver" onclick="odoVolverExpediente()" style="margin-bottom:8px;font-size:13px;">
@@ -479,7 +478,6 @@
                     </div>
                 </div>
 
-                <!-- Sin expediente seleccionado: lista de pacientes con expediente -->
                 <div id="odo-sin-expediente" style="display:none;">
                     <div class="tarjeta">
                         <div class="panel-titulo" style="margin-bottom:16px;">
@@ -503,19 +501,18 @@
                     </div>
                 </div>
 
-                <!-- Con expediente: odontograma interactivo -->
                 <div id="odo-con-expediente" style="display:none;">
                     <div class="panel-grid col-2">
-                        <!-- Mapa dental -->
+
                         <div class="odontograma-container">
                             <p style="font-size:12px;color:var(--gris-azulado);margin-bottom:12px;text-align:center;font-weight:600;">MAXILAR SUPERIOR</p>
                             <div class="odontograma-fila" id="odo-fila-superior">
-                                <!-- Renderizado por JS -->
+
                             </div>
                             <div style="border-top:2px dashed var(--borde);margin:10px 0;"></div>
                             <p style="font-size:12px;color:var(--gris-azulado);margin-bottom:12px;text-align:center;font-weight:600;">MAXILAR INFERIOR</p>
                             <div class="odontograma-fila" id="odo-fila-inferior">
-                                <!-- Renderizado por JS -->
+
                             </div>
                             <div class="leyenda-odontograma">
                                 <div class="leyenda-item"><div class="leyenda-color" style="background:#fff;border-color:var(--borde);"></div> Sano</div>
@@ -528,21 +525,17 @@
                             </div>
                         </div>
 
-                        <!-- Panel de edición -->
                         <div class="tarjeta">
                             <h3 style="margin-bottom:14px;">Detalle de pieza</h3>
 
-                            <!-- Estado: ningún diente seleccionado -->
                             <div id="odo-hint">
                                 <div class="alerta info"><i class="bi bi-hand-index"></i> Seleccione un diente para editar su estado.</div>
                             </div>
 
-                            <!-- Estado: cargando -->
                             <div id="odo-loading" style="display:none;text-align:center;padding:20px;color:var(--gris-azulado);">
                                 <div class="spinner-border spinner-border-sm" role="status" style="margin-right:6px;"></div> Cargando…
                             </div>
 
-                            <!-- Formulario de edición -->
                             <div id="odo-panel-edicion" style="display:none;">
                                 <div class="campo-grupo">
                                     <label>Pieza dental (FDI)</label>
@@ -579,10 +572,8 @@
                 </div>
             </div>
 
-            <!-- ───────────────── DOCUMENTOS CLÍNICOS ───────────── -->
             <div class="pagina" id="pagina-documentos">
 
-                <!-- Cabecera dinámica -->
                 <div class="panel-titulo" style="margin-bottom:6px;">
                     <div>
                         <button class="btn-outline-odent" id="doc-btn-volver" onclick="docVolverExpediente()" style="margin-bottom:8px;font-size:13px;">
@@ -598,7 +589,6 @@
                     </button>
                 </div>
 
-                <!-- Sin expediente seleccionado: lista de pacientes con expediente -->
                 <div id="doc-sin-expediente">
                     <div class="tarjeta">
                         <div class="panel-titulo" style="margin-bottom:16px;">
@@ -622,7 +612,6 @@
                     </div>
                 </div>
 
-                <!-- Con expediente: lista de documentos -->
                 <div id="doc-con-expediente" style="display:none;">
                     <div class="tarjeta">
                         <div class="panel-titulo" style="margin-bottom:16px;">
@@ -630,15 +619,12 @@
                             <span id="doc-count" style="font-size:13px;color:var(--gris-azulado);"></span>
                         </div>
 
-                        <!-- Estado: cargando -->
                         <div id="doc-loading" style="text-align:center;padding:20px;color:var(--gris-azulado);">
                             <div class="spinner-border spinner-border-sm" role="status" style="margin-right:6px;"></div> Cargando documentos…
                         </div>
 
-                        <!-- Lista de documentos -->
                         <div id="doc-lista" style="display:none;"></div>
 
-                        <!-- Sin documentos aún -->
                         <div id="doc-vacio" style="display:none;text-align:center;padding:30px 20px;">
                             <i class="bi bi-file-earmark-x" style="font-size:40px;color:var(--gris-azulado);display:block;margin-bottom:12px;"></i>
                             <p style="color:var(--gris-azulado);font-size:14px;margin-bottom:16px;">Este expediente no tiene documentos adjuntos aún.</p>
@@ -650,7 +636,6 @@
                 </div>
             </div>
 
-            <!-- Modal: subir documento -->
             <div class="modal-overlay" id="modal-doc-subir">
                 <div class="modal-caja" style="max-width:480px;">
                     <div class="modal-header">
@@ -675,7 +660,6 @@
                 </div>
             </div>
 
-            <!-- Modal: confirmar eliminación documento -->
             <div class="modal-overlay" id="modal-doc-confirmar-eliminar">
                 <div class="modal-caja" style="max-width:420px;">
                     <div class="modal-header">
@@ -695,11 +679,10 @@
                 </div>
             </div>
 
-                        <!-- ───────────────── TRATAMIENTOS ───────────────── -->
             <div class="pagina" id="pagina-tratamientos">
                 <?php include ROOT_PATH . '/views/shared/tratamientos_pagina.php'; ?>
             </div>
-            <!-- ───────────────── COTIZACIONES ───────────────── -->
+
             <div class="pagina" id="pagina-cotizaciones">
                 <div class="panel-titulo" style="margin-bottom:20px;">
                     <h2>Cotizaciones</h2>
@@ -733,6 +716,11 @@
                                     </td>
                                     <td style="display:flex;gap:6px;">
                                         <button class="btn-outline-odent" style="font-size:12px;padding:4px 10px;"><i class="bi bi-eye"></i> Ver</button>
+                                        <?php if ($rol === 'administrador' && $c['estado'] === 'aprobada'): ?>
+                                            <button class="btn-odent" onclick="abrirModal('modal-nuevo-pago')" style="font-size:12px;padding:4px 10px;">
+                                                <i class="bi bi-cash"></i> Cobrar
+                                            </button>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -741,10 +729,14 @@
                 </div>
             </div>
 
-            <!-- ───────────────── PAGOS ───────────────── -->
             <div class="pagina" id="pagina-pagos">
                 <div class="panel-titulo" style="margin-bottom:20px;">
                     <h2>Registro de pagos</h2>
+                    <?php if ($rol === 'administrador'): ?>
+                    <button class="btn-odent" onclick="abrirModal('modal-nuevo-pago')">
+                        <i class="bi bi-plus-lg"></i> Registrar pago
+                    </button>
+                    <?php endif; ?>
                 </div>
                 <div class="kpi-grid" style="margin-bottom:22px;">
                     <div class="kpi-card">
@@ -792,33 +784,14 @@
                 </div>
             </div>
 
-            <!-- ───────────────── INVENTARIO ───────────────── -->
-            <div class="pagina" id="pagina-inventario">
-                <div class="panel-titulo" style="margin-bottom:20px;">
-                    <h2>Inventario</h2>
-                </div>
-                <div class="tarjeta">
-                    <div class="alerta info">
-                        <i class="bi bi-info-circle"></i>
-                        El módulo de inventario está siendo desarrollado por el equipo.
-                    </div>
-                </div>
-            </div>
+            <?php if ($rol === 'administrador'): ?>
+                <?php include ROOT_PATH . '/views/shared/inventario_pagina.php'; ?>
+            <?php endif; ?>
 
-            <!-- ───────────────── REPORTES ───────────────── -->
-            <div class="pagina" id="pagina-reportes">
-                <div class="panel-titulo" style="margin-bottom:20px;">
-                    <h2>Reportes</h2>
-                </div>
-                <div class="tarjeta">
-                    <div class="alerta info">
-                        <i class="bi bi-info-circle"></i>
-                        El módulo de reportes está siendo desarrollado por el equipo.
-                    </div>
-                </div>
-            </div>
+                          <?php if ($rol === 'administrador'): ?>
+                  <?php include ROOT_PATH . '/views/shared/reportes_pagina.php'; ?>
+              <?php endif; ?>
 
-            <!-- ───────────────── BITÁCORA ───────────────── -->
             <?php if ($rol === 'administrador'): ?>
             <div class="pagina" id="pagina-bitacora">
                 <div class="panel-titulo" style="margin-bottom:20px;">
@@ -860,10 +833,12 @@
         </div>
     </div>
 
+          <?php include ROOT_PATH . '/views/shared/tratamientos_modales.php'; ?>
     <?php include ROOT_PATH . '/views/shared/agenda_modales.php'; ?>
+    <?php if ($rol === 'administrador'): ?>
+        <?php include ROOT_PATH . '/views/shared/inventario_modales.php'; ?>
+    <?php endif; ?>
 
-        <?php include ROOT_PATH . '/views/shared/tratamientos_modales.php'; ?>
-    <!-- Modal nuevo paciente -->
     <div class="modal-overlay" id="modal-nuevo-paciente">
         <div class="modal-caja">
             <div class="modal-header">
@@ -882,7 +857,6 @@
         </div>
     </div>
 
-    <!-- Modal nuevo usuario -->
     <div class="modal-overlay" id="modal-nuevo-usuario">
         <div class="modal-caja">
             <div class="modal-header">
@@ -931,8 +905,6 @@
         </div>
     </div>
 
-
-    <!-- Modal asignar rol -->
     <div class="modal-overlay" id="modal-asignar-rol">
         <div class="modal-caja">
             <div class="modal-header">
@@ -993,11 +965,6 @@
         </div>
     </div>
 
-
-
-
-
-    <!-- Modal editar usuario -->
     <div class="modal-overlay" id="modal-editar-usuario">
         <div class="modal-caja">
             <div class="modal-header">
@@ -1031,9 +998,6 @@
         </div>
     </div>
 
-
-
-    <!-- Modal restablecer contraseña -->
     <div class="modal-overlay" id="modal-restablecer">
         <div class="modal-caja">
             <div class="modal-header">
@@ -1065,7 +1029,6 @@
         </div>
     </div>
 
-    <!-- Modal confirmar cambio estado -->
     <div class="modal-overlay" id="modal-confirmar-estado">
         <div class="modal-caja" style="max-width:400px;">
             <div class="modal-header">
@@ -1080,7 +1043,80 @@
         </div>
     </div>
 
-    <!-- Modal nueva cotizacion -->
+    <?php if ($rol === 'administrador'): ?>
+    <div class="modal-overlay" id="modal-nuevo-pago">
+        <div class="modal-caja">
+            <div class="modal-header">
+                <h3>Registrar pago</h3>
+                <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-pago')"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="campo-grupo">
+                <label>Cotización</label>
+                <select>
+                    <?php foreach ($cotizaciones as $c): if ($c['estado'] === 'aprobada'): ?>
+                        <option value="<?= $c['id'] ?>"><?= $c['id'] ?> — <?= htmlspecialchars($c['paciente']) ?> (₡<?= number_format($c['total'], 0, ',', '.') ?>)</option>
+                    <?php endif; endforeach; ?>
+                </select>
+            </div>
+            <div class="campo-grupo"><label>Monto recibido (₡)</label><input type="number" placeholder="0"></div>
+            <div class="campo-grupo">
+                <label>Método de pago</label>
+                <select>
+                    <option>Efectivo</option>
+                    <option>Tarjeta débito</option>
+                    <option>Tarjeta crédito</option>
+                    <option>Sinpe Móvil</option>
+                    <option>Transferencia</option>
+                </select>
+            </div>
+            <div class="campo-grupo"><label>Comprobante (opcional)</label><input type="text" placeholder="N.° comprobante o referencia"></div>
+            <div class="modal-footer">
+                <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-pago')">Cancelar</button>
+                <button class="btn-odent"><i class="bi bi-check-lg"></i> Registrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-pac-editar-basico">
+        <div class="modal-caja" style="max-width:480px;">
+            <div class="modal-header">
+                <h3><i class="bi bi-person-gear" style="color:var(--azul-odent);margin-right:6px;"></i>Editar paciente</h3>
+                <button class="modal-cerrar" onclick="cerrarModal('modal-pac-editar-basico')"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <input type="hidden" id="pac-edit-id-usuario">
+            <div class="campo-grupo">
+                <label>Nombre completo *</label>
+                <input type="text" id="pac-edit-nombre" maxlength="150" autocomplete="off">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="campo-grupo">
+                    <label>Identificación *</label>
+                    <input type="text" id="pac-edit-cedula" maxlength="30" autocomplete="off">
+                </div>
+                <div class="campo-grupo">
+                    <label>Teléfono</label>
+                    <input type="text" id="pac-edit-telefono" maxlength="20" autocomplete="off">
+                </div>
+            </div>
+            <div class="campo-grupo">
+                <label>Correo electrónico *</label>
+                <input type="email" id="pac-edit-correo" maxlength="150" autocomplete="off">
+            </div>
+            <div class="campo-grupo">
+                <label>Nombre de usuario *</label>
+                <input type="text" id="pac-edit-usuario" maxlength="60" autocomplete="off"
+                    placeholder="Sin espacios ni caracteres especiales">
+            </div>
+            <div class="modal-footer">
+                <button class="btn-outline-odent" onclick="cerrarModal('modal-pac-editar-basico')">Cancelar</button>
+                <button class="btn-odent" id="pac-edit-btn-guardar" onclick="pacGuardarEditar()">
+                    <i class="bi bi-check-lg"></i> Guardar cambios
+                </button>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <div class="modal-overlay" id="modal-nueva-cotizacion">
         <div class="modal-caja">
             <div class="modal-header">
@@ -1106,7 +1142,6 @@
         </div>
     </div>
 
-    <!-- Modal crear expediente -->
     <div class="modal-overlay" id="modal-exp-crear">
         <div class="modal-caja">
             <div class="modal-header">
@@ -1148,7 +1183,6 @@
         </div>
     </div>
 
-    <!-- Modal editar expediente  -->
     <div class="modal-overlay" id="modal-exp-editar">
         <div class="modal-caja">
             <div class="modal-header">
@@ -1191,7 +1225,6 @@
         </div>
     </div>
 
-    <!-- Modal editar datos del paciente -->
     <div class="modal-overlay" id="modal-editar-paciente">
         <div class="modal-caja">
             <div class="modal-header">
@@ -1239,7 +1272,6 @@
         </div>
     </div>
 
-    <!-- Modal registrar atención -->
     <div class="modal-overlay" id="modal-exp-atencion">
         <div class="modal-caja">
             <div class="modal-header">
@@ -1274,20 +1306,97 @@
     <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
     <script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
         <script src="<?= BASE_URL ?>/public/js/tratamientos.js?v=<?= @filemtime(ROOT_PATH . '/public/js/tratamientos.js') ?>"></script>
+                  <?php if ($rol === 'administrador'): ?>
+          <script src="<?= BASE_URL ?>/public/js/reportes.js?v=<?= @filemtime(ROOT_PATH . '/public/js/reportes.js') ?>"></script>
+          <?php endif; ?>
+    <?php if ($rol === 'administrador'): ?>
+        <script src="<?= BASE_URL ?>/public/js/inventario.js?v=<?= @filemtime(ROOT_PATH . '/public/js/inventario.js') ?>"></script>
+    <?php endif; ?>
     <script>
         const BASE = '<?= BASE_URL ?>';
         let usuarioIdSeleccionado = null;
         let estadoActualSeleccionado = null;
 
+        function buscarPacienteTabla() {
+            const texto = (document.getElementById('buscar-paciente')?.value || '').toLowerCase().trim();
+            document.querySelectorAll('#tabla-pacientes .fila-paciente').forEach(fila => {
+                fila.style.display = fila.textContent.toLowerCase().includes(texto) ? '' : 'none';
+            });
+        }
 
-        /* ── cancelar descarta lo digitado ───────── */
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('buscar-paciente')?.addEventListener('input', buscarPacienteTabla);
+        });
+
+        function pacAbrirEditar(paciente) {
+            document.getElementById('pac-edit-id-usuario').value = paciente.id_usuario;
+            document.getElementById('pac-edit-nombre').value     = paciente.nombre   || '';
+            document.getElementById('pac-edit-cedula').value     = paciente.cedula   || '';
+            document.getElementById('pac-edit-telefono').value   = paciente.telefono || '';
+            document.getElementById('pac-edit-correo').value     = paciente.correo   || '';
+            document.getElementById('pac-edit-usuario').value    = paciente.usuario  || '';
+            abrirModal('modal-pac-editar-basico');
+        }
+
+        async function pacGuardarEditar() {
+            const idUsuario = document.getElementById('pac-edit-id-usuario').value;
+            const nombre    = document.getElementById('pac-edit-nombre').value.trim();
+            const cedula    = document.getElementById('pac-edit-cedula').value.trim();
+            const telefono  = document.getElementById('pac-edit-telefono').value.trim();
+            const correo    = document.getElementById('pac-edit-correo').value.trim();
+            const usuario   = document.getElementById('pac-edit-usuario').value.trim();
+
+            if (!nombre || !cedula || !correo || !usuario) {
+                mostrarToast('Complete todos los campos obligatorios.', 'aviso');
+                return;
+            }
+
+            const btn = document.getElementById('pac-edit-btn-guardar');
+            btn.disabled = true;
+            btn.textContent = 'Guardando…';
+
+            try {
+                const form = new FormData();
+                form.append('id_usuario', idUsuario);
+                form.append('nombre',     nombre);
+                form.append('cedula',     cedula);
+                form.append('telefono',   telefono);
+                form.append('correo',     correo);
+                form.append('usuario',    usuario);
+
+                const res  = await fetch(`${BASE}/index.php?accion=pacientes.editarDatosBasicos`, { method: 'POST', body: form });
+                const data = await res.json();
+
+                if (!data.ok) {
+                    mostrarToast(data.mensaje || 'Error al guardar.', 'error');
+                } else {
+                    mostrarToast('Datos del paciente actualizados.', 'exito');
+                    cerrarModal('modal-pac-editar-basico');
+                    document.querySelectorAll('#tabla-pacientes .fila-paciente').forEach(fila => {
+                        const celdas = fila.querySelectorAll('td');
+                        if (celdas[0]?.textContent.trim() === String(idUsuario)) {
+                            celdas[1].innerHTML = '<strong></strong>';
+                            celdas[1].firstChild.textContent = nombre;
+                            celdas[2].textContent = cedula;
+                            celdas[3].textContent = telefono || '—';
+                            celdas[4].textContent = correo;
+                        }
+                    });
+                }
+            } catch (e) {
+                mostrarToast('Error de conexión.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-lg"></i> Guardar cambios';
+            }
+        }
+
         function abrirNuevoUsuario() {
             ['nu-nombre', 'nu-cedula', 'nu-telefono', 'nu-correo', 'nu-usuario', 'nu-contrasena', 'nu-rol']
                 .forEach(id => document.getElementById(id).value = '');
             abrirModal('modal-nuevo-usuario');
         }
 
-        /* bitácora ───────────────────────────────────── */
         const escapar = t => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
         async function cargarBitacora() {
@@ -1329,9 +1438,6 @@
             cargarBitacora();
         }
 
-        // El override de mostrarPagina está en el bloque de Expedientes (cubre bitácora y expedientes).
-
-        /* ── Filtrar usuarios ───────────────────────────────────── */
         function filtrarUsuarios(texto) {
             const filtro = texto.toLowerCase().trim();
             document.querySelectorAll('#pagina-usuarios tbody tr').forEach(fila => {
@@ -1343,7 +1449,6 @@
             });
         }
 
-        /* ── Restablecer contraseña ─────────────────────────────── */
         function abrirRestablecerContrasena(id, nombre) {
             usuarioIdSeleccionado = id;
             document.getElementById('restablecer-nombre-usuario').textContent = nombre;
@@ -1367,7 +1472,6 @@
             });
         }
 
-        /* ── Crear usuario ──────────────────────────────────────── */
         async function guardarNuevoUsuario() {
             if (!validarCampos(['nu-nombre', 'nu-cedula', 'nu-correo', 'nu-usuario', 'nu-contrasena', 'nu-rol'])) return;
 
@@ -1398,7 +1502,6 @@
             });
         }
 
-        /* ── Asignar roles (varios) ─────────────────────────────── */
         function abrirAsignarRol(u) {
             document.getElementById('ar-usuario-id').value = u.id;
             document.getElementById('ar-usuario-nombre').textContent = u.nombre;
@@ -1441,7 +1544,6 @@
             });
         }
 
-        /* ── Editar usuario ─────────────────────────────────────── */
         function abrirEditarUsuario(u) {
             document.getElementById('eu-id').value = u.id;
             document.getElementById('eu-nombre').value = u.nombre ?? '';
@@ -1470,18 +1572,13 @@
             });
         }
 
-        /* ═══════════════════════════════════════════════════════════
-           MÓDULO EXPEDIENTES CLÍNICOS 
-           ═══════════════════════════════════════════════════════════ */
-
-        let _expPacienteActual = null;   // fila del paciente seleccionado
-        let _expDatos          = null;   // objeto expediente cargado
+        let _expPacienteActual = null;
+        let _expDatos          = null;
 
         const _exp = (id) => document.getElementById(id);
         const _expEsc = (t) => String(t ?? '—').replace(/[&<>"']/g, c =>
             ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-        /* ── Carga lista de pacientes ──────────────────────────── */
         async function expCargarLista(q = '') {
             const tbody = _exp('exp-tbody');
             tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gris-azulado);">Cargando…</td></tr>';
@@ -1513,7 +1610,7 @@
                             </span>
                         </td>
                         <td>
-                            ${p.id_paciente
+                            ${p.id_expediente
                                 ? '<span class="badge-estado badge-completada"><i class="bi bi-check-circle"></i> Creado</span>'
                                 : '<span class="badge-estado badge-pendiente"><i class="bi bi-dash-circle"></i> Sin expediente</span>'}
                         </td>
@@ -1535,14 +1632,12 @@
             return (p[0]?.[0] ?? '').toUpperCase() + (p[1]?.[0] ?? '').toUpperCase();
         }
 
-        /* ── Búsqueda en tiempo real ───────────────────────────── */
         let _expBuscarTimer = null;
         function expBuscar(q) {
             clearTimeout(_expBuscarTimer);
             _expBuscarTimer = setTimeout(() => expCargarLista(q.trim()), 300);
         }
 
-        /* ── Abrir expediente de un paciente ──────────────────── */
         async function expAbrirPaciente(paciente) {
             _expPacienteActual = paciente;
             _exp('exp-vista-lista').style.display   = 'none';
@@ -1554,7 +1649,6 @@
             _exp('exp-detalle-cedula').textContent = 'Cédula: ' + (paciente.identificacion ?? '—');
 
             if (!paciente.id_paciente) {
-                // El usuario tiene rol paciente pero sin perfil clínico aún
                 _exp('exp-sin-expediente').style.display      = '';
                 _exp('btn-editar-pac').style.display          = 'none';
                 _exp('btn-editar-exp').style.display          = 'none';
@@ -1564,10 +1658,8 @@
                 return;
             }
 
-            // Mostrar botón editar paciente siempre que haya perfil clínico
             _exp('btn-editar-pac').style.display = '';
 
-            // Cargar expediente por id_paciente
             try {
                 const res  = await fetch(`${BASE}/index.php?accion=expedientes.obtener&id_paciente=${paciente.id_paciente}`, {
                     headers: { Accept: 'application/json' }
@@ -1595,7 +1687,6 @@
             }
         }
 
-        /* ── Mostrar datos del expediente en los campos ────────── */
         function expRenderizarExpediente(data, paciente) {
             _exp('exp-motivo').textContent        = data.motivo_consulta  || '—';
             _exp('exp-alergias').textContent      = data.alergias         || 'Ninguna';
@@ -1612,7 +1703,6 @@
             _exp('exp-pac-correo').textContent = paciente.correo     || '—';
         }
 
-        /* ── Cargar atenciones ─────────────────────────────────── */
         async function expCargarAtenciones(idExpediente) {
             const lista = _exp('exp-atenciones-lista');
             lista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gris-azulado);">Cargando atenciones…</div>';
@@ -1661,7 +1751,6 @@
             return d.toLocaleDateString('es-CR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
         }
 
-        /* ── Volver a la lista ─────────────────────────────────── */
         function expVolverLista() {
             _expPacienteActual = null;
             _expDatos          = null;
@@ -1670,13 +1759,26 @@
             _exp('exp-vista-lista').style.display   = '';
         }
 
-        /* ── Crear expediente  ─────────────────────────── */
+        async function _expRefrescarPaciente() {
+            const ref = _expPacienteActual;
+            if (!ref) return;
+            try {
+                const res  = await fetch(`${BASE}/index.php?accion=expedientes.pacientes&q=${encodeURIComponent(ref.identificacion || ref.nombre_completo || '')}`, { headers: { Accept: 'application/json' } });
+                const data = await res.json();
+                const nuevo = Array.isArray(data) ? data.find(x => String(x.id_usuario) === String(ref.id_usuario)) : null;
+                expAbrirPaciente(nuevo || ref);
+            } catch (e) {
+                expAbrirPaciente(ref);
+            }
+        }
+
         async function guardarCrearExpediente() {
             if (!validarCampos(['ec-motivo'], 'El motivo de consulta es obligatorio.')) return;
-            if (!_expPacienteActual?.id_paciente) return mostrarToast('No se identificó al paciente.', 'error');
+            if (!_expPacienteActual) return mostrarToast('No se identificó al paciente.', 'error');
 
             await guardarJSON('expedientes.crear', {
                 id_paciente:          _expPacienteActual.id_paciente,
+                id_usuario:          _expPacienteActual.id_usuario,
                 motivo_consulta:      _exp('ec-motivo').value.trim(),
                 alergias:             _exp('ec-alergias').value.trim(),
                 enfermedades:         _exp('ec-enfermedades').value.trim(),
@@ -1687,11 +1789,10 @@
                 boton: document.querySelector('#modal-exp-crear .modal-footer .btn-odent'),
                 cerrarModal: 'modal-exp-crear',
                 exito: 'Expediente creado exitosamente.',
-                alExito: () => expAbrirPaciente(_expPacienteActual)
+                alExito: () => _expRefrescarPaciente()
             });
         }
 
-        /* ── Editar expediente  ────────────────── */
         function abrirEditarExpediente() {
             if (!_expDatos) return;
             _exp('ee-id-expediente').value = _expDatos.id_expediente;
@@ -1723,7 +1824,6 @@
             });
         }
 
-        /* ── Editar datos del paciente ─────────────────────────── */
         function abrirEditarPaciente() {
             if (!_expPacienteActual?.id_paciente) return;
             _exp('ep-id-paciente').value       = _expPacienteActual.id_paciente;
@@ -1757,7 +1857,6 @@
                 exito: 'Datos del paciente actualizados.'
             });
             if (res?.ok && pacienteRef) {
-                // Actualizar objeto local con los nuevos datos antes de recargar
                 pacienteRef.fecha_nacimiento = _exp('ep-fecha-nac').value || null;
                 pacienteRef.sexo             = _exp('ep-sexo').value      || null;
                 pacienteRef.grupo_sanguineo  = _exp('ep-sangre').value    || null;
@@ -1773,7 +1872,6 @@
             }
         }
 
-        /* ── Registrar atención (CLI-02) ───────────────────────── */
         function abrirRegistrarAtencion() {
             if (!_expDatos) {
                 return mostrarToast('Primero cree el expediente clínico del paciente.', 'aviso');
@@ -1802,10 +1900,8 @@
             });
         }
 
-        /* ── Cargar lista al navegar a la página ──────────────── */
         const _mostrarPaginaBase = window.mostrarPagina;
 
-        // Flag para distinguir navegación interna (desde expediente) vs sidebar
         let _navegandoDesdeExpediente = false;
 
         window.mostrarPagina = function (slug) {
@@ -1815,48 +1911,34 @@
                 expCargarLista();
             }
             if (slug === 'bitacora') cargarBitacora();
+            if (slug === 'inventario' && window.Inventario) Inventario.listar();
             if (slug === 'odontograma') {
                 if (_navegandoDesdeExpediente) {
-                    // Viene de Expedientes → cargar directo el odontograma
                     _navegandoDesdeExpediente = false;
                 } else {
-                    // Viene del sidebar → siempre mostrar lista de pacientes
                     _odoExpediente = null;
-                    _odoPacientesCache = null; // forzar recarga fresca de la lista
+                    _odoPacientesCache = null;
                 }
                 odoIniciar();
             }
             if (slug === 'documentos') {
                 if (_navegandoDesdeExpediente) {
-                    // Viene de Expedientes → cargar directo los documentos
                     _navegandoDesdeExpediente = false;
                 } else {
-                    // Viene del sidebar → siempre mostrar lista de pacientes
                     _docExpediente = null;
-                    _docPacientesCache = null; // forzar recarga fresca de la lista
+                    _docPacientesCache = null;
                 }
                 docIniciar();
             }
         };
 
-        /* ═══════════════════════════════════════════════════════════
-           FIN MÓDULO EXPEDIENTES
-           ═══════════════════════════════════════════════════════════ */
+        let _odoExpediente  = null;
+        let _odoPiezas      = {};
+        let _odoPiezaActual = null;
 
-        /* ═══════════════════════════════════════════════════════════
-           MÓDULO ODONTOGRAMA
-           ═══════════════════════════════════════════════════════════ */
-
-        // ── Estado ────────────────────────────────────────────────
-        let _odoExpediente  = null;  // { id_expediente, nombre_completo }
-        let _odoPiezas      = {};    // { numero_pieza: { estado, observaciones, updated_at } }
-        let _odoPiezaActual = null;  // número FDI seleccionado actualmente
-
-        // Distribución FDI de las arcadas
         const ODO_SUPERIOR = [18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28];
         const ODO_INFERIOR = [48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
 
-        // Colores por estado (clases CSS del DOM + estilos inline para los que no tienen clase)
         const ODO_CLASES = {
             sano:        'sano',
             caries:      'caries',
@@ -1867,7 +1949,6 @@
             implante:    'implante',
         };
 
-        // ── Helpers ───────────────────────────────────────────────
         function _odo(id) { return document.getElementById(id); }
 
         function _odoEstado(num) {
@@ -1876,8 +1957,10 @@
 
         function _odoRenderizarDiente(num) {
             const estado = _odoEstado(num);
-            return `<div class="diente ${estado}" id="diente-${num}" onclick="odoSeleccionarDiente(${num})">
-                        <i class="bi bi-circle-fill" style="font-size:10px;"></i>
+            const u = num % 10;
+            const tipo = u <= 2 ? 'incisivo' : u === 3 ? 'canino' : u <= 5 ? 'premolar' : 'molar';
+            const arc = ODO_SUPERIOR.includes(num) ? 'sup' : 'inf';
+            return `<div class="diente d-${tipo} ${arc} ${estado}" id="diente-${num}" onclick="odoSeleccionarDiente(${num})" title="Pieza ${num}">
                         <span>${num}</span>
                     </div>`;
         }
@@ -1889,18 +1972,10 @@
         function _odoActualizarDomPieza(num) {
             const el = document.getElementById('diente-' + num);
             if (!el) return;
-            // Quitar todas las clases de estado
             Object.keys(ODO_CLASES).forEach(c => el.classList.remove(c));
             el.classList.add(_odoEstado(num));
         }
 
-        // ── Iniciar / cargar odontograma ──────────────────────────
-
-        /**
-         * Llamado por mostrarPagina('odontograma').
-         * Si hay expediente en memoria (_odoExpediente) carga sus piezas,
-         * de lo contrario muestra el estado vacío.
-         */
         function odoIniciar() {
             if (!_odoExpediente) {
                 _odo('odo-sin-expediente').style.display = '';
@@ -1912,7 +1987,6 @@
             _odo('odo-con-expediente').style.display = '';
             _odo('odo-cabecera-paciente').innerHTML =
                 `Paciente: <strong>${escapar(_odoExpediente.nombre_completo)}</strong> — Haga clic en un diente para editar`;
-            // Texto del botón volver según contexto
             const textoVolver = document.getElementById('odo-btn-volver-texto');
             if (textoVolver) textoVolver.textContent = _expPacienteActual ? 'Volver al expediente' : 'Volver a la lista';
             _odoRenderizarArcadas();
@@ -1932,15 +2006,12 @@
                 const data = await r.json();
                 if (!data.ok) return;
                 _odoPiezas = data.piezas ?? {};
-                // Actualizar DOM pieza por pieza
                 [...ODO_SUPERIOR, ...ODO_INFERIOR].forEach(_odoActualizarDomPieza);
                 if (typeof treOdontograma === 'function') treOdontograma(_odoExpediente.id_expediente);
             } catch(e) {
                 mostrarToast('Error al cargar el odontograma.', 'error');
             }
         }
-
-        // ── Selección de diente ───────────────────────────────────
 
         function odoSeleccionarDiente(num) {
             _odoPiezaActual = num;
@@ -1961,7 +2032,6 @@
                 _odo('odo-ultima-mod').style.display = 'none';
             }
 
-            // Marcar diente activo visualmente
             document.querySelectorAll('#pagina-odontograma .diente').forEach(el => el.classList.remove('seleccionado'));
             const elDiente = document.getElementById('diente-' + num);
             if (elDiente) elDiente.classList.add('seleccionado');
@@ -1979,8 +2049,6 @@
             _odoCancelarSeleccion();
         }
 
-        // ── Guardar pieza ─────────────────────────────────────────
-
         async function odoGuardarDiente() {
             if (!_odoPiezaActual || !_odoExpediente) return;
 
@@ -1996,7 +2064,6 @@
                 boton:  _odo('odo-btn-guardar'),
                 exito:  `Pieza ${_odoPiezaActual} guardada como "${estado}".`,
                 alExito: (res) => {
-                    // Actualizar estado en memoria y en el DOM
                     if (!_odoPiezas[_odoPiezaActual]) _odoPiezas[_odoPiezaActual] = {};
                     _odoPiezas[_odoPiezaActual].estado        = estado;
                     _odoPiezas[_odoPiezaActual].observaciones = obs || null;
@@ -2007,12 +2074,6 @@
             });
         }
 
-        // ── Navegar al odontograma desde expediente ───────────────
-
-        /**
-         * Llamado por el botón "Odontograma" en la vista de detalle de expediente.
-         * Recibe el id_expediente y nombre del paciente desde _expDatos / _expPacienteActual.
-         */
         function abrirOdontograma() {
             if (!_expDatos || !_expPacienteActual) {
                 return mostrarToast('Primero abra un expediente clínico.', 'aviso');
@@ -2025,26 +2086,18 @@
             mostrarPagina('odontograma');
         }
 
-        /**
-         * "Volver al expediente" desde la vista del odontograma.
-         */
         function odoVolverExpediente() {
             if (_expPacienteActual) {
-                // Venimos desde un expediente: volver al detalle de ese paciente
-                // Guardamos referencia ANTES de cambiar de página (mostrarPagina resetea _expPacienteActual)
                 const pacienteGuardado = _expPacienteActual;
-                _mostrarPaginaBase('expedientes');  // cambia la página SIN resetear expedientes
+                _mostrarPaginaBase('expedientes');
                 expAbrirPaciente(pacienteGuardado);
             } else {
-                // Venimos desde la lista del sidebar: volver a la lista de pacientes
                 _odoExpediente = null;
                 odoIniciar();
             }
         }
 
-        // ── Lista de pacientes en pantalla de selección ───────────
-
-        let _odoPacientesCache = null; // cache de pacientes con expediente
+        let _odoPacientesCache = null;
 
         async function _odoCargarListaPacientes() {
             if (_odoPacientesCache !== null) {
@@ -2054,7 +2107,6 @@
             try {
                 const r = await fetch(`${BASE}/index.php?accion=expedientes.pacientes`);
                 const data = await r.json();
-                // El endpoint devuelve array directo de pacientes
                 _odoPacientesCache = Array.isArray(data) ? data : (data.pacientes ?? []);
                 _odoRenderizarListaPacientes(_odoPacientesCache, '');
             } catch(e) {
@@ -2065,6 +2117,7 @@
 
         function _odoRenderizarListaPacientes(lista, filtro) {
             const contenedor = document.getElementById('odo-lista-pacientes');
+            lista = lista.filter(p => p.id_expediente);
             const termino = filtro.trim().toLowerCase();
             const filtrados = termino
                 ? lista.filter(p => (p.nombre_completo || '').toLowerCase().includes(termino))
@@ -2092,7 +2145,6 @@
                 </div>`;
             }).join('');
 
-            // Quitar borde del último item
             const items = contenedor.querySelectorAll('[style*="border-bottom"]');
             if (items.length) items[items.length - 1].style.borderBottom = 'none';
         }
@@ -2123,20 +2175,10 @@
             }
         }
 
-        /* ═══════════════════════════════════════════════════════════
-           FIN MÓDULO ODONTOGRAMA
-           ═══════════════════════════════════════════════════════════ */
-
-        /* ═══════════════════════════════════════════════════════════
-           MÓDULO DOCUMENTOS CLÍNICOS 
-           ═══════════════════════════════════════════════════════════ */
-
-        // ── Estado ────────────────────────────────────────────────
-        let _docExpediente      = null;   // { id_expediente, nombre_completo }
-        let _docIdAEliminar     = null;   // id_documento seleccionado para borrar
+        let _docExpediente      = null;
+        let _docIdAEliminar     = null;
         let _docNombreAEliminar = '';
 
-        // ── Helpers ───────────────────────────────────────────────
         function _doc(id) { return document.getElementById(id); }
 
         function _docIcono(mime) {
@@ -2145,8 +2187,6 @@
             if (mime.includes('word') || mime.includes('docx')) return 'bi-file-earmark-word text-primary';
             return 'bi-file-earmark';
         }
-
-        // ── Iniciar / cargar documentos ───────────────────────────
 
         function docIniciar() {
             if (!_docExpediente) {
@@ -2161,7 +2201,6 @@
             _doc('doc-btn-subir-cabecera').style.display = '';
             _doc('doc-cabecera-paciente').innerHTML =
                 `Paciente: <strong>${escapar(_docExpediente.nombre_completo)}</strong> — Archivos adjuntos del expediente`;
-            // Texto del botón volver según contexto
             const textoVolver = document.getElementById('doc-btn-volver-texto');
             if (textoVolver) textoVolver.textContent = _expPacienteActual ? 'Volver al expediente' : 'Volver a la lista';
             docCargarLista();
@@ -2208,7 +2247,6 @@
                         </div>
                     </div>`).join('');
 
-                // Quitar borde del último elemento
                 const items = _doc('doc-lista').querySelectorAll('[style*="border-bottom"]');
                 if (items.length) items[items.length - 1].style.borderBottom = 'none';
 
@@ -2218,8 +2256,6 @@
                 mostrarToast('Error al cargar los documentos.', 'error');
             }
         }
-
-        // ── Subir documento ───────────────────────────────────────
 
         async function docSubir() {
             const archivoInput = _doc('doc-archivo');
@@ -2242,7 +2278,6 @@
                 const res  = await fetch(`${BASE}/index.php?accion=documentos.subir`, {
                     method: 'POST',
                     body:   formData,
-                    // No se pone Content-Type: el navegador lo pone automáticamente con boundary
                 });
                 const data = await res.json();
 
@@ -2262,8 +2297,6 @@
                 btn.innerHTML = '<i class="bi bi-upload"></i> Subir';
             }
         }
-
-        // ── Eliminar documento ────────────────────────────────────
 
         function docAbrirEliminar(idDocumento, nombre) {
             _docIdAEliminar     = idDocumento;
@@ -2290,8 +2323,6 @@
             });
         }
 
-        // ── Navegar a documentos desde expediente ─────────────────
-
         function abrirDocumentos() {
             if (!_expDatos || !_expPacienteActual) {
                 return mostrarToast('Primero abra un expediente clínico.', 'aviso');
@@ -2306,19 +2337,14 @@
 
         function docVolverExpediente() {
             if (_expPacienteActual) {
-                // Venimos desde un expediente: volver al detalle de ese paciente
-                // Guardamos referencia ANTES de cambiar de página (mostrarPagina resetea _expPacienteActual)
                 const pacienteGuardado = _expPacienteActual;
-                _mostrarPaginaBase('expedientes');  // cambia la página SIN resetear expedientes
+                _mostrarPaginaBase('expedientes');
                 expAbrirPaciente(pacienteGuardado);
             } else {
-                // Venimos desde la lista del sidebar: volver a la lista de pacientes
                 _docExpediente = null;
                 docIniciar();
             }
         }
-
-        // ── Lista de pacientes en pantalla de selección (documentos) ─
 
         let _docPacientesCache = null;
 
@@ -2340,6 +2366,7 @@
 
         function _docRenderizarListaPacientes(lista, filtro) {
             const contenedor = document.getElementById('doc-lista-pacientes');
+            lista = lista.filter(p => p.id_expediente);
             const termino = filtro.trim().toLowerCase();
             const filtrados = termino
                 ? lista.filter(p => (p.nombre_completo || '').toLowerCase().includes(termino))
@@ -2397,11 +2424,6 @@
             }
         }
 
-        /* ═══════════════════════════════════════════════════════════
-           FIN MÓDULO DOCUMENTOS
-           ═══════════════════════════════════════════════════════════ */
-
-        /* ── Cambiar estado ─────────────────────────────────────── */
         function confirmarCambioEstado(id, estadoActual, nombre) {
             usuarioIdSeleccionado = id;
             estadoActualSeleccionado = estadoActual;

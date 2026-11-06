@@ -6,6 +6,7 @@
     <title>Odent | Portal del paciente</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= BASE_URL ?>/public/css/estilos.css?v=<?= @filemtime(ROOT_PATH . '/public/css/estilos.css') ?>">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/public/css/asistente.css?v=<?= @filemtime(ROOT_PATH . '/public/css/asistente.css') ?>">
 </head>
 <body>
 
@@ -236,67 +237,13 @@ $saldo_pendiente = 60000;
             </div>
         </div>
 
-        <div class="pagina" id="pagina-asistente">
-            <h2 style="margin-bottom:6px;">Asistente de triaje</h2>
-            <p style="font-size:14px;color:var(--gris-azulado);margin-bottom:20px;">
-                Cuénteme sus síntomas o consultas. Le ayudaré a orientar su atención.
-            </p>
-
-            <div class="panel-grid col-3">
-
-                <div class="tarjeta" style="grid-column:1 / span 2;">
-                    <div class="asistente-chat">
-                        <div class="chat-mensajes" id="chat-mensajes">
-                            <div class="mensaje bot">
-                                Hola <strong><?= htmlspecialchars($usuario['nombre']) ?></strong>, soy el asistente de triaje de Odent.
-                                Puede contarme sus síntomas o hacerme preguntas sobre su atención dental.
-                                Le ayudaré a determinar qué tan urgente es su situación. 😊
-                            </div>
-                        </div>
-                        <div class="chat-input">
-                            <input type="text" id="chat-input-texto" placeholder="Escriba su consulta o síntoma..." onkeydown="chatEnter(event)">
-                            <button onclick="enviarMensajeChat()">
-                                <i class="bi bi-send-fill"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tarjeta">
-                    <h4 style="margin-bottom:14px;">Preguntas frecuentes</h4>
-                    <div style="display:flex;flex-direction:column;gap:8px;">
-                        <?php
-                        $preguntas = [
-                            'Tengo dolor de muela fuerte',
-                            'Se me cayó un diente',
-                            '¿Cuándo es mi próxima cita?',
-                            'Tengo encías inflamadas',
-                            'Rompí un bracket',
-                        ];
-                        foreach ($preguntas as $preg): ?>
-                        <button onclick="preguntaRapida('<?= htmlspecialchars($preg, ENT_QUOTES) ?>')"
-                                style="text-align:left;border:1.5px solid var(--borde);border-radius:8px;padding:10px 14px;font-size:13px;background:var(--blanco);cursor:pointer;color:var(--gris-texto);transition:all .2s;"
-                                onmouseover="this.style.borderColor='var(--verde-odent)'"
-                                onmouseout="this.style.borderColor='var(--borde)'">
-                            <i class="bi bi-chat-dots" style="color:var(--verde-odent);"></i>
-                            <?= htmlspecialchars($preg) ?>
-                        </button>
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="alerta aviso" style="margin-top:16px;">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        Este asistente es orientativo. En emergencias, llame directamente a la clínica.
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
+        <?php include ROOT_PATH . '/views/paciente/asistente.php'; ?>
 
     </div>
 
 </div>
 
 <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
+<script src="<?= BASE_URL ?>/public/js/asistente.js?v=<?= @filemtime(ROOT_PATH . '/public/js/asistente.js') ?>"></script>
 </body>
 </html>

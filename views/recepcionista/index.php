@@ -19,7 +19,6 @@
     $esRecepcionista   = $rol === 'recepcionista';
     $esAsistenteDental = $rol === 'asistente_dental';
 
-    // Las citas vienen de la BD (CitaController::listar); nunca se simulan aquí
     $citas = $citas ?? [];
 
     $pacientes = $pacientes ?? [];
@@ -170,61 +169,12 @@
 
             <!-- =====================================================
      INVENTARIO
-====================================================== -->
 
             <?php if ($esAsistenteDental): ?>
+            <?php if ($esRecepcionista || $esAsistenteDental): ?>
 
-                <div class="pagina" id="pagina-inventario">
-
-                    <div class="panel-titulo" style="margin-bottom:20px;">
-                        <div>
-                            <h2>Inventario</h2>
-                            <p style="color:var(--gris-azulado);margin-top:5px;">
-                                Control de insumos odontológicos.
-                            </p>
-                        </div>
-
-                        <button class="btn-odent"
-                            onclick="abrirModal('modal-nuevo-insumo')">
-                            <i class="bi bi-plus-lg"></i> Registrar insumo
-                        </button>
-                    </div>
-
-
-                    <!-- Alertas de inventario -->
-                    <div id="inventario-alertas"
-                        style="display:none;margin-bottom:18px;">
-                    </div>
-
-
-                    <div class="tarjeta">
-
-                        <table class="tabla-odent">
-
-                            <thead>
-                                <tr>
-                                    <th>Insumo</th>
-                                    <th>Categoría</th>
-                                    <th>Disponible</th>
-                                    <th>Nivel mínimo</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-
-                            <tbody id="inventario-lista">
-                                <tr>
-                                    <td colspan="6" style="text-align:center;">
-                                        No hay insumos registrados.
-                                    </td>
-                                </tr>
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-                </div>
+                <?php include ROOT_PATH . '/views/shared/inventario_pagina.php'; ?>
+                  <?php include ROOT_PATH . '/views/shared/asistente_reportes_pagina.php'; ?>
 
             <?php endif; ?>
 
@@ -327,7 +277,6 @@
                 </div>
 
             <?php endif; ?>
-
 
             <?php if ($esRecepcionista): ?>
 
@@ -462,6 +411,27 @@
         </div>
 
     </div>
+            <?php if ($esRecepcionista || $esAsistenteDental): ?>
+
+        <div class="pagina" id="pagina-expedientes">
+
+            <div id="exp-vista-lista">
+                <div class="panel-titulo" style="margin-bottom:20px;">
+                    <div>
+                        <h2>Expedientes clínicos</h2>
+                        <p style="font-size:14px;color:var(--gris-azulado);margin-top:4px;">
+                            Seleccione un paciente para ver o crear su expediente
+                        </p>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <input type="text" id="exp-buscar" placeholder="Buscar por nombre o cédula…"
+                            style="border:1.5px solid var(--borde);border-radius:8px;padding:8px 14px;font-size:14px;min-width:240px;"
+                            oninput="expBuscar(this.value)">
+                        <button class="btn-odent" onclick="expBuscar(document.getElementById('exp-buscar').value)">
+                            <i class="bi bi-search"></i> Buscar
+                        </button>
+                    </div>
+                </div>
 
     <?php include ROOT_PATH . '/views/shared/agenda_modales.php'; ?>
 
@@ -508,6 +478,14 @@
                                 </option>
                             <?php endif; endforeach; ?>
                         </select>
+            <div id="exp-vista-detalle" style="display:none;">
+                <div class="panel-titulo" style="margin-bottom:20px;">
+                    <div>
+                        <button class="btn-outline-odent" onclick="expVolverLista()" style="margin-bottom:8px;font-size:13px;">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </button>
+                        <h2 id="exp-detalle-nombre">Expediente clínico</h2>
+                        <p id="exp-detalle-cedula" style="font-size:14px;color:var(--gris-azulado);margin-top:2px;"></p>
                     </div>
 
                     <div class="campo-grupo">
@@ -549,6 +527,15 @@
                                 onclick="cerrarModal('modal-nuevo-pago')">Cancelar</button>
                         <button type="submit" class="btn-odent" id="pago-btn-guardar">
                             <i class="bi bi-check-lg"></i> Registrar pago
+                <div id="exp-sin-expediente" style="display:none;">
+                    <div class="tarjeta" style="text-align:center;padding:40px 20px;">
+                        <i class="bi bi-folder2-open" style="font-size:48px;color:var(--gris-azulado);display:block;margin-bottom:16px;"></i>
+                        <h3 style="margin-bottom:8px;">Este paciente no tiene expediente clínico</h3>
+                        <p style="color:var(--gris-azulado);font-size:14px;margin-bottom:24px;">
+                            Cree el expediente para registrar la historia clínica y las atenciones del paciente.
+                        </p>
+                        <button class="btn-odent" onclick="abrirModal('modal-exp-crear')">
+                            <i class="bi bi-file-earmark-medical"></i> Crear expediente
                         </button>
                     </div>
 
@@ -565,6 +552,37 @@
                 </div>
 
                 <form id="form-nueva-cotizacion">
+                <div id="exp-con-expediente" style="display:none;">
+                    <div class="panel-grid col-2" style="margin-bottom:24px;">
+                        <div class="tarjeta">
+                            <h3 style="margin-bottom:16px;"><i class="bi bi-clipboard2-pulse" style="color:var(--azul-odent);margin-right:6px;"></i>Datos del expediente</h3>
+                            <div class="campo-grupo" style="margin-bottom:10px;">
+                                <label style="font-size:12px;color:var(--gris-azulado);">Motivo de consulta</label>
+                                <p id="exp-motivo" style="font-size:14px;margin:0;"></p>
+                            </div>
+                            <div class="panel-grid col-2" style="gap:10px;">
+                                <div class="campo-grupo" style="margin-bottom:10px;">
+                                    <label style="font-size:12px;color:var(--gris-azulado);">Alergias</label>
+                                    <p id="exp-alergias" style="font-size:14px;margin:0;"></p>
+                                </div>
+                                <div class="campo-grupo" style="margin-bottom:10px;">
+                                    <label style="font-size:12px;color:var(--gris-azulado);">Enfermedades</label>
+                                    <p id="exp-enfermedades" style="font-size:14px;margin:0;"></p>
+                                </div>
+                            </div>
+                            <div class="campo-grupo" style="margin-bottom:10px;">
+                                <label style="font-size:12px;color:var(--gris-azulado);">Medicamentos actuales</label>
+                                <p id="exp-medicamentos" style="font-size:14px;margin:0;"></p>
+                            </div>
+                            <div class="campo-grupo" style="margin-bottom:10px;">
+                                <label style="font-size:12px;color:var(--gris-azulado);">Antecedentes</label>
+                                <p id="exp-antecedentes" style="font-size:14px;margin:0;"></p>
+                            </div>
+                            <div class="campo-grupo" style="margin-bottom:0;">
+                                <label style="font-size:12px;color:var(--gris-azulado);">Observaciones generales</label>
+                                <p id="exp-observaciones" style="font-size:14px;margin:0;"></p>
+                            </div>
+                        </div>
 
                     <!-- Tratamiento (se carga desde la BD via AJAX) -->
                     <div class="campo-grupo">
@@ -610,6 +628,10 @@
                             <label>IVA 13%</label>
                             <input type="text" id="cot-iva" readonly
                                    style="background:#f5f5f5;" placeholder="₡0">
+                    <div class="tarjeta">
+                        <div class="panel-titulo" style="margin-bottom:16px;">
+                            <h3><i class="bi bi-journal-medical" style="color:var(--azul-odent);margin-right:6px;"></i>Historial de atenciones</h3>
+                            <span id="exp-atenciones-count" style="font-size:13px;color:var(--gris-azulado);"></span>
                         </div>
                         <div class="campo-grupo">
                             <label>Total</label>
@@ -642,6 +664,11 @@
                     <h3>Detalle de cotización</h3>
                     <button class="modal-cerrar" onclick="cerrarModal('modal-ver-cotizacion')">
                         <i class="bi bi-x-lg"></i>
+        <div class="pagina" id="pagina-odontograma">
+            <div class="panel-titulo" style="margin-bottom:6px;">
+                <div>
+                    <button class="btn-outline-odent" id="odo-btn-volver" onclick="odoVolverExpediente()" style="margin-bottom:8px;font-size:13px;">
+                        <i class="bi bi-arrow-left"></i> <span id="odo-btn-volver-texto">Volver al expediente</span>
                     </button>
                 </div>
                 <div id="cot-ver-contenido" style="padding:4px 0 12px;"></div>
@@ -650,13 +677,255 @@
                             onclick="cerrarModal('modal-ver-cotizacion')">Cerrar</button>
                 </div>
             </div>
+
+            <div id="odo-sin-expediente" style="display:none;">
+                <div class="tarjeta">
+                    <div class="panel-titulo" style="margin-bottom:16px;">
+                        <div>
+                            <h3 style="margin:0;">Seleccionar paciente</h3>
+                            <p style="color:var(--gris-azulado);font-size:13px;margin:4px 0 0;">
+                                Elija un paciente para ver o editar su odontograma
+                            </p>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:14px;">
+                        <input type="text" id="odo-buscar-paciente" placeholder="Buscar paciente…"
+                               style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:14px;"
+                               oninput="odoBuscarPaciente(this.value)">
+                    </div>
+                    <div id="odo-lista-pacientes" style="max-height:420px;overflow-y:auto;">
+                        <div style="text-align:center;padding:30px;color:var(--gris-azulado);">
+                            <div class="spinner-border spinner-border-sm" role="status"></div> Cargando pacientes…
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="odo-con-expediente" style="display:none;">
+                <div class="panel-grid col-2">
+                    <div class="odontograma-container">
+                        <p style="font-size:12px;color:var(--gris-azulado);margin-bottom:12px;text-align:center;font-weight:600;">MAXILAR SUPERIOR</p>
+                        <div class="odontograma-fila" id="odo-fila-superior"></div>
+                        <div style="border-top:2px dashed var(--borde);margin:10px 0;"></div>
+                        <p style="font-size:12px;color:var(--gris-azulado);margin-bottom:12px;text-align:center;font-weight:600;">MAXILAR INFERIOR</p>
+                        <div class="odontograma-fila" id="odo-fila-inferior"></div>
+                        <div class="leyenda-odontograma">
+                            <div class="leyenda-item"><div class="leyenda-color" style="background:#fff;border-color:var(--borde);"></div> Sano</div>
+                            <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(192,57,43,.2);border-color:#C0392B;"></div> Caries</div>
+                            <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(245,158,11,.2);border-color:#f59e0b;"></div> Corona</div>
+                            <div class="leyenda-item"><div class="leyenda-color" style="background:var(--fondo-odent);border-color:var(--gris-azulado);"></div> Ausente</div>
+                            <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(139,92,246,.15);border-color:#7c3aed;"></div> Endodoncia</div>
+                            <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(239,68,68,.15);border-color:#ef4444;"></div> Extracción</div>
+                            <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(16,185,129,.15);border-color:#10b981;"></div> Implante</div>
+                        </div>
+                    </div>
+
+                    <div class="tarjeta">
+                        <h3 style="margin-bottom:14px;">Detalle de pieza</h3>
+                        <div id="odo-hint">
+                            <div class="alerta info"><i class="bi bi-hand-index"></i> Seleccione un diente para editar su estado.</div>
+                        </div>
+                        <div id="odo-loading" style="display:none;text-align:center;padding:20px;color:var(--gris-azulado);">
+                            <div class="spinner-border spinner-border-sm" role="status" style="margin-right:6px;"></div> Cargando…
+                        </div>
+                        <div id="odo-panel-edicion" style="display:none;">
+                            <div class="campo-grupo">
+                                <label>Pieza dental (FDI)</label>
+                                <input type="text" id="odo-numero" readonly style="background:var(--fondo-odent);">
+                            </div>
+                            <div class="campo-grupo">
+                                <label>Estado</label>
+                                <select id="odo-estado">
+                                    <option value="sano">Sano</option>
+                                    <option value="caries">Caries</option>
+                                    <option value="corona">Corona</option>
+                                    <option value="ausente">Ausente</option>
+                                    <option value="endodoncia">Endodoncia</option>
+                                    <option value="extraccion">Extracción</option>
+                                    <option value="implante">Implante</option>
+                                </select>
+                            </div>
+                            <div class="campo-grupo">
+                                <label>Observaciones</label>
+                                <textarea id="odo-observaciones" rows="3" placeholder="Notas clínicas opcionales…"></textarea>
+                            </div>
+                            <div id="odo-ultima-mod" style="font-size:12px;color:var(--gris-azulado);margin-bottom:14px;display:none;">
+                                <i class="bi bi-clock-history"></i> Última modificación: <span id="odo-fecha-mod"></span>
+                            </div>
+                            <div style="display:flex;gap:10px;">
+                                <button class="btn-odent" id="odo-btn-guardar" onclick="odoGuardarDiente()">
+                                    <i class="bi bi-check-lg"></i> Guardar
+                                </button>
+                                <button class="btn-outline-odent" onclick="odoCancelarEdicion()">Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pagina" id="pagina-documentos">
+
+            <div class="panel-titulo" style="margin-bottom:6px;">
+                <div>
+                    <button class="btn-outline-odent" id="doc-btn-volver" onclick="docVolverExpediente()" style="margin-bottom:8px;font-size:13px;">
+                        <i class="bi bi-arrow-left"></i> <span id="doc-btn-volver-texto">Volver al expediente</span>
+                    </button>
+                    <h2>Documentos clínicos</h2>
+                    <p id="doc-cabecera-paciente" style="font-size:14px;color:var(--gris-azulado);margin-top:2px;">
+                        Archivos adjuntos del expediente
+                    </p>
+                </div>
+                <button class="btn-odent" id="doc-btn-subir-cabecera" onclick="abrirModal('modal-doc-subir')" style="display:none;">
+                    <i class="bi bi-upload"></i> Subir documento
+                </button>
+            </div>
+
+            <div id="doc-sin-expediente">
+                <div class="tarjeta">
+                    <div class="panel-titulo" style="margin-bottom:16px;">
+                        <div>
+                            <h3 style="margin:0;">Seleccionar paciente</h3>
+                            <p style="color:var(--gris-azulado);font-size:13px;margin:4px 0 0;">
+                                Elija un paciente para ver o subir sus documentos clínicos
+                            </p>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:14px;">
+                        <input type="text" id="doc-buscar-paciente" placeholder="Buscar paciente…"
+                               style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:14px;"
+                               oninput="docBuscarPaciente(this.value)">
+                    </div>
+                    <div id="doc-lista-pacientes" style="max-height:420px;overflow-y:auto;">
+                        <div style="text-align:center;padding:30px;color:var(--gris-azulado);">
+                            <div class="spinner-border spinner-border-sm" role="status"></div> Cargando pacientes…
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="doc-con-expediente" style="display:none;">
+                <div class="tarjeta">
+                    <div class="panel-titulo" style="margin-bottom:16px;">
+                        <h3><i class="bi bi-paperclip" style="color:var(--azul-odent);margin-right:6px;"></i>Archivos adjuntos</h3>
+                        <span id="doc-count" style="font-size:13px;color:var(--gris-azulado);"></span>
+                    </div>
+                    <div id="doc-loading" style="text-align:center;padding:20px;color:var(--gris-azulado);">
+                        <div class="spinner-border spinner-border-sm" role="status" style="margin-right:6px;"></div> Cargando documentos…
+                    </div>
+                    <div id="doc-lista" style="display:none;"></div>
+                    <div id="doc-vacio" style="display:none;text-align:center;padding:30px 20px;">
+                        <i class="bi bi-file-earmark-x" style="font-size:40px;color:var(--gris-azulado);display:block;margin-bottom:12px;"></i>
+                        <p style="color:var(--gris-azulado);font-size:14px;margin-bottom:16px;">Este expediente no tiene documentos adjuntos aún.</p>
+                        <button class="btn-odent" onclick="abrirModal('modal-doc-subir')">
+                            <i class="bi bi-upload"></i> Subir primer documento
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            <?php endif; ?>
+
+        </div>
+
+    </div>
+
+    <?php include ROOT_PATH . '/views/shared/agenda_modales.php'; ?>
+
+    <?php if ($esRecepcionista): ?>
+
+        <div class="modal-overlay" id="modal-nuevo-paciente">
+            <div class="modal-caja">
+                <div class="modal-header">
+                    <h3>Registrar paciente</h3>
+                    <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-paciente')"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <div class="campo-grupo"><label>Nombre completo</label><input type="text" placeholder="Nombre y apellidos"></div>
+                <div class="campo-grupo"><label>Cédula</label><input type="text" placeholder="0-0000-0000"></div>
+                <div class="campo-grupo"><label>Teléfono</label><input type="tel" placeholder="0000-0000"></div>
+                <div class="campo-grupo"><label>Correo electrónico</label><input type="email" placeholder="correo@ejemplo.com"></div>
+                <div class="campo-grupo"><label>Fecha de nacimiento</label><input type="date"></div>
+                <div class="modal-footer">
+                    <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-paciente')">Cancelar</button>
+                    <button class="btn-odent"><i class="bi bi-check-lg"></i> Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="modal-nuevo-pago">
+            <div class="modal-caja">
+                <div class="modal-header">
+                    <h3>Registrar pago</h3>
+                    <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-pago')"><i class="bi bi-x-lg"></i></button>
+                </div>
+
+                <div class="campo-grupo">
+                    <label>Cotización</label>
+                    <select>
+                        <?php foreach ($cotizaciones as $c): if ($c['estado'] === 'aprobada'): ?>
+                                <option value="<?= $c['id'] ?>"><?= $c['id'] ?> — <?= htmlspecialchars($c['paciente']) ?> (₡<?= number_format($c['total'], 0, ',', '.') ?>)</option>
+                        <?php endif;
+                        endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="campo-grupo"><label>Monto recibido (₡)</label><input type="number" placeholder="0"></div>
+
+                <div class="campo-grupo">
+                    <label>Método de pago</label>
+                    <select>
+                        <option>Efectivo</option>
+                        <option>Tarjeta débito</option>
+                        <option>Tarjeta crédito</option>
+                        <option>Sinpe Móvil</option>
+                        <option>Transferencia</option>
+                    </select>
+                </div>
+
+                <div class="campo-grupo"><label>Comprobante (opcional)</label><input type="text" placeholder="N.° comprobante o referencia"></div>
+
+                <div class="modal-footer">
+                    <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-pago')">Cancelar</button>
+                    <button class="btn-odent"><i class="bi bi-check-lg"></i> Registrar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="modal-nueva-cotizacion">
+            <div class="modal-caja">
+                <div class="modal-header">
+                    <h3>Nueva cotización</h3>
+                    <button class="modal-cerrar" onclick="cerrarModal('modal-nueva-cotizacion')"><i class="bi bi-x-lg"></i></button>
+                </div>
+
+                <div class="campo-grupo">
+                    <label>Paciente</label>
+                    <select>
+                        <option value="">Seleccione un paciente</option>
+                        <?php foreach ($pacientes as $p): ?>
+                            <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nombre']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="campo-grupo"><label>Tratamiento</label><input type="text" placeholder="Descripción del tratamiento"></div>
+                <div class="campo-grupo"><label>Monto (₡)</label><input type="number" placeholder="0" id="cot-monto"></div>
+                <div class="campo-grupo"><label>IVA (13%)</label><input type="text" id="cot-iva" readonly placeholder="Se calcula automáticamente"></div>
+                <div class="campo-grupo"><label>Total</label><input type="text" id="cot-total" readonly placeholder="Se calcula automáticamente"></div>
+                <div class="campo-grupo"><label>Observaciones</label><textarea rows="2" placeholder="Notas adicionales..."></textarea></div>
+
+                <div class="modal-footer">
+                    <button class="btn-outline-odent" onclick="cerrarModal('modal-nueva-cotizacion')">Cancelar</button>
+                    <button class="btn-odent"><i class="bi bi-check-lg"></i> Crear cotización</button>
+                </div>
+            </div>
         </div>
 
     <?php endif; ?>
 
     <!-- =============================================================
      MODAL INVENTARIO
-============================================================= -->
 
     <?php if ($esAsistenteDental): ?>
 
@@ -1451,6 +1720,9 @@
                 </div>
             </div>
         </div>
+    <?php if ($esRecepcionista || $esAsistenteDental): ?>
+        <?php include ROOT_PATH . '/views/shared/inventario_modales.php'; ?>
+          <?php include ROOT_PATH . '/views/shared/asistente_reportes_modales.php'; ?>
 
         <!-- ───────────────── DOCUMENTOS (asistente_dental) ─── -->
         <div class="pagina" id="pagina-documentos">
@@ -1464,6 +1736,16 @@
                     <p id="doc-cabecera-paciente" style="font-size:14px;color:var(--gris-azulado);margin-top:2px;">
                         Archivos adjuntos del expediente
                     </p>
+        <div class="modal-overlay" id="modal-pac-editar-basico">
+            <div class="modal-caja" style="max-width:480px;">
+                <div class="modal-header">
+                    <h3><i class="bi bi-person-gear" style="color:var(--azul-odent);margin-right:6px;"></i>Editar paciente</h3>
+                    <button class="modal-cerrar" onclick="cerrarModal('modal-pac-editar-basico')"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <input type="hidden" id="pac-edit-id-usuario">
+                <div class="campo-grupo">
+                    <label>Nombre completo *</label>
+                    <input type="text" id="pac-edit-nombre" maxlength="150" autocomplete="off">
                 </div>
                 <button class="btn-odent" id="doc-btn-subir-cabecera" onclick="abrirModal('modal-doc-subir')" style="display:none;">
                     <i class="bi bi-upload"></i> Subir documento
@@ -1539,7 +1821,6 @@
             </div>
         </div>
 
-        <!-- Modal confirmar eliminación documento -->
         <div class="modal-overlay" id="modal-doc-confirmar-eliminar">
             <div class="modal-caja" style="max-width:420px;">
                 <div class="modal-header">
@@ -1559,7 +1840,6 @@
             </div>
         </div>
 
-        <!-- Modal crear expediente -->
         <div class="modal-overlay" id="modal-exp-crear">
             <div class="modal-caja">
                 <div class="modal-header">
@@ -1601,7 +1881,6 @@
             </div>
         </div>
 
-        <!-- Modal editar expediente -->
         <div class="modal-overlay" id="modal-exp-editar">
             <div class="modal-caja">
                 <div class="modal-header">
@@ -1644,7 +1923,6 @@
             </div>
         </div>
 
-        <!-- Modal editar datos del paciente -->
         <div class="modal-overlay" id="modal-editar-paciente">
             <div class="modal-caja">
                 <div class="modal-header">
@@ -1692,7 +1970,6 @@
             </div>
         </div>
 
-        <!-- Modal registrar atención -->
         <div class="modal-overlay" id="modal-exp-atencion">
             <div class="modal-caja">
                 <div class="modal-header">
@@ -1725,12 +2002,14 @@
         </div>
 
     <?php endif; /* $esAsistenteDental */ ?>
+    <?php endif; ?>
 
     <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
     <script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
 
     <?php if ($esAsistenteDental): ?>
         <script src="<?= BASE_URL ?>/public/js/inventario.js?v=<?= @filemtime(ROOT_PATH . '/public/js/inventario.js') ?>"></script>
+          <script src="<?= BASE_URL ?>/public/js/asistente_reportes.js?v=<?= @filemtime(ROOT_PATH . '/public/js/asistente_reportes.js') ?>"></script>
     <?php endif; ?>
 
     <?php if ($esAsistenteDental): ?>
@@ -1787,7 +2066,6 @@
                 } else {
                     mostrarToast('Datos del paciente actualizados.', 'exito');
                     cerrarModal('modal-pac-editar-basico');
-                    // Actualizar la fila en la tabla sin recargar la página
                     const filas = document.querySelectorAll('#tabla-pacientes .fila-paciente');
                     filas.forEach(fila => {
                         const celdas = fila.querySelectorAll('td');
@@ -1807,10 +2085,6 @@
                 btn.innerHTML = '<i class="bi bi-check-lg"></i> Guardar cambios';
             }
         }
-
-        /* ═══════════════════════════════════════════════════════════
-           MÓDULO EXPEDIENTES CLÍNICOS (asistente_dental)
-           ═══════════════════════════════════════════════════════════ */
 
         const escapar = t => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -1833,8 +2107,6 @@
                     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gris-azulado);">No se encontraron pacientes.</td></tr>';
                     return;
                 }
-                // Guardamos los objetos paciente en un mapa global para evitar
-                // problemas de escaping con comillas en atributos HTML.
                 window._expPacientesData = {};
                 tbody.innerHTML = data.map((p, i) => {
                     const key = 'pac_' + (p.id_usuario ?? i);
@@ -1859,7 +2131,7 @@
                             </span>
                         </td>
                         <td>
-                            ${p.id_paciente
+                            ${p.id_expediente
                                 ? '<span class="badge-estado badge-completada"><i class="bi bi-check-circle"></i> Creado</span>'
                                 : '<span class="badge-estado badge-pendiente"><i class="bi bi-dash-circle"></i> Sin expediente</span>'}
                         </td>
@@ -2010,12 +2282,26 @@
             if (vistaLista)   vistaLista.style.display   = '';
         }
 
+        async function _expRefrescarPaciente() {
+            const ref = _expPacienteActual;
+            if (!ref) return;
+            try {
+                const res  = await fetch(`${BASE}/index.php?accion=expedientes.pacientes&q=${encodeURIComponent(ref.identificacion || ref.nombre_completo || '')}`, { headers: { Accept: 'application/json' } });
+                const data = await res.json();
+                const nuevo = Array.isArray(data) ? data.find(x => String(x.id_usuario) === String(ref.id_usuario)) : null;
+                expAbrirPaciente(nuevo || ref);
+            } catch (e) {
+                expAbrirPaciente(ref);
+            }
+        }
+
         async function guardarCrearExpediente() {
             if (!validarCampos(['ec-motivo'], 'El motivo de consulta es obligatorio.')) return;
-            if (!_expPacienteActual?.id_paciente) return mostrarToast('No se identificó al paciente.', 'error');
+            if (!_expPacienteActual) return mostrarToast('No se identificó al paciente.', 'error');
 
             await guardarJSON('expedientes.crear', {
                 id_paciente:           _expPacienteActual.id_paciente,
+                id_usuario:           _expPacienteActual.id_usuario,
                 motivo_consulta:       _exp('ec-motivo').value.trim(),
                 alergias:              _exp('ec-alergias').value.trim(),
                 enfermedades:          _exp('ec-enfermedades').value.trim(),
@@ -2026,7 +2312,7 @@
                 boton: document.querySelector('#modal-exp-crear .modal-footer .btn-odent'),
                 cerrarModal: 'modal-exp-crear',
                 exito: 'Expediente creado exitosamente.',
-                alExito: () => expAbrirPaciente(_expPacienteActual)
+                alExito: () => _expRefrescarPaciente()
             });
         }
 
@@ -2139,32 +2425,16 @@
 
         let _navegandoDesdeExpediente = false;
 
-        /* ── Override window.mostrarPagina + arranque al cargar ──────────────
-           El script inline parsea ANTES de que DOMContentLoaded dispare,
-           y app.js ya está cargado porque su <script src> precede a este bloque.
-           Overridear window.mostrarPagina aquí captura los clics del sidebar.
-           Para la restauración inicial (sessionStorage/hash), app.js llama
-           mostrarPagina() por su nombre de scope local — no pasa por window —
-           así que usamos el MutationObserver para ese caso, conectándolo con
-           setTimeout(0) dentro de DOMContentLoaded para que corra DESPUÉS del
-           listener de app.js que ya cambió la clase. ── */
-
-        /* 1) Override para clics del sidebar */
         const _mostrarPaginaOriginal = window.mostrarPagina;
         window.mostrarPagina = function (slug) {
             if (typeof _mostrarPaginaOriginal === 'function') _mostrarPaginaOriginal(slug);
             _despacharSlug(slug);
         };
 
-        /* 2) Arranque inmediato — este script está al final del body, el DOM ya existe
-           y DOMContentLoaded ya disparó (app.js corrió su listener antes que nosotros).
-           Usamos setTimeout(0) para ceder el turno y dejar que app.js termine de
-           restaurar la página activa antes de leerla. */
         setTimeout(function () {
             const activa = document.querySelector('.pagina.activa');
             if (activa) _despacharSlug(activa.id.replace('pagina-', ''));
 
-            /* Observar futuros cambios de página */
             const obs = new MutationObserver(function (muts) {
                 muts.forEach(function (m) {
                     if (m.attributeName === 'class') {
@@ -2203,10 +2473,6 @@
             }
         }
 
-        /* ═══════════════════════════════════════════════════════════
-           MÓDULO ODONTOGRAMA (asistente_dental)
-           ═══════════════════════════════════════════════════════════ */
-
         let _odoExpediente  = null;
         let _odoPiezas      = {};
         let _odoPiezaActual = null;
@@ -2224,8 +2490,10 @@
 
         function _odoRenderizarDiente(num) {
             const estado = _odoEstado(num);
-            return `<div class="diente ${estado}" id="diente-${num}" onclick="odoSeleccionarDiente(${num})">
-                        <i class="bi bi-circle-fill" style="font-size:10px;"></i>
+            const u = num % 10;
+            const tipo = u <= 2 ? 'incisivo' : u === 3 ? 'canino' : u <= 5 ? 'premolar' : 'molar';
+            const arc = ODO_SUPERIOR.includes(num) ? 'sup' : 'inf';
+            return `<div class="diente d-${tipo} ${arc} ${estado}" id="diente-${num}" onclick="odoSeleccionarDiente(${num})" title="Pieza ${num}">
                         <span>${num}</span>
                     </div>`;
         }
@@ -2377,6 +2645,7 @@
         function _odoRenderizarListaPacientes(lista, filtro) {
             const contenedor = document.getElementById('odo-lista-pacientes');
             const termino    = filtro.trim().toLowerCase();
+            lista = lista.filter(p => p.id_expediente);
             const filtrados  = termino ? lista.filter(p => (p.nombre_completo || '').toLowerCase().includes(termino)) : lista;
 
             if (!filtrados.length) {
@@ -2430,10 +2699,6 @@
                 btn.innerHTML = '<i class="bi bi-clipboard2-pulse"></i> Ver odontograma';
             }
         }
-
-        /* ═══════════════════════════════════════════════════════════
-           MÓDULO DOCUMENTOS CLÍNICOS (asistente_dental)
-           ═══════════════════════════════════════════════════════════ */
 
         let _docExpediente      = null;
         let _docIdAEliminar     = null;
@@ -2623,6 +2888,7 @@
         function _docRenderizarListaPacientes(lista, filtro) {
             const contenedor = document.getElementById('doc-lista-pacientes');
             const termino    = filtro.trim().toLowerCase();
+            lista = lista.filter(p => p.id_expediente);
             const filtrados  = termino ? lista.filter(p => (p.nombre_completo || '').toLowerCase().includes(termino)) : lista;
 
             if (!filtrados.length) {
@@ -2942,6 +3208,7 @@
     })();
     </script>
     <?php endif; /* $esRecepcionista JS */ ?>
+    <?php endif; ?>
 
 </body>
 

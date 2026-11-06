@@ -212,6 +212,17 @@ class Tratamiento
     /** Pacientes activos para el formulario, indicando si ya tienen expediente clínico */
     public function pacientesActivos(): array
     {
+                // Usuarios con rol "paciente" que todavía no tienen su fila clínica (por ejemplo,
+        // los creados antes de que existiera esa tabla). Se completa solo, sin duplicar nada.
+        $this->db->exec(
+            "INSERT IGNORE INTO paciente (id_usuario, estado)
+             SELECT u.id_usuario, 'activo'
+             FROM usuario u
+             WHERE u.estado = 'activo'
+               AND EXISTS (SELECT 1 FROM usuario_rol ur
+                           JOIN rol r ON r.id_rol = ur.id_rol
+                           WHERE ur.id_usuario = u.id_usuario AND r.nombre = 'paciente')"
+        );
         return $this->db->query(
             "SELECT p.id_paciente, u.nombre_completo, u.identificacion, e.id_expediente
              FROM paciente p

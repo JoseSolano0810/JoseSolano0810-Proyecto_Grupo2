@@ -2,24 +2,38 @@ const Inventario = {
 
     insumos: [],
 
+    notificar(mensaje, tipo = 'info', duracion = 5000) {
+        mostrarToast(mensaje, tipo, duracion);
+    },
+
     async listar() {
         try {
             const respuesta = await fetch('index.php?accion=inventario.listar');
             const datos = await respuesta.json();
 
             if (!datos.ok) {
-                alert(datos.error || 'No fue posible cargar el inventario.');
+                this.notificar(
+                    datos.error || 'No pudimos cargar el inventario.',
+                    'peligro',
+                    6000
+                );
                 return;
             }
 
             this.insumos = datos.insumos;
-
             this.mostrar(datos.insumos);
             this.mostrarAlertas(datos.insumos);
 
         } catch (error) {
             console.error(error);
-            alert('No fue posible cargar el inventario.');
+
+            this.notificar(
+                navigator.onLine
+                    ? 'No pudimos cargar el inventario. Intente de nuevo.'
+                    : 'Sin conexión a internet.',
+                'peligro',
+                6000
+            );
         }
     },
 
@@ -83,17 +97,11 @@ const Inventario = {
 
                     <td>${this.escapar(insumo.categoria)}</td>
 
-                    <td>
-                        ${insumo.cantidad_disponible}
-                    </td>
+                    <td>${insumo.cantidad_disponible}</td>
 
-                    <td>
-                        ${insumo.nivel_minimo}
-                    </td>
+                    <td>${insumo.nivel_minimo}</td>
 
-                    <td>
-                        ${estado}
-                    </td>
+                    <td>${estado}</td>
 
                     <td>
                         <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -286,6 +294,36 @@ const Inventario = {
                 document.getElementById('insumo-minimo').value
         };
 
+        const faltan = [];
+
+        if (!datos.nombre) faltan.push('nombre');
+        if (!datos.descripcion) faltan.push('descripción');
+        if (!datos.categoria) faltan.push('categoría');
+
+        if (
+            datos.cantidad_disponible === '' ||
+            Number(datos.cantidad_disponible) < 0
+        ) {
+            faltan.push('cantidad disponible');
+        }
+
+        if (
+            datos.nivel_minimo === '' ||
+            Number(datos.nivel_minimo) < 0
+        ) {
+            faltan.push('nivel mínimo');
+        }
+
+        if (faltan.length) {
+            this.notificar(
+                'Para registrar el insumo falta completar correctamente: ' +
+                faltan.join(', ') + '.',
+                'aviso',
+                6000
+            );
+            return;
+        }
+
         try {
             const respuesta = await fetch(
                 'index.php?accion=inventario.crear',
@@ -301,14 +339,20 @@ const Inventario = {
             const resultado = await respuesta.json();
 
             if (!resultado.ok) {
-                alert(
+                this.notificar(
                     resultado.error ||
-                    'No fue posible registrar el insumo.'
+                    'No fue posible registrar el insumo.',
+                    respuesta.status === 422 ? 'aviso' : 'peligro',
+                    6000
                 );
                 return;
             }
 
-            alert(resultado.mensaje);
+            this.notificar(
+                resultado.mensaje ||
+                'Listo, el insumo quedó registrado.',
+                'exito'
+            );
 
             document
                 .getElementById('form-nuevo-insumo')
@@ -323,7 +367,14 @@ const Inventario = {
 
         } catch (error) {
             console.error(error);
-            alert('No fue posible registrar el insumo.');
+
+            this.notificar(
+                navigator.onLine
+                    ? 'No fue posible registrar el insumo. Intente de nuevo.'
+                    : 'Sin conexión a internet.',
+                'peligro',
+                6000
+            );
         }
     },
 
@@ -372,6 +423,29 @@ const Inventario = {
                 document.getElementById('editar-insumo-minimo').value
         };
 
+        const faltan = [];
+
+        if (!datos.nombre) faltan.push('nombre');
+        if (!datos.descripcion) faltan.push('descripción');
+        if (!datos.categoria) faltan.push('categoría');
+
+        if (
+            datos.nivel_minimo === '' ||
+            Number(datos.nivel_minimo) < 0
+        ) {
+            faltan.push('nivel mínimo');
+        }
+
+        if (faltan.length) {
+            this.notificar(
+                'Para actualizar el insumo falta completar correctamente: ' +
+                faltan.join(', ') + '.',
+                'aviso',
+                6000
+            );
+            return;
+        }
+
         try {
             const respuesta = await fetch(
                 'index.php?accion=inventario.editar',
@@ -387,14 +461,20 @@ const Inventario = {
             const resultado = await respuesta.json();
 
             if (!resultado.ok) {
-                alert(
+                this.notificar(
                     resultado.error ||
-                    'No fue posible actualizar el insumo.'
+                    'No fue posible actualizar el insumo.',
+                    respuesta.status === 422 ? 'aviso' : 'peligro',
+                    6000
                 );
                 return;
             }
 
-            alert(resultado.mensaje);
+            this.notificar(
+                resultado.mensaje ||
+                'Listo, el insumo quedó actualizado.',
+                'exito'
+            );
 
             cerrarModal('modal-editar-insumo');
 
@@ -402,7 +482,14 @@ const Inventario = {
 
         } catch (error) {
             console.error(error);
-            alert('No fue posible actualizar el insumo.');
+
+            this.notificar(
+                navigator.onLine
+                    ? 'No fue posible actualizar el insumo. Intente de nuevo.'
+                    : 'Sin conexión a internet.',
+                'peligro',
+                6000
+            );
         }
     },
 
@@ -414,8 +501,10 @@ const Inventario = {
         if (!insumo) return;
 
         if (insumo.estado !== 'activo') {
-            alert(
-                'No se pueden registrar movimientos en un insumo inactivo.'
+            this.notificar(
+                'No se pueden registrar movimientos en un insumo inactivo.',
+                'aviso',
+                6000
             );
             return;
         }
@@ -485,12 +574,20 @@ const Inventario = {
         );
 
         if (!insumo) {
-            alert('No fue posible identificar el insumo.');
+            this.notificar(
+                'No fue posible identificar el insumo.',
+                'peligro',
+                6000
+            );
             return;
         }
 
         if (!Number.isInteger(cantidad) || cantidad <= 0) {
-            alert('La cantidad debe ser mayor a cero.');
+            this.notificar(
+                'La cantidad debe ser mayor a cero.',
+                'aviso',
+                6000
+            );
             return;
         }
 
@@ -498,9 +595,11 @@ const Inventario = {
             tipo === 'salida' &&
             cantidad > Number(insumo.cantidad_disponible)
         ) {
-            alert(
+            this.notificar(
                 `No existe suficiente inventario disponible. ` +
-                `Actualmente hay ${insumo.cantidad_disponible} unidades.`
+                `Actualmente hay ${insumo.cantidad_disponible} unidades.`,
+                'aviso',
+                6000
             );
             return;
         }
@@ -527,14 +626,24 @@ const Inventario = {
             const resultado = await respuesta.json();
 
             if (!resultado.ok) {
-                alert(
+                this.notificar(
                     resultado.error ||
-                    'No fue posible registrar el movimiento.'
+                    'No fue posible registrar el movimiento.',
+                    respuesta.status === 422 ? 'aviso' : 'peligro',
+                    6000
                 );
                 return;
             }
 
-            alert(resultado.mensaje);
+            this.notificar(
+                resultado.mensaje ||
+                (
+                    tipo === 'entrada'
+                        ? 'Listo, la entrada quedó registrada.'
+                        : 'Listo, la salida quedó registrada.'
+                ),
+                'exito'
+            );
 
             cerrarModal('modal-movimiento-inventario');
 
@@ -546,7 +655,14 @@ const Inventario = {
 
         } catch (error) {
             console.error(error);
-            alert('No fue posible registrar el movimiento.');
+
+            this.notificar(
+                navigator.onLine
+                    ? 'No fue posible registrar el movimiento. Intente de nuevo.'
+                    : 'Sin conexión a internet.',
+                'peligro',
+                6000
+            );
         }
     },
 
@@ -565,15 +681,18 @@ const Inventario = {
             const resultado = await respuesta.json();
 
             if (!resultado.ok) {
-                alert(
+                this.notificar(
                     resultado.error ||
-                    'No fue posible consultar el historial.'
+                    'No fue posible consultar el historial.',
+                    'peligro',
+                    6000
                 );
                 return;
             }
 
-            document.getElementById('historial-insumo-nombre').textContent =
-                resultado.insumo.nombre;
+            document
+                .getElementById('historial-insumo-nombre')
+                .textContent = resultado.insumo.nombre;
 
             this.mostrarHistorial(resultado.movimientos);
 
@@ -581,7 +700,14 @@ const Inventario = {
 
         } catch (error) {
             console.error(error);
-            alert('No fue posible consultar el historial.');
+
+            this.notificar(
+                navigator.onLine
+                    ? 'No fue posible consultar el historial. Intente de nuevo.'
+                    : 'Sin conexión a internet.',
+                'peligro',
+                6000
+            );
         }
     },
 
@@ -632,9 +758,7 @@ const Inventario = {
                         ${this.formatearFecha(movimiento.created_at)}
                     </td>
 
-                    <td>
-                        ${tipo}
-                    </td>
+                    <td>${tipo}</td>
 
                     <td>
                         <strong>
@@ -701,20 +825,33 @@ const Inventario = {
             const resultado = await respuesta.json();
 
             if (!resultado.ok) {
-                alert(
+                this.notificar(
                     resultado.error ||
-                    'No fue posible desactivar el insumo.'
+                    'No fue posible desactivar el insumo.',
+                    respuesta.status === 422 ? 'aviso' : 'peligro',
+                    6000
                 );
                 return;
             }
 
-            alert(resultado.mensaje);
+            this.notificar(
+                resultado.mensaje ||
+                'Listo, el insumo quedó desactivado.',
+                'exito'
+            );
 
             await this.listar();
 
         } catch (error) {
             console.error(error);
-            alert('No fue posible desactivar el insumo.');
+
+            this.notificar(
+                navigator.onLine
+                    ? 'No fue posible desactivar el insumo. Intente de nuevo.'
+                    : 'Sin conexión a internet.',
+                'peligro',
+                6000
+            );
         }
     },
 
@@ -748,20 +885,33 @@ const Inventario = {
             const resultado = await respuesta.json();
 
             if (!resultado.ok) {
-                alert(
+                this.notificar(
                     resultado.error ||
-                    'No fue posible activar el insumo.'
+                    'No fue posible activar el insumo.',
+                    respuesta.status === 422 ? 'aviso' : 'peligro',
+                    6000
                 );
                 return;
             }
 
-            alert(resultado.mensaje);
+            this.notificar(
+                resultado.mensaje ||
+                'Listo, el insumo quedó activado.',
+                'exito'
+            );
 
             await this.listar();
 
         } catch (error) {
             console.error(error);
-            alert('No fue posible activar el insumo.');
+
+            this.notificar(
+                navigator.onLine
+                    ? 'No fue posible activar el insumo. Intente de nuevo.'
+                    : 'Sin conexión a internet.',
+                'peligro',
+                6000
+            );
         }
     },
 

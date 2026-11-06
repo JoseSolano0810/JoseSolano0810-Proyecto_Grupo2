@@ -65,17 +65,21 @@
                 <i class="bi bi-cash-coin"></i> Pagos
             </a>
 
+            <?php if ($rol === 'administrador'): ?>
             <div class="sidebar-seccion-titulo">Inventario</div>
 
             <a class="sidebar-enlace <?= $pagina_activa === 'inventario' ? 'activo' : '' ?>" onclick="mostrarPagina('inventario')">
                 <i class="bi bi-box-seam"></i> Inventario
             </a>
+            <?php endif; ?>
 
+            <?php if ($rol === 'administrador'): ?>
             <div class="sidebar-seccion-titulo">Reportes</div>
 
             <a class="sidebar-enlace <?= $pagina_activa === 'reportes' ? 'activo' : '' ?>" onclick="mostrarPagina('reportes')">
                 <i class="bi bi-bar-chart-line"></i> Reportes
             </a>
+            <?php endif; ?>
 
             <?php if ($rol === 'administrador'): ?>
             <div class="sidebar-seccion-titulo">Administración</div>
@@ -88,9 +92,6 @@
                 <i class="bi bi-journal-text"></i> Bitácora
             </a>
             <?php endif; ?>
-
-
-
 
         <?php elseif ($rol === 'recepcionista'): ?>
 
@@ -124,6 +125,11 @@
                 <i class="bi bi-file-earmark-medical"></i> Documentos
             </a>
 
+                        <div class="sidebar-seccion-titulo">Asistente inteligente</div>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'asistente-reportes' ? 'activo' : '' ?>" onclick="mostrarPagina('asistente-reportes')">
+                <i class="bi bi-robot"></i> Reportes del asistente
+            </a>
             <div class="sidebar-seccion-titulo">Inventario</div>
 
             <a class="sidebar-enlace <?= $pagina_activa === 'inventario' ? 'activo' : '' ?>" onclick="mostrarPagina('inventario')">
@@ -139,7 +145,6 @@
             <a class="sidebar-enlace <?= $pagina_activa === 'pagos' ? 'activo' : '' ?>" onclick="mostrarPagina('pagos')">
                 <i class="bi bi-cash-coin"></i> Pagos
             </a>
-
 
         <?php elseif ($rol === 'asistente_dental'): ?>
 
@@ -171,12 +176,16 @@
                 <i class="bi bi-file-earmark-medical"></i> Documentos
             </a>
 
+                        <div class="sidebar-seccion-titulo">Asistente inteligente</div>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'asistente-reportes' ? 'activo' : '' ?>" onclick="mostrarPagina('asistente-reportes')">
+                <i class="bi bi-robot"></i> Reportes del asistente
+            </a>
             <div class="sidebar-seccion-titulo">Inventario</div>
 
             <a class="sidebar-enlace <?= $pagina_activa === 'inventario' ? 'activo' : '' ?>" onclick="mostrarPagina('inventario')">
                 <i class="bi bi-box-seam"></i> Inventario
             </a>
-
 
         <?php elseif ($rol === 'paciente'): ?>
 
@@ -199,7 +208,7 @@
             </a>
 
             <a class="sidebar-enlace <?= $pagina_activa === 'asistente' ? 'activo' : '' ?>" onclick="mostrarPagina('asistente')">
-                <i class="bi bi-robot"></i> Asistente de triaje
+                <i class="bi bi-robot"></i> Asistente inteligente
             </a>
 
         <?php endif; ?>
@@ -218,7 +227,6 @@
 
 </aside>
 
-<!-- modal cambiar mi contraseña -->
 <div class="modal-overlay" id="modal-cambiar-contrasena">
     <div class="modal-caja" style="max-width:420px;">
 
