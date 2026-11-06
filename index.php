@@ -377,13 +377,13 @@ switch ($accion) {
     case 'tratamientos.odontograma':
         (new TratamientoController())->odontograma();
         break;
+
+    // ── Reportes del administrador (REP-01 y REP-02) ──────────
+    case 'reportes.citas':
+        (new ReporteController())->citas();
+        break;
+
     default:
-          // ── Reportes del administrador (REP-01 y REP-02) ──────────
-      case 'reportes.citas':
-          (new ReporteController())->citas();
-          break;
-          
-        default:
         http_response_code(404);
         $ctrl = new LoginController();
         $ctrl->mostrar();
