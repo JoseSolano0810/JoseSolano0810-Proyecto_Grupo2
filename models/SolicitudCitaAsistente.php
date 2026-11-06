@@ -327,6 +327,28 @@ class SolicitudCitaAsistente
         return $stmt->fetchAll();
     }
 
+    /** Cantidad de solicitudes que esperan ser programadas */
+    public function contarPendientes(): int
+    {
+        return (int) $this->db->query(
+            "SELECT COUNT(*) FROM asistente_solicitud_cita WHERE estado = 'pendiente'"
+        )->fetchColumn();
+    }
+
+    /** Estado de la solicitud de cada reporte: [id_reporte => estado]; los reportes sin solicitud no aparecen */
+    public function estadosPorReportes(array $idsReporte): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $idsReporte)));
+        if (!$ids) return [];
+
+        $stmt = $this->db->prepare(
+            "SELECT id_reporte, estado FROM asistente_solicitud_cita
+             WHERE id_reporte IN (" . implode(',', array_fill(0, count($ids), '?')) . ")"
+        );
+        $stmt->execute($ids);
+        return array_column($stmt->fetchAll(), 'estado', 'id_reporte');
+    }
+
     /** La solicitud ya se convirtió en una cita real del módulo de Citas */
     public function marcarProgramada(int $id, int $idCita): void
     {

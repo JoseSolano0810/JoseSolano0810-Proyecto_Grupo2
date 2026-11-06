@@ -117,8 +117,11 @@ switch ($accion) {
         (new AsistenteController())->enviarReporte();
         break;
 
-    case 'asistente.reporte.cancelar':
-            // ── Solicitud de cita desde un reporte del asistente (ASI-05) ──
+        case 'asistente.reporte.cancelar':
+        (new AsistenteController())->cancelarReporte();
+        break;
+
+    // ── Solicitud de cita desde un reporte del asistente (ASI-05) ──
     case 'asistente.disponibilidad':
         (new AsistenteSolicitudController())->disponibilidad();
         break;
@@ -129,17 +132,28 @@ switch ($accion) {
 
     case 'asistente.solicitud.cancelar':
         (new AsistenteSolicitudController())->cancelar();
-        break;       
-        
-        // ── Reportes del asistente para recepción / asistente dental (ASI-04) ──
-       case 'asistente.reportes.listar':
-           (new AsistenteReportesController())->listar();
-           break;
+        break;
 
-       case 'asistente.reportes.detalle':
-           (new AsistenteReportesController())->detalle();
-           break;
-        (new AsistenteController())->cancelarReporte();
+    // ── Reportes del asistente para recepción / asistente dental (ASI-04) ──
+    case 'asistente.reportes.listar':
+        (new AsistenteReportesController())->listar();
+        break;
+
+    case 'asistente.reportes.detalle':
+        (new AsistenteReportesController())->detalle();
+        break;
+
+    // ── Bandeja de solicitudes de cita para el personal (ASI-05) ──
+    case 'asistente.solicitudes.listar':
+        (new AsistenteReportesController())->solicitudes();
+        break;
+
+    case 'asistente.solicitudes.programada':
+        (new AsistenteReportesController())->programada();
+        break;
+
+    case 'asistente.solicitudes.descartar':
+        (new AsistenteReportesController())->descartar();
         break;
 
     // panel * rol
