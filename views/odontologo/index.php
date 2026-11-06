@@ -788,17 +788,9 @@
                 <?php include ROOT_PATH . '/views/shared/inventario_pagina.php'; ?>
             <?php endif; ?>
 
-            <div class="pagina" id="pagina-reportes">
-                <div class="panel-titulo" style="margin-bottom:20px;">
-                    <h2>Reportes</h2>
-                </div>
-                <div class="tarjeta">
-                    <div class="alerta info">
-                        <i class="bi bi-info-circle"></i>
-                        El módulo de reportes está siendo desarrollado por el equipo.
-                    </div>
-                </div>
-            </div>
+                          <?php if ($rol === 'administrador'): ?>
+                  <?php include ROOT_PATH . '/views/shared/reportes_pagina.php'; ?>
+              <?php endif; ?>
 
             <?php if ($rol === 'administrador'): ?>
             <div class="pagina" id="pagina-bitacora">
@@ -1314,6 +1306,9 @@
     <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
     <script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
         <script src="<?= BASE_URL ?>/public/js/tratamientos.js?v=<?= @filemtime(ROOT_PATH . '/public/js/tratamientos.js') ?>"></script>
+                  <?php if ($rol === 'administrador'): ?>
+          <script src="<?= BASE_URL ?>/public/js/reportes.js?v=<?= @filemtime(ROOT_PATH . '/public/js/reportes.js') ?>"></script>
+          <?php endif; ?>
     <?php if ($rol === 'administrador'): ?>
         <script src="<?= BASE_URL ?>/public/js/inventario.js?v=<?= @filemtime(ROOT_PATH . '/public/js/inventario.js') ?>"></script>
     <?php endif; ?>

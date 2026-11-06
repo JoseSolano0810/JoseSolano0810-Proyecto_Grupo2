@@ -73,11 +73,13 @@
             </a>
             <?php endif; ?>
 
+            <?php if ($rol === 'administrador'): ?>
             <div class="sidebar-seccion-titulo">Reportes</div>
 
             <a class="sidebar-enlace <?= $pagina_activa === 'reportes' ? 'activo' : '' ?>" onclick="mostrarPagina('reportes')">
                 <i class="bi bi-bar-chart-line"></i> Reportes
             </a>
+            <?php endif; ?>
 
             <?php if ($rol === 'administrador'): ?>
             <div class="sidebar-seccion-titulo">Administración</div>

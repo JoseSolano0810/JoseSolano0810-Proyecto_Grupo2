@@ -28,6 +28,7 @@ require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/RecordatorioService.php';
 require_once ROOT_PATH . '/controllers/InventarioController.php';
 require_once ROOT_PATH . '/controllers/AsistenteController.php';
+  require_once ROOT_PATH . '/controllers/ReporteController.php';
    require_once ROOT_PATH . '/controllers/AsistenteReportesController.php';
    require_once ROOT_PATH . '/controllers/AsistenteSolicitudController.php';
 
@@ -367,7 +368,12 @@ switch ($accion) {
         (new TratamientoController())->asociar();
         break;
 
-    default:
+          // ── Reportes del administrador (REP-01 y REP-02) ──────────
+      case 'reportes.citas':
+          (new ReporteController())->citas();
+          break;
+          
+        default:
         http_response_code(404);
         $ctrl = new LoginController();
         $ctrl->mostrar();

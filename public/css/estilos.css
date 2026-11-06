@@ -2713,3 +2713,168 @@ button:disabled {
     .arep-btn-consultar { margin-left: 0; }
     .arep-tab { padding: 10px 12px; font-size: 13px; }
 }
+
+
+/* ═══════════════════════════════════════════════════════════
+   REPORTES (REP-01 y REP-02)
+   ═══════════════════════════════════════════════════════════ */
+
+.rep-titulo { margin: 0 0 4px; font-size: 17px; color: var(--azul-odent); }
+.rep-titulo i { color: var(--verde-odent); margin-right: 6px; }
+.rep-subtitulo { margin: 0 0 14px; font-size: 15px; color: var(--azul-odent); }
+.rep-ayuda { margin: 0 0 16px; font-size: 13px; color: var(--gris-azulado); }
+
+.rep-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: flex-end;
+}
+.rep-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gris-azulado);
+}
+.rep-campo input[type="date"] {
+    border: 1.5px solid var(--borde);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--blanco);
+}
+.rep-campo input:focus { outline: none; border-color: var(--azul-odent); }
+
+.rep-vacio {
+    text-align: center;
+    padding: 34px 20px;
+    color: var(--gris-azulado);
+    font-size: 14px;
+}
+.rep-vacio i { display: block; font-size: 42px; margin-bottom: 10px; opacity: .6; }
+.rep-vacio h4 { margin: 0 0 6px; font-size: 16px; color: var(--azul-odent); }
+.rep-vacio p { margin: 0; }
+
+.rep-resumen-frase {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: #e0f2f1;
+    border-color: #b2dfdb;
+}
+.rep-resumen-frase i { font-size: 20px; color: var(--verde-odent); margin-top: 2px; }
+.rep-resumen-frase p { margin: 0; font-size: 14px; line-height: 1.55; }
+
+/* Distribución por estado */
+.rep-apilada {
+    display: flex;
+    height: 22px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--borde);
+    margin-bottom: 16px;
+}
+.rep-apilada span { display: block; height: 100%; }
+.rep-leyenda { list-style: none; margin: 0; padding: 0; }
+.rep-leyenda li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--borde);
+    font-size: 14px;
+}
+.rep-leyenda li:last-child { border-bottom: none; }
+.rep-leyenda i { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.rep-leyenda span { flex: 1; }
+.rep-leyenda small { color: var(--gris-azulado); min-width: 56px; text-align: right; }
+
+/* Barras horizontales (tipos de consulta, % atendidas) */
+.rep-fila-barra {
+    display: grid;
+    grid-template-columns: 130px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+}
+.rep-fila-nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rep-fila-pista {
+    display: inline-block;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--borde);
+    overflow: hidden;
+    vertical-align: middle;
+}
+.rep-fila-barra .rep-fila-pista { display: block; }
+.rep-fila-pista i { display: block; height: 100%; background: var(--verde-odent); border-radius: 999px; }
+.rep-pista-chica { width: 70px; margin-right: 6px; }
+.rep-fila-valor { white-space: nowrap; font-weight: 600; }
+.rep-fila-valor small { color: var(--gris-azulado); font-weight: 400; }
+
+.rep-tabla-scroll { overflow-x: auto; }
+
+/* Serie en el tiempo */
+.rep-serie {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 190px;
+    padding-top: 22px;
+    overflow-x: auto;
+    border-bottom: 2px solid var(--borde);
+}
+.rep-col {
+    flex: 1 0 34px;
+    max-width: 70px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: stretch;
+    position: relative;
+    cursor: default;
+}
+.rep-col-valor { text-align: center; font-size: 11px; font-weight: 700; color: var(--azul-odent); }
+.rep-col-barra {
+    display: flex;
+    flex-direction: column;
+    border-radius: 6px 6px 0 0;
+    overflow: hidden;
+    min-height: 6px;
+}
+.rep-col-barra i { display: block; }
+.rep-col-etq {
+    position: absolute;
+    bottom: -22px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11px;
+    color: var(--gris-azulado);
+    white-space: nowrap;
+}
+.rep-serie { margin-bottom: 32px; }
+.rep-leyenda-serie {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--gris-azulado);
+}
+.rep-leyenda-serie i {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    margin-right: 5px;
+    vertical-align: -1px;
+}
+
+@media (max-width: 560px) {
+    .rep-fila-barra { grid-template-columns: 90px 1fr auto; }
+}
