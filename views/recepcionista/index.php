@@ -17,7 +17,8 @@
     $pagina_activa = $pagina_activa ?? 'inicio';
 
     $esRecepcionista   = $rol === 'recepcionista';
-    $esAsistenteDental = $rol === 'asistente_dental';
+    $esAsistenteDental = $rol === 'asistente_dental'
+        || in_array('asistente_dental', $roles_sesion ?? [], true);
 
     $citas = $citas ?? [];
 
@@ -167,10 +168,6 @@
 
             <?php include ROOT_PATH . '/views/shared/agenda_pagina.php'; ?>
 
-            <!-- =====================================================
-     INVENTARIO
-
-            <?php if ($esAsistenteDental): ?>
             <?php if ($esRecepcionista || $esAsistenteDental): ?>
 
                 <?php include ROOT_PATH . '/views/shared/inventario_pagina.php'; ?>
@@ -408,9 +405,6 @@
 
             <?php endif; ?>
 
-        </div>
-
-    </div>
             <?php if ($esRecepcionista || $esAsistenteDental): ?>
 
         <div class="pagina" id="pagina-expedientes">
@@ -433,51 +427,27 @@
                     </div>
                 </div>
 
-    <?php include ROOT_PATH . '/views/shared/agenda_modales.php'; ?>
-
-    <?php if ($esRecepcionista): ?>
-
-        <div class="modal-overlay" id="modal-nuevo-paciente">
-            <div class="modal-caja">
-                <div class="modal-header">
-                    <h3>Registrar paciente</h3>
-                    <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-paciente')"><i class="bi bi-x-lg"></i></button>
-                </div>
-                <div class="campo-grupo"><label>Nombre completo</label><input type="text" placeholder="Nombre y apellidos"></div>
-                <div class="campo-grupo"><label>Cédula</label><input type="text" placeholder="0-0000-0000"></div>
-                <div class="campo-grupo"><label>Teléfono</label><input type="tel" placeholder="0000-0000"></div>
-                <div class="campo-grupo"><label>Correo electrónico</label><input type="email" placeholder="correo@ejemplo.com"></div>
-                <div class="campo-grupo"><label>Fecha de nacimiento</label><input type="date"></div>
-                <div class="modal-footer">
-                    <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-paciente')">Cancelar</button>
-                    <button class="btn-odent"><i class="bi bi-check-lg"></i> Guardar</button>
+                <div class="tarjeta">
+                    <table class="tabla-odent">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Paciente</th>
+                                <th>Cédula</th>
+                                <th>Edad</th>
+                                <th>Grupo sanguíneo</th>
+                                <th>Estado</th>
+                                <th>Expediente</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exp-tbody">
+                            <tr><td colspan="8" style="text-align:center;color:var(--gris-azulado);">Cargando…</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
 
-        <!-- ═══════ MODAL REGISTRAR PAGO ═══════ -->
-        <div class="modal-overlay" id="modal-nuevo-pago">
-            <div class="modal-caja">
-                <div class="modal-header">
-                    <h3>Registrar pago</h3>
-                    <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-pago')"><i class="bi bi-x-lg"></i></button>
-                </div>
-
-                <form id="form-nuevo-pago">
-
-                    <div class="campo-grupo">
-                        <label>Cotización *</label>
-                        <select id="pago-cotizacion" required>
-                            <option value="">— Seleccione cotización —</option>
-                            <?php foreach ($cotizaciones as $c):
-                                if (in_array($c['estado'], ['pendiente','aprobada'], true)): ?>
-                                <option value="<?= (int)$c['id_cotizacion'] ?>"
-                                        data-total="<?= $c['total'] ?>">
-                                    #<?= (int)$c['id_cotizacion'] ?> — <?= htmlspecialchars($c['paciente']) ?>
-                                    (Total ₡<?= number_format($c['total'], 0, ',', '.') ?>)
-                                </option>
-                            <?php endif; endforeach; ?>
-                        </select>
             <div id="exp-vista-detalle" style="display:none;">
                 <div class="panel-titulo" style="margin-bottom:20px;">
                     <div>
@@ -487,46 +457,25 @@
                         <h2 id="exp-detalle-nombre">Expediente clínico</h2>
                         <p id="exp-detalle-cedula" style="font-size:14px;color:var(--gris-azulado);margin-top:2px;"></p>
                     </div>
-
-                    <div class="campo-grupo">
-                        <label>Monto a pagar (₡) *</label>
-                        <input type="number" id="pago-monto" min="1" step="0.01"
-                               placeholder="0" required>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button class="btn-outline-odent" onclick="abrirOdontograma()" id="btn-ver-odontograma" style="display:none;">
+                            <i class="bi bi-grid-3x3"></i> Odontograma
+                        </button>
+                        <button class="btn-outline-odent" onclick="abrirDocumentos()" id="btn-ver-documentos" style="display:none;">
+                            <i class="bi bi-file-earmark-medical"></i> Documentos
+                        </button>
+                        <button class="btn-outline-odent" onclick="abrirEditarPaciente()" id="btn-editar-pac" style="display:none;">
+                            <i class="bi bi-person-gear"></i> Editar paciente
+                        </button>
+                        <button class="btn-outline-odent" onclick="abrirEditarExpediente()" id="btn-editar-exp" style="display:none;">
+                            <i class="bi bi-pencil"></i> Editar expediente
+                        </button>
+                        <button class="btn-odent" onclick="abrirRegistrarAtencion()">
+                            <i class="bi bi-plus-lg"></i> Registrar atención
+                        </button>
                     </div>
+                </div>
 
-                    <div class="campo-grupo">
-                        <label>Método de pago *</label>
-                        <select id="pago-metodo" required>
-                            <option value="">— Seleccione método —</option>
-                            <option value="efectivo">Efectivo</option>
-                            <option value="tarjeta">Tarjeta</option>
-                            <option value="sinpe">SINPE Móvil</option>
-                            <option value="transferencia">Transferencia bancaria</option>
-                        </select>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Fecha del pago *</label>
-                        <input type="date" id="pago-fecha"
-                               value="<?= date('Y-m-d') ?>" required>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Referencia / comprobante (opcional)</label>
-                        <input type="text" id="pago-referencia"
-                               placeholder="N.° SINPE, voucher, etc.">
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Observaciones (opcional)</label>
-                        <textarea id="pago-observaciones" rows="2"></textarea>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn-outline-odent"
-                                onclick="cerrarModal('modal-nuevo-pago')">Cancelar</button>
-                        <button type="submit" class="btn-odent" id="pago-btn-guardar">
-                            <i class="bi bi-check-lg"></i> Registrar pago
                 <div id="exp-sin-expediente" style="display:none;">
                     <div class="tarjeta" style="text-align:center;padding:40px 20px;">
                         <i class="bi bi-folder2-open" style="font-size:48px;color:var(--gris-azulado);display:block;margin-bottom:16px;"></i>
@@ -538,20 +487,8 @@
                             <i class="bi bi-file-earmark-medical"></i> Crear expediente
                         </button>
                     </div>
-
-                </form>
-            </div>
-        </div>
-
-        <!-- ═══════ MODAL NUEVA COTIZACIÓN ═══════ -->
-        <div class="modal-overlay" id="modal-nueva-cotizacion">
-            <div class="modal-caja">
-                <div class="modal-header">
-                    <h3>Nueva cotización</h3>
-                    <button class="modal-cerrar" onclick="cotCerrar()"><i class="bi bi-x-lg"></i></button>
                 </div>
 
-                <form id="form-nueva-cotizacion">
                 <div id="exp-con-expediente" style="display:none;">
                     <div class="panel-grid col-2" style="margin-bottom:24px;">
                         <div class="tarjeta">
@@ -584,97 +521,61 @@
                             </div>
                         </div>
 
-                    <!-- Tratamiento (se carga desde la BD via AJAX) -->
-                    <div class="campo-grupo">
-                        <label>Tratamiento *</label>
-                        <select id="cot-tratamiento" required>
-                            <option value="">— Cargando tratamientos… —</option>
-                        </select>
-                    </div>
-
-                    <!-- Paciente (se auto-completa al elegir tratamiento) -->
-                    <div class="campo-grupo">
-                        <label>Paciente</label>
-                        <input type="text" id="cot-paciente-nombre" readonly
-                               placeholder="Se autocompleta al elegir tratamiento"
-                               style="background:#f5f5f5;">
-                        <input type="hidden" id="cot-paciente-id">
-                    </div>
-
-                    <!-- Descripción -->
-                    <div class="campo-grupo">
-                        <label>Descripción *</label>
-                        <textarea id="cot-descripcion" rows="2"
-                                  placeholder="Detalle del servicio cotizado…" required></textarea>
-                    </div>
-
-                    <!-- Subtotal + Descuento -->
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div class="campo-grupo">
-                            <label>Subtotal (₡) *</label>
-                            <input type="number" id="cot-subtotal" min="1" step="0.01"
-                                   placeholder="0" required>
-                        </div>
-                        <div class="campo-grupo">
-                            <label>Descuento (₡)</label>
-                            <input type="number" id="cot-descuento" min="0" step="0.01"
-                                   placeholder="0" value="0">
+                        <div class="tarjeta">
+                            <h3 style="margin-bottom:16px;"><i class="bi bi-person-vcard" style="color:var(--azul-odent);margin-right:6px;"></i>Datos del paciente</h3>
+                            <div class="panel-grid col-2" style="gap:10px;">
+                                <div class="campo-grupo" style="margin-bottom:10px;">
+                                    <label style="font-size:12px;color:var(--gris-azulado);">Fecha de nacimiento</label>
+                                    <p id="exp-pac-fnac" style="font-size:14px;margin:0;"></p>
+                                </div>
+                                <div class="campo-grupo" style="margin-bottom:10px;">
+                                    <label style="font-size:12px;color:var(--gris-azulado);">Edad</label>
+                                    <p id="exp-pac-edad" style="font-size:14px;margin:0;"></p>
+                                </div>
+                                <div class="campo-grupo" style="margin-bottom:10px;">
+                                    <label style="font-size:12px;color:var(--gris-azulado);">Sexo</label>
+                                    <p id="exp-pac-sexo" style="font-size:14px;margin:0;"></p>
+                                </div>
+                                <div class="campo-grupo" style="margin-bottom:10px;">
+                                    <label style="font-size:12px;color:var(--gris-azulado);">Grupo sanguíneo</label>
+                                    <p id="exp-pac-sangre" style="font-size:14px;margin:0;"></p>
+                                </div>
+                            </div>
+                            <div class="campo-grupo" style="margin-bottom:10px;">
+                                <label style="font-size:12px;color:var(--gris-azulado);">Teléfono</label>
+                                <p id="exp-pac-tel" style="font-size:14px;margin:0;"></p>
+                            </div>
+                            <div class="campo-grupo" style="margin-bottom:0;">
+                                <label style="font-size:12px;color:var(--gris-azulado);">Correo electrónico</label>
+                                <p id="exp-pac-correo" style="font-size:14px;margin:0;"></p>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- IVA y Total (sólo lectura) -->
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div class="campo-grupo">
-                            <label>IVA 13%</label>
-                            <input type="text" id="cot-iva" readonly
-                                   style="background:#f5f5f5;" placeholder="₡0">
                     <div class="tarjeta">
                         <div class="panel-titulo" style="margin-bottom:16px;">
                             <h3><i class="bi bi-journal-medical" style="color:var(--azul-odent);margin-right:6px;"></i>Historial de atenciones</h3>
                             <span id="exp-atenciones-count" style="font-size:13px;color:var(--gris-azulado);"></span>
                         </div>
-                        <div class="campo-grupo">
-                            <label>Total</label>
-                            <input type="text" id="cot-total" readonly
-                                   style="background:#f5f5f5;font-weight:700;" placeholder="₡0">
+                        <div id="exp-atenciones-lista">
+                            <div style="text-align:center;padding:20px;color:var(--gris-azulado);">Cargando atenciones…</div>
                         </div>
                     </div>
-
-                    <div class="campo-grupo">
-                        <label>Observaciones</label>
-                        <textarea id="cot-observaciones" rows="2"
-                                  placeholder="Notas adicionales (opcional)…"></textarea>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn-outline-odent" onclick="cotCerrar()">Cancelar</button>
-                        <button type="submit" class="btn-odent" id="cot-btn-guardar">
-                            <i class="bi bi-check-lg"></i> Crear cotización
-                        </button>
-                    </div>
-
-                </form>
+                </div>
             </div>
+
         </div>
 
-        <!-- ═══════ MODAL VER COTIZACIÓN ═══════ -->
-        <div class="modal-overlay" id="modal-ver-cotizacion">
-            <div class="modal-caja">
-                <div class="modal-header">
-                    <h3>Detalle de cotización</h3>
-                    <button class="modal-cerrar" onclick="cerrarModal('modal-ver-cotizacion')">
-                        <i class="bi bi-x-lg"></i>
         <div class="pagina" id="pagina-odontograma">
             <div class="panel-titulo" style="margin-bottom:6px;">
                 <div>
                     <button class="btn-outline-odent" id="odo-btn-volver" onclick="odoVolverExpediente()" style="margin-bottom:8px;font-size:13px;">
                         <i class="bi bi-arrow-left"></i> <span id="odo-btn-volver-texto">Volver al expediente</span>
                     </button>
-                </div>
-                <div id="cot-ver-contenido" style="padding:4px 0 12px;"></div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-outline-odent"
-                            onclick="cerrarModal('modal-ver-cotizacion')">Cerrar</button>
+                    <h2>Odontograma</h2>
+                    <p id="odo-cabecera-paciente" style="font-size:14px;color:var(--gris-azulado);margin-top:2px;">
+                        Haga clic en un diente para editar su estado
+                    </p>
                 </div>
             </div>
 
@@ -853,6 +754,7 @@
             </div>
         </div>
 
+        <!-- ═══════ MODAL REGISTRAR PAGO ═══════ -->
         <div class="modal-overlay" id="modal-nuevo-pago">
             <div class="modal-caja">
                 <div class="modal-header">
@@ -860,537 +762,170 @@
                     <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-pago')"><i class="bi bi-x-lg"></i></button>
                 </div>
 
-                <div class="campo-grupo">
-                    <label>Cotización</label>
-                    <select>
-                        <?php foreach ($cotizaciones as $c): if ($c['estado'] === 'aprobada'): ?>
-                                <option value="<?= $c['id'] ?>"><?= $c['id'] ?> — <?= htmlspecialchars($c['paciente']) ?> (₡<?= number_format($c['total'], 0, ',', '.') ?>)</option>
-                        <?php endif;
-                        endforeach; ?>
-                    </select>
-                </div>
+                <form id="form-nuevo-pago">
 
-                <div class="campo-grupo"><label>Monto recibido (₡)</label><input type="number" placeholder="0"></div>
+                    <div class="campo-grupo">
+                        <label>Cotización *</label>
+                        <select id="pago-cotizacion" required>
+                            <option value="">— Seleccione cotización —</option>
+                            <?php foreach ($cotizaciones as $c):
+                                if (in_array($c['estado'], ['pendiente','aprobada'], true)): ?>
+                                <option value="<?= (int)$c['id_cotizacion'] ?>"
+                                        data-total="<?= $c['total'] ?>">
+                                    #<?= (int)$c['id_cotizacion'] ?> — <?= htmlspecialchars($c['paciente']) ?>
+                                    (Total ₡<?= number_format($c['total'], 0, ',', '.') ?>)
+                                </option>
+                            <?php endif; endforeach; ?>
+                        </select>
+                    </div>
 
-                <div class="campo-grupo">
-                    <label>Método de pago</label>
-                    <select>
-                        <option>Efectivo</option>
-                        <option>Tarjeta débito</option>
-                        <option>Tarjeta crédito</option>
-                        <option>Sinpe Móvil</option>
-                        <option>Transferencia</option>
-                    </select>
-                </div>
+                    <div class="campo-grupo">
+                        <label>Monto a pagar (₡) *</label>
+                        <input type="number" id="pago-monto" min="1" step="0.01"
+                               placeholder="0" required>
+                    </div>
 
-                <div class="campo-grupo"><label>Comprobante (opcional)</label><input type="text" placeholder="N.° comprobante o referencia"></div>
+                    <div class="campo-grupo">
+                        <label>Método de pago *</label>
+                        <select id="pago-metodo" required>
+                            <option value="">— Seleccione método —</option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta">Tarjeta</option>
+                            <option value="sinpe">SINPE Móvil</option>
+                            <option value="transferencia">Transferencia bancaria</option>
+                        </select>
+                    </div>
 
-                <div class="modal-footer">
-                    <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-pago')">Cancelar</button>
-                    <button class="btn-odent"><i class="bi bi-check-lg"></i> Registrar</button>
-                </div>
+                    <div class="campo-grupo">
+                        <label>Fecha del pago *</label>
+                        <input type="date" id="pago-fecha"
+                               value="<?= date('Y-m-d') ?>" required>
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Referencia / comprobante (opcional)</label>
+                        <input type="text" id="pago-referencia"
+                               placeholder="N.° SINPE, voucher, etc.">
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Observaciones (opcional)</label>
+                        <textarea id="pago-observaciones" rows="2"></textarea>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-outline-odent"
+                                onclick="cerrarModal('modal-nuevo-pago')">Cancelar</button>
+                        <button type="submit" class="btn-odent" id="pago-btn-guardar">
+                            <i class="bi bi-check-lg"></i> Registrar pago
+                        </button>
+                    </div>
+
+                </form>
             </div>
         </div>
 
+        <!-- ═══════ MODAL NUEVA COTIZACIÓN ═══════ -->
         <div class="modal-overlay" id="modal-nueva-cotizacion">
             <div class="modal-caja">
                 <div class="modal-header">
                     <h3>Nueva cotización</h3>
-                    <button class="modal-cerrar" onclick="cerrarModal('modal-nueva-cotizacion')"><i class="bi bi-x-lg"></i></button>
+                    <button class="modal-cerrar" onclick="cotCerrar()"><i class="bi bi-x-lg"></i></button>
                 </div>
 
-                <div class="campo-grupo">
-                    <label>Paciente</label>
-                    <select>
-                        <option value="">Seleccione un paciente</option>
-                        <?php foreach ($pacientes as $p): ?>
-                            <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nombre']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                <form id="form-nueva-cotizacion">
+
+                    <!-- Tratamiento (se carga desde la BD via AJAX) -->
+                    <div class="campo-grupo">
+                        <label>Tratamiento *</label>
+                        <select id="cot-tratamiento" required>
+                            <option value="">— Cargando tratamientos… —</option>
+                        </select>
+                    </div>
+
+                    <!-- Paciente (se auto-completa al elegir tratamiento) -->
+                    <div class="campo-grupo">
+                        <label>Paciente</label>
+                        <input type="text" id="cot-paciente-nombre" readonly
+                               placeholder="Se autocompleta al elegir tratamiento"
+                               style="background:#f5f5f5;">
+                        <input type="hidden" id="cot-paciente-id">
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="campo-grupo">
+                        <label>Descripción *</label>
+                        <textarea id="cot-descripcion" rows="2"
+                                  placeholder="Detalle del servicio cotizado…" required></textarea>
+                    </div>
+
+                    <!-- Subtotal + Descuento -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="campo-grupo">
+                            <label>Subtotal (₡) *</label>
+                            <input type="number" id="cot-subtotal" min="1" step="0.01"
+                                   placeholder="0" required>
+                        </div>
+                        <div class="campo-grupo">
+                            <label>Descuento (₡)</label>
+                            <input type="number" id="cot-descuento" min="0" step="0.01"
+                                   placeholder="0" value="0">
+                        </div>
+                    </div>
+
+                    <!-- IVA y Total (sólo lectura) -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="campo-grupo">
+                            <label>IVA 13%</label>
+                            <input type="text" id="cot-iva" readonly
+                                   style="background:#f5f5f5;" placeholder="₡0">
+                        </div>
+                        <div class="campo-grupo">
+                            <label>Total</label>
+                            <input type="text" id="cot-total" readonly
+                                   style="background:#f5f5f5;font-weight:700;" placeholder="₡0">
+                        </div>
+                    </div>
+
+                    <div class="campo-grupo">
+                        <label>Observaciones</label>
+                        <textarea id="cot-observaciones" rows="2"
+                                  placeholder="Notas adicionales (opcional)…"></textarea>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-outline-odent" onclick="cotCerrar()">Cancelar</button>
+                        <button type="submit" class="btn-odent" id="cot-btn-guardar">
+                            <i class="bi bi-check-lg"></i> Crear cotización
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- ═══════ MODAL VER COTIZACIÓN ═══════ -->
+        <div class="modal-overlay" id="modal-ver-cotizacion">
+            <div class="modal-caja">
+                <div class="modal-header">
+                    <h3>Detalle de cotización</h3>
+                    <button class="modal-cerrar" onclick="cerrarModal('modal-ver-cotizacion')">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
-
-                <div class="campo-grupo"><label>Tratamiento</label><input type="text" placeholder="Descripción del tratamiento"></div>
-                <div class="campo-grupo"><label>Monto (₡)</label><input type="number" placeholder="0" id="cot-monto"></div>
-                <div class="campo-grupo"><label>IVA (13%)</label><input type="text" id="cot-iva" readonly placeholder="Se calcula automáticamente"></div>
-                <div class="campo-grupo"><label>Total</label><input type="text" id="cot-total" readonly placeholder="Se calcula automáticamente"></div>
-                <div class="campo-grupo"><label>Observaciones</label><textarea rows="2" placeholder="Notas adicionales..."></textarea></div>
-
+                <div id="cot-ver-contenido" style="padding:4px 0 12px;"></div>
                 <div class="modal-footer">
-                    <button class="btn-outline-odent" onclick="cerrarModal('modal-nueva-cotizacion')">Cancelar</button>
-                    <button class="btn-odent"><i class="bi bi-check-lg"></i> Crear cotización</button>
+                    <button type="button" class="btn-outline-odent"
+                            onclick="cerrarModal('modal-ver-cotizacion')">Cerrar</button>
                 </div>
             </div>
         </div>
 
     <?php endif; ?>
 
-    <!-- =============================================================
-     MODAL INVENTARIO
-
-    <?php if ($esAsistenteDental): ?>
-
-        <!-- Registrar insumo -->
-        <div class="modal-overlay" id="modal-nuevo-insumo">
-            <div class="modal-caja">
-
-                <div class="modal-header">
-                    <h3>Registrar insumo</h3>
-
-                    <button
-                        class="modal-cerrar"
-                        onclick="cerrarModal('modal-nuevo-insumo')">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-
-                <form id="form-nuevo-insumo">
-
-                    <div class="campo-grupo">
-                        <label>Nombre *</label>
-                        <input
-                            type="text"
-                            id="insumo-nombre"
-                            name="nombre">
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Descripción *</label>
-                        <textarea
-                            id="insumo-descripcion"
-                            name="descripcion"
-                            rows="3"></textarea>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Categoría *</label>
-
-                        <select
-                            id="insumo-categoria"
-                            name="categoria">
-
-                            <option value="">
-                                Seleccione una categoría
-                            </option>
-
-                            <option value="Protección">
-                                Protección
-                            </option>
-
-                            <option value="Higiene y desinfección">
-                                Higiene y desinfección
-                            </option>
-
-                            <option value="Material clínico">
-                                Material clínico
-                            </option>
-
-                            <option value="Anestesia">
-                                Anestesia
-                            </option>
-
-                            <option value="Restauración">
-                                Restauración
-                            </option>
-
-                            <option value="Endodoncia">
-                                Endodoncia
-                            </option>
-
-                            <option value="Impresión">
-                                Impresión
-                            </option>
-
-                            <option value="Otros">
-                                Otros
-                            </option>
-
-                        </select>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Cantidad disponible *</label>
-
-                        <div style="display:flex;gap:8px;align-items:center;">
-
-                            <button
-                                type="button"
-                                class="btn-outline-odent"
-                                onclick="cambiarCantidad('insumo-cantidad', -1)">
-                                −
-                            </button>
-
-                            <input
-                                type="number"
-                                id="insumo-cantidad"
-                                name="cantidad_disponible"
-                                min="0"
-                                step="1"
-                                value="0"
-                                style="text-align:center;">
-
-                            <button
-                                type="button"
-                                class="btn-outline-odent"
-                                onclick="cambiarCantidad('insumo-cantidad', 1)">
-                                +
-                            </button>
-
-                        </div>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Nivel mínimo de alerta *</label>
-
-                        <div style="display:flex;gap:8px;align-items:center;">
-
-                            <button
-                                type="button"
-                                class="btn-outline-odent"
-                                onclick="cambiarCantidad('insumo-minimo', -1)">
-                                −
-                            </button>
-
-                            <input
-                                type="number"
-                                id="insumo-minimo"
-                                name="nivel_minimo"
-                                min="0"
-                                step="1"
-                                value="0"
-                                style="text-align:center;">
-
-                            <button
-                                type="button"
-                                class="btn-outline-odent"
-                                onclick="cambiarCantidad('insumo-minimo', 1)">
-                                +
-                            </button>
-
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-
-                        <button
-                            type="button"
-                            class="btn-outline-odent"
-                            onclick="cerrarModal('modal-nuevo-insumo')">
-                            Cancelar
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="btn-odent">
-                            <i class="bi bi-check-lg"></i>
-                            Guardar
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-        </div>
-
-
-        <!-- Editar insumo -->
-        <div class="modal-overlay" id="modal-editar-insumo">
-            <div class="modal-caja">
-
-                <div class="modal-header">
-                    <h3>Editar insumo</h3>
-
-                    <button
-                        class="modal-cerrar"
-                        onclick="cerrarModal('modal-editar-insumo')">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-
-                <form id="form-editar-insumo">
-
-                    <input
-                        type="hidden"
-                        id="editar-insumo-id">
-
-                    <div class="campo-grupo">
-                        <label>Nombre *</label>
-
-                        <input
-                            type="text"
-                            id="editar-insumo-nombre">
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Descripción *</label>
-
-                        <textarea
-                            id="editar-insumo-descripcion"
-                            rows="3"></textarea>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Categoría *</label>
-
-                        <select id="editar-insumo-categoria">
-
-                            <option value="">
-                                Seleccione una categoría
-                            </option>
-
-                            <option value="Protección">
-                                Protección
-                            </option>
-
-                            <option value="Higiene y desinfección">
-                                Higiene y desinfección
-                            </option>
-
-                            <option value="Material clínico">
-                                Material clínico
-                            </option>
-
-                            <option value="Anestesia">
-                                Anestesia
-                            </option>
-
-                            <option value="Restauración">
-                                Restauración
-                            </option>
-
-                            <option value="Endodoncia">
-                                Endodoncia
-                            </option>
-
-                            <option value="Impresión">
-                                Impresión
-                            </option>
-
-                            <option value="Otros">
-                                Otros
-                            </option>
-
-                        </select>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Nivel mínimo de alerta *</label>
-
-                        <input
-                            type="number"
-                            id="editar-insumo-minimo"
-                            min="0">
-                    </div>
-
-                    <div class="modal-footer">
-
-                        <button
-                            type="button"
-                            class="btn-outline-odent"
-                            onclick="cerrarModal('modal-editar-insumo')">
-                            Cancelar
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="btn-odent">
-                            <i class="bi bi-check-lg"></i>
-                            Guardar cambios
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-        </div>
-
-
-        <!-- Entrada / salida de inventario -->
-        <div class="modal-overlay" id="modal-movimiento-inventario">
-            <div class="modal-caja">
-
-                <div class="modal-header">
-
-                    <h3 id="movimiento-titulo">
-                        Movimiento de inventario
-                    </h3>
-
-                    <button
-                        class="modal-cerrar"
-                        onclick="cerrarModal('modal-movimiento-inventario')">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-
-                </div>
-
-                <form id="form-movimiento-inventario">
-
-                    <input
-                        type="hidden"
-                        id="movimiento-insumo-id">
-
-                    <input
-                        type="hidden"
-                        id="movimiento-tipo">
-
-                    <div class="campo-grupo">
-                        <label>Insumo</label>
-
-                        <input
-                            type="text"
-                            id="movimiento-insumo-nombre"
-                            readonly>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Stock actual</label>
-
-                        <input
-                            type="number"
-                            id="movimiento-stock-actual"
-                            readonly>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Cantidad *</label>
-
-                        <div style="display:flex;gap:8px;align-items:center;">
-
-                            <button
-                                type="button"
-                                class="btn-outline-odent"
-                                onclick="cambiarCantidad('movimiento-cantidad', -1)">
-                                −
-                            </button>
-
-                            <input
-                                type="number"
-                                id="movimiento-cantidad"
-                                min="1"
-                                step="1"
-                                value="1"
-                                style="text-align:center;">
-
-                            <button
-                                type="button"
-                                class="btn-outline-odent"
-                                onclick="cambiarCantidad('movimiento-cantidad', 1)">
-                                +
-                            </button>
-
-                        </div>
-                    </div>
-
-                    <div class="campo-grupo">
-                        <label>Observación</label>
-
-                        <textarea
-                            id="movimiento-observacion"
-                            rows="3"
-                            placeholder="Ej. Compra de materiales, uso clínico, ajuste de inventario..."></textarea>
-                    </div>
-
-                    <div class="modal-footer">
-
-                        <button
-                            type="button"
-                            class="btn-outline-odent"
-                            onclick="cerrarModal('modal-movimiento-inventario')">
-                            Cancelar
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="btn-odent"
-                            id="movimiento-boton">
-                            <i class="bi bi-check-lg"></i>
-                            Registrar
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-        </div>
-
-
-        <!-- Historial de movimientos -->
-        <div class="modal-overlay" id="modal-historial-inventario">
-
-            <div
-                class="modal-caja"
-                style="max-width:850px;">
-
-                <div class="modal-header">
-
-                    <div>
-                        <h3>Historial de movimientos</h3>
-
-                        <div
-                            id="historial-insumo-nombre"
-                            style="
-                            font-size:13px;
-                            color:var(--gris-azulado);
-                            margin-top:4px;
-                        ">
-                        </div>
-                    </div>
-
-                    <button
-                        class="modal-cerrar"
-                        onclick="cerrarModal('modal-historial-inventario')">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-
-                </div>
-
-                <div style="overflow-x:auto;">
-
-                    <table class="tabla-odent">
-
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Tipo</th>
-                                <th>Cantidad</th>
-                                <th>Anterior</th>
-                                <th>Resultante</th>
-                                <th>Observación</th>
-                            </tr>
-                        </thead>
-
-                        <tbody id="inventario-historial-lista">
-
-                            <tr>
-                                <td
-                                    colspan="6"
-                                    style="text-align:center;">
-                                    No hay movimientos registrados.
-                                </td>
-                            </tr>
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-                <div class="modal-footer">
-
-                    <button
-                        type="button"
-                        class="btn-outline-odent"
-                        onclick="cerrarModal('modal-historial-inventario')">
-                        Cerrar
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
+    <?php if ($esRecepcionista || $esAsistenteDental): ?>
+        <?php include ROOT_PATH . '/views/shared/inventario_modales.php'; ?>
+          <?php include ROOT_PATH . '/views/shared/asistente_reportes_modales.php'; ?>
 
     <?php endif; ?>
 
@@ -1414,9 +949,8 @@
         });
     </script>
 
-    <?php if ($esAsistenteDental): ?>
+    <?php if ($esRecepcionista || $esAsistenteDental): ?>
 
-        <!-- Modal editar datos básicos de paciente (asistente_dental) -->
         <div class="modal-overlay" id="modal-pac-editar-basico">
             <div class="modal-caja" style="max-width:480px;">
                 <div class="modal-header">
@@ -1456,347 +990,6 @@
             </div>
         </div>
 
-        <!-- ───────────────── EXPEDIENTES (asistente_dental) ─── -->
-        <div class="pagina" id="pagina-expedientes">
-
-            <!-- Vista: lista de pacientes -->
-            <div id="exp-vista-lista">
-                <div class="panel-titulo" style="margin-bottom:20px;">
-                    <div>
-                        <h2>Expedientes clínicos</h2>
-                        <p style="font-size:14px;color:var(--gris-azulado);margin-top:4px;">
-                            Seleccione un paciente para ver o crear su expediente
-                        </p>
-                    </div>
-                    <div style="display:flex;gap:10px;">
-                        <input type="text" id="exp-buscar" placeholder="Buscar por nombre o cédula…"
-                            style="border:1.5px solid var(--borde);border-radius:8px;padding:8px 14px;font-size:14px;min-width:240px;"
-                            oninput="expBuscar(this.value)">
-                        <button class="btn-odent" onclick="expBuscar(document.getElementById('exp-buscar').value)">
-                            <i class="bi bi-search"></i> Buscar
-                        </button>
-                    </div>
-                </div>
-
-                <div class="tarjeta">
-                    <table class="tabla-odent">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Paciente</th>
-                                <th>Cédula</th>
-                                <th>Edad</th>
-                                <th>Grupo sanguíneo</th>
-                                <th>Estado</th>
-                                <th>Expediente</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="exp-tbody">
-                            <tr><td colspan="8" style="text-align:center;color:var(--gris-azulado);">Cargando…</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Vista: detalle de expediente de un paciente -->
-            <div id="exp-vista-detalle" style="display:none;">
-                <div class="panel-titulo" style="margin-bottom:20px;">
-                    <div>
-                        <button class="btn-outline-odent" onclick="expVolverLista()" style="margin-bottom:8px;font-size:13px;">
-                            <i class="bi bi-arrow-left"></i> Volver
-                        </button>
-                        <h2 id="exp-detalle-nombre">Expediente clínico</h2>
-                        <p id="exp-detalle-cedula" style="font-size:14px;color:var(--gris-azulado);margin-top:2px;"></p>
-                    </div>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                        <button class="btn-outline-odent" onclick="abrirOdontograma()" id="btn-ver-odontograma" style="display:none;">
-                            <i class="bi bi-grid-3x3"></i> Odontograma
-                        </button>
-                        <button class="btn-outline-odent" onclick="abrirDocumentos()" id="btn-ver-documentos" style="display:none;">
-                            <i class="bi bi-file-earmark-medical"></i> Documentos
-                        </button>
-                        <button class="btn-outline-odent" onclick="abrirEditarPaciente()" id="btn-editar-pac" style="display:none;">
-                            <i class="bi bi-person-gear"></i> Editar paciente
-                        </button>
-                        <button class="btn-outline-odent" onclick="abrirEditarExpediente()" id="btn-editar-exp" style="display:none;">
-                            <i class="bi bi-pencil"></i> Editar expediente
-                        </button>
-                        <button class="btn-odent" onclick="abrirRegistrarAtencion()">
-                            <i class="bi bi-plus-lg"></i> Registrar atención
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Sin expediente aún -->
-                <div id="exp-sin-expediente" style="display:none;">
-                    <div class="tarjeta" style="text-align:center;padding:40px 20px;">
-                        <i class="bi bi-folder2-open" style="font-size:48px;color:var(--gris-azulado);display:block;margin-bottom:16px;"></i>
-                        <h3 style="margin-bottom:8px;">Este paciente no tiene expediente clínico</h3>
-                        <p style="color:var(--gris-azulado);font-size:14px;margin-bottom:24px;">
-                            Cree el expediente para registrar la historia clínica y las atenciones del paciente.
-                        </p>
-                        <button class="btn-odent" onclick="abrirModal('modal-exp-crear')">
-                            <i class="bi bi-file-earmark-medical"></i> Crear expediente
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Con expediente -->
-                <div id="exp-con-expediente" style="display:none;">
-                    <div class="panel-grid col-2" style="margin-bottom:24px;">
-                        <div class="tarjeta">
-                            <h3 style="margin-bottom:16px;"><i class="bi bi-clipboard2-pulse" style="color:var(--azul-odent);margin-right:6px;"></i>Datos del expediente</h3>
-                            <div class="campo-grupo" style="margin-bottom:10px;">
-                                <label style="font-size:12px;color:var(--gris-azulado);">Motivo de consulta</label>
-                                <p id="exp-motivo" style="font-size:14px;margin:0;"></p>
-                            </div>
-                            <div class="panel-grid col-2" style="gap:10px;">
-                                <div class="campo-grupo" style="margin-bottom:10px;">
-                                    <label style="font-size:12px;color:var(--gris-azulado);">Alergias</label>
-                                    <p id="exp-alergias" style="font-size:14px;margin:0;"></p>
-                                </div>
-                                <div class="campo-grupo" style="margin-bottom:10px;">
-                                    <label style="font-size:12px;color:var(--gris-azulado);">Enfermedades</label>
-                                    <p id="exp-enfermedades" style="font-size:14px;margin:0;"></p>
-                                </div>
-                            </div>
-                            <div class="campo-grupo" style="margin-bottom:10px;">
-                                <label style="font-size:12px;color:var(--gris-azulado);">Medicamentos actuales</label>
-                                <p id="exp-medicamentos" style="font-size:14px;margin:0;"></p>
-                            </div>
-                            <div class="campo-grupo" style="margin-bottom:10px;">
-                                <label style="font-size:12px;color:var(--gris-azulado);">Antecedentes</label>
-                                <p id="exp-antecedentes" style="font-size:14px;margin:0;"></p>
-                            </div>
-                            <div class="campo-grupo" style="margin-bottom:0;">
-                                <label style="font-size:12px;color:var(--gris-azulado);">Observaciones generales</label>
-                                <p id="exp-observaciones" style="font-size:14px;margin:0;"></p>
-                            </div>
-                        </div>
-
-                        <div class="tarjeta">
-                            <h3 style="margin-bottom:16px;"><i class="bi bi-person-vcard" style="color:var(--azul-odent);margin-right:6px;"></i>Datos del paciente</h3>
-                            <div class="panel-grid col-2" style="gap:10px;">
-                                <div class="campo-grupo" style="margin-bottom:10px;">
-                                    <label style="font-size:12px;color:var(--gris-azulado);">Fecha de nacimiento</label>
-                                    <p id="exp-pac-fnac" style="font-size:14px;margin:0;"></p>
-                                </div>
-                                <div class="campo-grupo" style="margin-bottom:10px;">
-                                    <label style="font-size:12px;color:var(--gris-azulado);">Edad</label>
-                                    <p id="exp-pac-edad" style="font-size:14px;margin:0;"></p>
-                                </div>
-                                <div class="campo-grupo" style="margin-bottom:10px;">
-                                    <label style="font-size:12px;color:var(--gris-azulado);">Sexo</label>
-                                    <p id="exp-pac-sexo" style="font-size:14px;margin:0;"></p>
-                                </div>
-                                <div class="campo-grupo" style="margin-bottom:10px;">
-                                    <label style="font-size:12px;color:var(--gris-azulado);">Grupo sanguíneo</label>
-                                    <p id="exp-pac-sangre" style="font-size:14px;margin:0;"></p>
-                                </div>
-                            </div>
-                            <div class="campo-grupo" style="margin-bottom:10px;">
-                                <label style="font-size:12px;color:var(--gris-azulado);">Teléfono</label>
-                                <p id="exp-pac-tel" style="font-size:14px;margin:0;"></p>
-                            </div>
-                            <div class="campo-grupo" style="margin-bottom:0;">
-                                <label style="font-size:12px;color:var(--gris-azulado);">Correo electrónico</label>
-                                <p id="exp-pac-correo" style="font-size:14px;margin:0;"></p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Historial de atenciones -->
-                    <div class="tarjeta">
-                        <div class="panel-titulo" style="margin-bottom:16px;">
-                            <h3><i class="bi bi-journal-medical" style="color:var(--azul-odent);margin-right:6px;"></i>Historial de atenciones</h3>
-                            <span id="exp-atenciones-count" style="font-size:13px;color:var(--gris-azulado);"></span>
-                        </div>
-                        <div id="exp-atenciones-lista">
-                            <div style="text-align:center;padding:20px;color:var(--gris-azulado);">Cargando atenciones…</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- ───────────────── ODONTOGRAMA (asistente_dental) ─── -->
-        <div class="pagina" id="pagina-odontograma">
-            <div class="panel-titulo" style="margin-bottom:6px;">
-                <div>
-                    <button class="btn-outline-odent" id="odo-btn-volver" onclick="odoVolverExpediente()" style="margin-bottom:8px;font-size:13px;">
-                        <i class="bi bi-arrow-left"></i> <span id="odo-btn-volver-texto">Volver al expediente</span>
-                    </button>
-                    <h2>Odontograma</h2>
-                    <p id="odo-cabecera-paciente" style="font-size:14px;color:var(--gris-azulado);margin-top:2px;">
-                        Haga clic en un diente para editar su estado
-                    </p>
-                </div>
-            </div>
-
-            <div id="odo-sin-expediente" style="display:none;">
-                <div class="tarjeta">
-                    <div class="panel-titulo" style="margin-bottom:16px;">
-                        <div>
-                            <h3 style="margin:0;">Seleccionar paciente</h3>
-                            <p style="color:var(--gris-azulado);font-size:13px;margin:4px 0 0;">
-                                Elija un paciente para ver o editar su odontograma
-                            </p>
-                        </div>
-                    </div>
-                    <div style="margin-bottom:14px;">
-                        <input type="text" id="odo-buscar-paciente" placeholder="Buscar paciente…"
-                               style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:14px;"
-                               oninput="odoBuscarPaciente(this.value)">
-                    </div>
-                    <div id="odo-lista-pacientes" style="max-height:420px;overflow-y:auto;">
-                        <div style="text-align:center;padding:30px;color:var(--gris-azulado);">
-                            <div class="spinner-border spinner-border-sm" role="status"></div> Cargando pacientes…
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="odo-con-expediente" style="display:none;">
-                <div class="panel-grid col-2">
-                    <div class="odontograma-container">
-                        <p style="font-size:12px;color:var(--gris-azulado);margin-bottom:12px;text-align:center;font-weight:600;">MAXILAR SUPERIOR</p>
-                        <div class="odontograma-fila" id="odo-fila-superior"></div>
-                        <div style="border-top:2px dashed var(--borde);margin:10px 0;"></div>
-                        <p style="font-size:12px;color:var(--gris-azulado);margin-bottom:12px;text-align:center;font-weight:600;">MAXILAR INFERIOR</p>
-                        <div class="odontograma-fila" id="odo-fila-inferior"></div>
-                        <div class="leyenda-odontograma">
-                            <div class="leyenda-item"><div class="leyenda-color" style="background:#fff;border-color:var(--borde);"></div> Sano</div>
-                            <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(192,57,43,.2);border-color:#C0392B;"></div> Caries</div>
-                            <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(245,158,11,.2);border-color:#f59e0b;"></div> Corona</div>
-                            <div class="leyenda-item"><div class="leyenda-color" style="background:var(--fondo-odent);border-color:var(--gris-azulado);"></div> Ausente</div>
-                            <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(139,92,246,.15);border-color:#7c3aed;"></div> Endodoncia</div>
-                            <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(239,68,68,.15);border-color:#ef4444;"></div> Extracción</div>
-                            <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(16,185,129,.15);border-color:#10b981;"></div> Implante</div>
-                        </div>
-                    </div>
-
-                    <div class="tarjeta">
-                        <h3 style="margin-bottom:14px;">Detalle de pieza</h3>
-                        <div id="odo-hint">
-                            <div class="alerta info"><i class="bi bi-hand-index"></i> Seleccione un diente para editar su estado.</div>
-                        </div>
-                        <div id="odo-loading" style="display:none;text-align:center;padding:20px;color:var(--gris-azulado);">
-                            <div class="spinner-border spinner-border-sm" role="status" style="margin-right:6px;"></div> Cargando…
-                        </div>
-                        <div id="odo-panel-edicion" style="display:none;">
-                            <div class="campo-grupo">
-                                <label>Pieza dental (FDI)</label>
-                                <input type="text" id="odo-numero" readonly style="background:var(--fondo-odent);">
-                            </div>
-                            <div class="campo-grupo">
-                                <label>Estado</label>
-                                <select id="odo-estado">
-                                    <option value="sano">Sano</option>
-                                    <option value="caries">Caries</option>
-                                    <option value="corona">Corona</option>
-                                    <option value="ausente">Ausente</option>
-                                    <option value="endodoncia">Endodoncia</option>
-                                    <option value="extraccion">Extracción</option>
-                                    <option value="implante">Implante</option>
-                                </select>
-                            </div>
-                            <div class="campo-grupo">
-                                <label>Observaciones</label>
-                                <textarea id="odo-observaciones" rows="3" placeholder="Notas clínicas opcionales…"></textarea>
-                            </div>
-                            <div id="odo-ultima-mod" style="font-size:12px;color:var(--gris-azulado);margin-bottom:14px;display:none;">
-                                <i class="bi bi-clock-history"></i> Última modificación: <span id="odo-fecha-mod"></span>
-                            </div>
-                            <div style="display:flex;gap:10px;">
-                                <button class="btn-odent" id="odo-btn-guardar" onclick="odoGuardarDiente()">
-                                    <i class="bi bi-check-lg"></i> Guardar
-                                </button>
-                                <button class="btn-outline-odent" onclick="odoCancelarEdicion()">Cancelar</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    <?php if ($esRecepcionista || $esAsistenteDental): ?>
-        <?php include ROOT_PATH . '/views/shared/inventario_modales.php'; ?>
-          <?php include ROOT_PATH . '/views/shared/asistente_reportes_modales.php'; ?>
-
-        <!-- ───────────────── DOCUMENTOS (asistente_dental) ─── -->
-        <div class="pagina" id="pagina-documentos">
-
-            <div class="panel-titulo" style="margin-bottom:6px;">
-                <div>
-                    <button class="btn-outline-odent" id="doc-btn-volver" onclick="docVolverExpediente()" style="margin-bottom:8px;font-size:13px;">
-                        <i class="bi bi-arrow-left"></i> <span id="doc-btn-volver-texto">Volver al expediente</span>
-                    </button>
-                    <h2>Documentos clínicos</h2>
-                    <p id="doc-cabecera-paciente" style="font-size:14px;color:var(--gris-azulado);margin-top:2px;">
-                        Archivos adjuntos del expediente
-                    </p>
-        <div class="modal-overlay" id="modal-pac-editar-basico">
-            <div class="modal-caja" style="max-width:480px;">
-                <div class="modal-header">
-                    <h3><i class="bi bi-person-gear" style="color:var(--azul-odent);margin-right:6px;"></i>Editar paciente</h3>
-                    <button class="modal-cerrar" onclick="cerrarModal('modal-pac-editar-basico')"><i class="bi bi-x-lg"></i></button>
-                </div>
-                <input type="hidden" id="pac-edit-id-usuario">
-                <div class="campo-grupo">
-                    <label>Nombre completo *</label>
-                    <input type="text" id="pac-edit-nombre" maxlength="150" autocomplete="off">
-                </div>
-                <button class="btn-odent" id="doc-btn-subir-cabecera" onclick="abrirModal('modal-doc-subir')" style="display:none;">
-                    <i class="bi bi-upload"></i> Subir documento
-                </button>
-            </div>
-
-            <div id="doc-sin-expediente">
-                <div class="tarjeta">
-                    <div class="panel-titulo" style="margin-bottom:16px;">
-                        <div>
-                            <h3 style="margin:0;">Seleccionar paciente</h3>
-                            <p style="color:var(--gris-azulado);font-size:13px;margin:4px 0 0;">
-                                Elija un paciente para ver o subir sus documentos clínicos
-                            </p>
-                        </div>
-                    </div>
-                    <div style="margin-bottom:14px;">
-                        <input type="text" id="doc-buscar-paciente" placeholder="Buscar paciente…"
-                               style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:14px;"
-                               oninput="docBuscarPaciente(this.value)">
-                    </div>
-                    <div id="doc-lista-pacientes" style="max-height:420px;overflow-y:auto;">
-                        <div style="text-align:center;padding:30px;color:var(--gris-azulado);">
-                            <div class="spinner-border spinner-border-sm" role="status"></div> Cargando pacientes…
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="doc-con-expediente" style="display:none;">
-                <div class="tarjeta">
-                    <div class="panel-titulo" style="margin-bottom:16px;">
-                        <h3><i class="bi bi-paperclip" style="color:var(--azul-odent);margin-right:6px;"></i>Archivos adjuntos</h3>
-                        <span id="doc-count" style="font-size:13px;color:var(--gris-azulado);"></span>
-                    </div>
-                    <div id="doc-loading" style="text-align:center;padding:20px;color:var(--gris-azulado);">
-                        <div class="spinner-border spinner-border-sm" role="status" style="margin-right:6px;"></div> Cargando documentos…
-                    </div>
-                    <div id="doc-lista" style="display:none;"></div>
-                    <div id="doc-vacio" style="display:none;text-align:center;padding:30px 20px;">
-                        <i class="bi bi-file-earmark-x" style="font-size:40px;color:var(--gris-azulado);display:block;margin-bottom:12px;"></i>
-                        <p style="color:var(--gris-azulado);font-size:14px;margin-bottom:16px;">Este expediente no tiene documentos adjuntos aún.</p>
-                        <button class="btn-odent" onclick="abrirModal('modal-doc-subir')">
-                            <i class="bi bi-upload"></i> Subir primer documento
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal subir documento -->
         <div class="modal-overlay" id="modal-doc-subir">
             <div class="modal-caja" style="max-width:480px;">
                 <div class="modal-header">
@@ -2001,22 +1194,18 @@
             </div>
         </div>
 
-    <?php endif; /* $esAsistenteDental */ ?>
     <?php endif; ?>
 
     <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
     <script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
 
-    <?php if ($esAsistenteDental): ?>
+    <?php if ($esRecepcionista || $esAsistenteDental): ?>
         <script src="<?= BASE_URL ?>/public/js/inventario.js?v=<?= @filemtime(ROOT_PATH . '/public/js/inventario.js') ?>"></script>
           <script src="<?= BASE_URL ?>/public/js/asistente_reportes.js?v=<?= @filemtime(ROOT_PATH . '/public/js/asistente_reportes.js') ?>"></script>
     <?php endif; ?>
 
-    <?php if ($esAsistenteDental): ?>
+    <?php if ($esRecepcionista || $esAsistenteDental): ?>
     <script>
-        /* ═══════════════════════════════════════════════════════════
-           MÓDULO PACIENTES — edición básica (asistente_dental)
-           ═══════════════════════════════════════════════════════════ */
 
         const BASE = '<?= BASE_URL ?>';
 
@@ -2943,271 +2132,251 @@
             }
         }
     </script>
-    <?php endif; /* $esAsistenteDental JS */ ?>
+    <?php endif; ?>
 
     <?php if ($esRecepcionista): ?>
-    <!-- ═══════════════════════════════════════════════
-         JS — Módulo Cotizaciones (FIN-01)
-    ════════════════════════════════════════════════ -->
     <script>
-    (() => {
-        'use strict';
+    /* ═══════════════════════════════════════════════════════════════════
+       FIN-01 — Cotizaciones & Pagos  (recepcionista)
+    ═══════════════════════════════════════════════════════════════════ */
+    const BASE_COT = '<?= BASE_URL ?>';
+    const IVA_TASA = 0.13;
 
-        const BASE = '<?= BASE_URL ?>';
-        const IVA  = 0.13;
+    /* ── helpers ── */
+    function cotFmt(n) {
+        return '₡' + Number(n ?? 0).toLocaleString('es-CR', {minimumFractionDigits:2, maximumFractionDigits:2});
+    }
 
-        /* ── Helpers ────────────────────────────────────────────── */
-        const fmt  = n => '₡' + Number(n).toLocaleString('es-CR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const $    = id => document.getElementById(id);
+    /* ── abrir / cerrar modal nueva cotización ── */
+    function cotCerrar() {
+        cerrarModal('modal-nueva-cotizacion');
+    }
 
-        /* ── Recalcular IVA y Total al escribir ─────────────────── */
-        function cotRecalcular() {
-            const sub  = parseFloat($('cot-subtotal').value)  || 0;
-            const desc = parseFloat($('cot-descuento').value) || 0;
-            const base = Math.max(0, sub - desc);
-            const iva  = +(base * IVA).toFixed(2);
-            const tot  = +(base + iva).toFixed(2);
-            $('cot-iva').value   = base > 0 ? fmt(iva) : '';
-            $('cot-total').value = base > 0 ? fmt(tot) : '';
-        }
+    document.addEventListener('DOMContentLoaded', function () {
 
-        /* ── Abrir modal: cargar tratamientos disponibles ────────── */
-        async function cotAbrir() {
-            // Limpiar
-            const form = document.getElementById('form-nueva-cotizacion');
-            form.reset();
-            $('cot-iva').value             = '';
-            $('cot-total').value           = '';
-            $('cot-paciente-nombre').value = '';
-            $('cot-paciente-id').value     = '';
-            $('cot-btn-guardar').disabled  = false;
-
-            // Cargar tratamientos
-            const sel = $('cot-tratamiento');
-            sel.innerHTML = '<option value="">Cargando…</option>';
-            sel.disabled  = true;
-
-            try {
-                const r    = await fetch(`${BASE}/index.php?accion=cotizaciones.tratamientosDisponibles`);
-                const data = await r.json();
-
-                if (!data.ok || !data.tratamientos.length) {
-                    sel.innerHTML = '<option value="">— Sin tratamientos disponibles —</option>';
-                    sel.disabled  = true;
-                } else {
-                    sel.innerHTML = '<option value="">— Seleccione un tratamiento —</option>';
-                    data.tratamientos.forEach(t => {
-                        const opt = document.createElement('option');
-                        opt.value = t.id_tratamiento;
-                        opt.textContent = `${t.nombre} — ${t.paciente_nombre}`;
-                        opt.dataset.idPaciente    = t.id_paciente;
-                        opt.dataset.pacienteNombre = t.paciente_nombre;
-                        opt.dataset.costoEstimado  = t.costo_estimado;
-                        sel.appendChild(opt);
-                    });
-                    sel.disabled = false;
-                }
-            } catch (e) {
-                sel.innerHTML = '<option value="">Error al cargar tratamientos</option>';
-                mostrarToast('No se pudieron cargar los tratamientos.', 'error');
-            }
-
-            abrirModal('modal-nueva-cotizacion');
-        }
-
-        /* ── Al seleccionar tratamiento: auto-completar paciente ── */
-        function cotOnTratamientoChange() {
-            const sel = $('cot-tratamiento');
-            const opt = sel.options[sel.selectedIndex];
-            if (opt && opt.value) {
-                $('cot-paciente-nombre').value = opt.dataset.pacienteNombre || '';
-                $('cot-paciente-id').value     = opt.dataset.idPaciente     || '';
-                // Pre-cargar costo estimado si el subtotal está vacío
-                const costo = parseFloat(opt.dataset.costoEstimado || 0);
-                if (costo > 0 && !$('cot-subtotal').value) {
-                    $('cot-subtotal').value = costo;
-                    cotRecalcular();
-                }
-            } else {
-                $('cot-paciente-nombre').value = '';
-                $('cot-paciente-id').value     = '';
-            }
-        }
-
-        /* ── Cerrar modal ────────────────────────────────────────── */
-        window.cotCerrar = function() {
-            cerrarModal('modal-nueva-cotizacion');
-        };
-
-        /* ── Ver detalle de cotización ───────────────────────────── */
-        window.cotVerDetalle = function(c) {
-            const estadoLbl = { pendiente:'Pendiente', aprobada:'Aprobada', rechazada:'Rechazada', pagada:'Pagada' };
-            const badgeCls  = { aprobada:'confirmada', pagada:'confirmada', rechazada:'cancelada', pendiente:'pendiente' };
-            const cls       = badgeCls[c.estado] ?? 'pendiente';
-
-            $('cot-ver-contenido').innerHTML = `
-                <table style="width:100%;border-collapse:collapse;font-size:14px;">
-                    <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 0;color:#666;width:40%">Cotización #</td><td><strong>${c.id_cotizacion}</strong></td></tr>
-                    <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 0;color:#666;">Paciente</td><td>${escHtml(c.paciente)}</td></tr>
-                    <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 0;color:#666;">Tratamiento</td><td>${escHtml(c.tratamiento)}</td></tr>
-                    <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 0;color:#666;">Descripción</td><td>${escHtml(c.descripcion)}</td></tr>
-                    <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 0;color:#666;">Subtotal</td><td>${fmt(c.subtotal)}</td></tr>
-                    <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 0;color:#666;">Descuento</td><td>${fmt(c.descuento)}</td></tr>
-                    <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 0;color:#666;">IVA (13%)</td><td>${fmt(c.iva)}</td></tr>
-                    <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 0;color:#666;">Total</td><td><strong>${fmt(c.total)}</strong></td></tr>
-                    <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 0;color:#666;">Estado</td>
-                        <td><span class="badge-estado badge-${cls}">${estadoLbl[c.estado] ?? c.estado}</span></td></tr>
-                    <tr style="border-bottom:1px solid #eee;"><td style="padding:7px 0;color:#666;">Fecha</td><td>${escHtml(c.fecha)}</td></tr>
-                    ${c.observaciones ? `<tr><td style="padding:7px 0;color:#666;">Observaciones</td><td>${escHtml(c.observaciones)}</td></tr>` : ''}
-                </table>`;
-            abrirModal('modal-ver-cotizacion');
-        };
-
-        function escHtml(s) {
-            return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        }
-
-        /* ── Submit del formulario ───────────────────────────────── */
-        async function cotGuardar(e) {
-            e.preventDefault();
-
-            const idTrat  = $('cot-tratamiento').value;
-            const idPac   = $('cot-paciente-id').value;
-            const desc    = $('cot-descripcion').value.trim();
-            const sub     = parseFloat($('cot-subtotal').value)  || 0;
-            const desc2   = parseFloat($('cot-descuento').value) || 0;
-            const obs     = $('cot-observaciones').value.trim();
-
-            if (!idTrat)     { mostrarToast('Seleccione un tratamiento.', 'error'); return; }
-            if (!desc)       { mostrarToast('La descripción es obligatoria.', 'error'); return; }
-            if (sub <= 0)    { mostrarToast('El subtotal debe ser mayor a 0.', 'error'); return; }
-            if (desc2 < 0 || desc2 > sub) { mostrarToast('El descuento no puede ser negativo ni mayor al subtotal.', 'error'); return; }
-
-            const btn = $('cot-btn-guardar');
-            btn.disabled  = true;
-            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando…';
-
-            try {
-                const r = await fetch(`${BASE}/index.php?accion=cotizaciones.crear`, {
-                    method:  'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({
-                        id_tratamiento: parseInt(idTrat),
-                        id_paciente:    parseInt(idPac),
-                        descripcion:    desc,
-                        subtotal:       sub,
-                        descuento:      desc2,
-                        observaciones:  obs,
-                    }),
-                });
-                const data = await r.json();
-
-                if (data.ok) {
-                    mostrarToast(`Cotización #${data.id_cotizacion} creada. Total: ${fmt(data.total)}`, 'exito');
-                    cotCerrar();
-                    // Recargar la página para reflejar la nueva cotización
-                    setTimeout(() => location.reload(), 900);
-                } else {
-                    mostrarToast(data.mensaje || 'Error al crear la cotización.', 'error');
-                    btn.disabled  = false;
-                    btn.innerHTML = '<i class="bi bi-check-lg"></i> Crear cotización';
-                }
-            } catch (err) {
-                mostrarToast('Error de conexión al guardar.', 'error');
-                btn.disabled  = false;
-                btn.innerHTML = '<i class="bi bi-check-lg"></i> Crear cotización';
-            }
-        }
-
-        /* ── Wire-up de eventos ──────────────────────────────────── */
-        document.addEventListener('DOMContentLoaded', () => {
-            // Botón "Nueva cotización"
-            const btnAbrir = document.querySelector('#pagina-cotizaciones .btn-odent');
-            if (btnAbrir) btnAbrir.addEventListener('click', cotAbrir);
-
-            // Cambio en el selector de tratamiento
-            const selTrat = $('cot-tratamiento');
-            if (selTrat) selTrat.addEventListener('change', cotOnTratamientoChange);
-
-            // Recalcular al escribir en subtotal/descuento
-            const cotSub  = $('cot-subtotal');
-            const cotDes  = $('cot-descuento');
-            if (cotSub) cotSub.addEventListener('input', cotRecalcular);
-            if (cotDes) cotDes.addEventListener('input', cotRecalcular);
-
-            // Submit del form
-            const form = document.getElementById('form-nueva-cotizacion');
-            if (form) form.addEventListener('submit', cotGuardar);
-        });
-
-    })();
-
-    /* ══════════════════════════════════════════════════
-       JS — Módulo Pagos (FIN-03 preparación)
-    ══════════════════════════════════════════════════ */
-    (() => {
-        'use strict';
-        const BASE = '<?= BASE_URL ?>';
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('form-nuevo-pago');
-            if (!form) return;
-
-            form.addEventListener('submit', async e => {
-                e.preventDefault();
-
-                const idCot   = document.getElementById('pago-cotizacion').value;
-                const monto   = parseFloat(document.getElementById('pago-monto').value) || 0;
-                const metodo  = document.getElementById('pago-metodo').value;
-                const fecha   = document.getElementById('pago-fecha').value;
-                const ref     = document.getElementById('pago-referencia').value.trim();
-                const obs     = document.getElementById('pago-observaciones').value.trim();
-
-                if (!idCot)   { mostrarToast('Seleccione una cotización.', 'error'); return; }
-                if (monto<=0) { mostrarToast('El monto debe ser mayor a 0.', 'error'); return; }
-                if (!metodo)  { mostrarToast('Seleccione un método de pago.', 'error'); return; }
-
-                const btn = document.getElementById('pago-btn-guardar');
-                btn.disabled  = true;
-                btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Registrando…';
-
-                try {
-                    const r = await fetch(`${BASE}/index.php?accion=pagos.registrar`, {
-                        method:  'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body:    JSON.stringify({
-                            id_cotizacion:  parseInt(idCot),
-                            monto,
-                            metodo,
-                            fecha_pago:     fecha,
-                            referencia:     ref,
-                            observaciones:  obs,
-                        }),
-                    });
-                    const data = await r.json();
-
-                    if (data.ok) {
-                        const msg = data.estado_cotizacion === 'pagada'
-                            ? '✅ Pago registrado. ¡Cotización completamente pagada!'
-                            : `Pago registrado. Saldo pendiente: ₡${Number(data.saldo_pendiente).toLocaleString('es-CR')}`;
-                        mostrarToast(msg, 'exito');
-                        cerrarModal('modal-nuevo-pago');
-                        setTimeout(() => location.reload(), 900);
-                    } else {
-                        mostrarToast(data.mensaje || 'Error al registrar el pago.', 'error');
-                        btn.disabled  = false;
-                        btn.innerHTML = '<i class="bi bi-check-lg"></i> Registrar pago';
-                    }
-                } catch (err) {
-                    mostrarToast('Error de conexión al registrar.', 'error');
-                    btn.disabled  = false;
-                    btn.innerHTML = '<i class="bi bi-check-lg"></i> Registrar pago';
-                }
+        /* Cargar tratamientos disponibles al abrir el modal */
+        document.getElementById('modal-nueva-cotizacion')
+            ?.addEventListener('click', function (e) {
+                if (e.target === this) cotCerrar();
             });
+
+        const overlay = document.getElementById('modal-nueva-cotizacion');
+        if (overlay) {
+            /* Observar cuándo aparece el modal */
+            new MutationObserver(function(muts) {
+                muts.forEach(function(m) {
+                    if (m.attributeName === 'class' && overlay.classList.contains('activo')) {
+                        cotCargarTratamientos();
+                    }
+                });
+            }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
+        }
+
+        /* Calcular IVA+Total al escribir subtotal o descuento */
+        ['cot-subtotal','cot-descuento'].forEach(function(id) {
+            document.getElementById(id)?.addEventListener('input', cotRecalcular);
         });
-    })();
+
+        /* Auto-completar paciente al elegir tratamiento */
+        document.getElementById('cot-tratamiento')
+            ?.addEventListener('change', function() {
+                const opt = this.options[this.selectedIndex];
+                const pacNombre = opt.dataset.paciente ?? '';
+                const pacId     = opt.dataset.idPaciente ?? '';
+                document.getElementById('cot-paciente-nombre').value = pacNombre;
+                document.getElementById('cot-paciente-id').value     = pacId;
+            });
+
+        /* Enviar formulario cotización */
+        document.getElementById('form-nueva-cotizacion')
+            ?.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await cotGuardar();
+            });
+
+        /* Enviar formulario pago */
+        document.getElementById('form-nuevo-pago')
+            ?.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await pagoGuardar();
+            });
+    });
+
+    async function cotCargarTratamientos() {
+        const sel = document.getElementById('cot-tratamiento');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">— Cargando… —</option>';
+        try {
+            const r    = await fetch(`${BASE_COT}/index.php?accion=cotizaciones.tratamientosDisponibles`);
+            const data = await r.json();
+            if (!data.ok || !data.tratamientos.length) {
+                sel.innerHTML = '<option value="">— Sin tratamientos disponibles —</option>';
+                return;
+            }
+            sel.innerHTML = '<option value="">— Seleccione tratamiento —</option>'
+                + data.tratamientos.map(t =>
+                    `<option value="${t.id_tratamiento}"
+                             data-paciente="${t.paciente ?? ''}"
+                             data-id-paciente="${t.id_paciente ?? ''}">
+                        ${t.paciente ?? 'Sin paciente'} — ${t.nombre ?? 'Tratamiento #'+t.id_tratamiento}
+                     </option>`
+                ).join('');
+        } catch(e) {
+            sel.innerHTML = '<option value="">— Error al cargar —</option>';
+        }
+    }
+
+    function cotRecalcular() {
+        const sub  = parseFloat(document.getElementById('cot-subtotal').value) || 0;
+        const desc = parseFloat(document.getElementById('cot-descuento').value) || 0;
+        const base = sub - desc;
+        const iva  = base > 0 ? base * IVA_TASA : 0;
+        const tot  = base > 0 ? base + iva : 0;
+        document.getElementById('cot-iva').value   = cotFmt(iva);
+        document.getElementById('cot-total').value = cotFmt(tot);
+    }
+
+    async function cotGuardar() {
+        const idTrat = document.getElementById('cot-tratamiento').value;
+        const idPac  = document.getElementById('cot-paciente-id').value;
+        const desc   = document.getElementById('cot-descripcion').value.trim();
+        const sub    = parseFloat(document.getElementById('cot-subtotal').value) || 0;
+        const descu  = parseFloat(document.getElementById('cot-descuento').value) || 0;
+        const obs    = document.getElementById('cot-observaciones').value.trim();
+
+        if (!idTrat || !desc || sub < 1) {
+            mostrarToast('Complete los campos obligatorios.', 'aviso');
+            return;
+        }
+
+        const btn = document.getElementById('cot-btn-guardar');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Guardando…';
+
+        try {
+            const form = new FormData();
+            form.append('id_tratamiento', idTrat);
+            form.append('id_paciente',    idPac);
+            form.append('descripcion',    desc);
+            form.append('subtotal',       sub);
+            form.append('descuento',      descu);
+            form.append('observaciones',  obs);
+
+            const res  = await fetch(`${BASE_COT}/index.php?accion=cotizaciones.crear`, { method:'POST', body:form });
+            const data = await res.json();
+
+            if (!data.ok) {
+                mostrarToast(data.mensaje || 'Error al crear la cotización.', 'error');
+            } else {
+                mostrarToast('Cotización creada correctamente.', 'exito');
+                cotCerrar();
+                setTimeout(() => location.reload(), 800);
+            }
+        } catch(e) {
+            mostrarToast('Error de conexión.', 'error');
+        } finally {
+            btn.disabled  = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Crear cotización';
+        }
+    }
+
+    /* ── Ver detalle de cotización ── */
+    function cotVerDetalle(c) {
+        const badgeMap = {
+            aprobada:'confirmada', rechazada:'cancelada', pagada:'confirmada', pendiente:'pendiente'
+        };
+        const badge = badgeMap[c.estado] ?? 'pendiente';
+
+        document.getElementById('cot-ver-contenido').innerHTML = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                <div class="campo-grupo" style="margin:0;">
+                    <label style="font-size:12px;color:var(--gris-azulado);">Cotización #</label>
+                    <p style="font-size:14px;font-weight:700;margin:0;">${c.id_cotizacion}</p>
+                </div>
+                <div class="campo-grupo" style="margin:0;">
+                    <label style="font-size:12px;color:var(--gris-azulado);">Estado</label>
+                    <p style="margin:0;"><span class="badge-estado badge-${badge}">${c.estado}</span></p>
+                </div>
+                <div class="campo-grupo" style="margin:0;">
+                    <label style="font-size:12px;color:var(--gris-azulado);">Paciente</label>
+                    <p style="font-size:14px;margin:0;">${c.paciente ?? '—'}</p>
+                </div>
+                <div class="campo-grupo" style="margin:0;">
+                    <label style="font-size:12px;color:var(--gris-azulado);">Tratamiento</label>
+                    <p style="font-size:14px;margin:0;">${c.tratamiento ?? '—'}</p>
+                </div>
+            </div>
+            <div class="campo-grupo" style="margin-bottom:10px;">
+                <label style="font-size:12px;color:var(--gris-azulado);">Descripción</label>
+                <p style="font-size:14px;margin:0;">${c.descripcion ?? '—'}</p>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;background:var(--fondo-odent,#f8f9fa);border-radius:8px;padding:12px;margin-top:10px;">
+                <div>
+                    <div style="font-size:12px;color:var(--gris-azulado);">Subtotal</div>
+                    <div style="font-weight:600;">${cotFmt(c.subtotal)}</div>
+                </div>
+                <div>
+                    <div style="font-size:12px;color:var(--gris-azulado);">IVA 13%</div>
+                    <div style="font-weight:600;">${cotFmt(c.iva)}</div>
+                </div>
+                <div>
+                    <div style="font-size:12px;color:var(--gris-azulado);">Total</div>
+                    <div style="font-weight:700;font-size:16px;color:var(--azul-odent);">${cotFmt(c.total)}</div>
+                </div>
+            </div>
+            ${c.observaciones ? `<div class="campo-grupo" style="margin-top:10px;margin-bottom:0;">
+                <label style="font-size:12px;color:var(--gris-azulado);">Observaciones</label>
+                <p style="font-size:14px;margin:0;">${c.observaciones}</p>
+            </div>` : ''}`;
+
+        abrirModal('modal-ver-cotizacion');
+    }
+
+    /* ── Registrar pago ── */
+    async function pagoGuardar() {
+        const idCot   = document.getElementById('pago-cotizacion').value;
+        const monto   = parseFloat(document.getElementById('pago-monto').value) || 0;
+        const metodo  = document.getElementById('pago-metodo').value;
+        const fecha   = document.getElementById('pago-fecha').value;
+        const ref     = document.getElementById('pago-referencia').value.trim();
+        const obs     = document.getElementById('pago-observaciones').value.trim();
+
+        if (!idCot || monto < 1 || !metodo || !fecha) {
+            mostrarToast('Complete todos los campos obligatorios.', 'aviso');
+            return;
+        }
+
+        const btn = document.getElementById('pago-btn-guardar');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Registrando…';
+
+        try {
+            const form = new FormData();
+            form.append('id_cotizacion', idCot);
+            form.append('monto',         monto);
+            form.append('metodo',        metodo);
+            form.append('fecha_pago',    fecha);
+            form.append('referencia',    ref);
+            form.append('observaciones', obs);
+
+            const res  = await fetch(`${BASE_COT}/index.php?accion=pagos.registrar`, { method:'POST', body:form });
+            const data = await res.json();
+
+            if (!data.ok) {
+                mostrarToast(data.mensaje || 'Error al registrar el pago.', 'error');
+            } else {
+                mostrarToast('Pago registrado correctamente.', 'exito');
+                cerrarModal('modal-nuevo-pago');
+                setTimeout(() => location.reload(), 800);
+            }
+        } catch(e) {
+            mostrarToast('Error de conexión.', 'error');
+        } finally {
+            btn.disabled  = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Registrar pago';
+        }
+    }
     </script>
-    <?php endif; /* $esRecepcionista JS */ ?>
     <?php endif; ?>
 
 </body>

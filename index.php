@@ -378,7 +378,7 @@ switch ($accion) {
         (new TratamientoController())->odontograma();
         break;
 
-    // ── Reportes del administrador (REP-01 y REP-02) ──────────
+    // ── Reportes del administrador  ──────────
     case 'reportes.citas':
         (new ReporteController())->citas();
         break;
