@@ -477,6 +477,7 @@
 
         caja.appendChild(el('small', null, 'Reporte N.º ' + r.id_reporte + ' registrado.'));
         burbujaBot('Su reporte fue enviado a la clínica.', caja);
+                ofrecerCita(r);
 
         if (nivel === 'urgente') {
             if (abierta) {
@@ -500,6 +501,220 @@
         }
     }
 
+    /* ── ASI-05: solicitud de cita a partir del reporte ─────── */
+
+    function botonAccion(texto, nombreIcono, clase, alClick) {
+        const b = el('button', 'asi-btn ' + clase);
+        b.type = 'button';
+        if (nombreIcono) b.append(icono(nombreIcono), document.createTextNode(' '));
+        b.appendChild(document.createTextNode(texto));
+        b.addEventListener('click', alClick);
+        return b;
+    }
+
+    /** Después de enviar el reporte, ofrece solicitar una cita */
+    function ofrecerCita(r) {
+        if (!r || !r.id_reporte) return;
+        const idReporte = r.id_reporte;
+
+        const opciones = el('div', 'asi-opciones');
+        opciones.append(
+            botonAccion('Sí, solicitar una cita', 'calendar-plus', 'asi-btn-primario', () => {
+                bloquear(opciones);
+                burbujaUsuario('Solicitar una cita');
+                cargarHorarios(idReporte);
+            }),
+            botonAccion('No, gracias', 'x-circle', 'asi-btn-secundario', () => {
+                bloquear(opciones);
+                burbujaUsuario('No, gracias');
+                descartarSolicitud(idReporte);
+            })
+        );
+        burbujaBot('¿Desea solicitar una cita para que lo atiendan por esta molestia?', opciones);
+    }
+
+    async function cargarHorarios(idReporte) {
+        if (estado.ocupado) return;
+        fijarOcupado(true);
+        const espera = escribiendo();
+
+        try {
+            const r = await api('asistente.disponibilidad&id_reporte=' + encodeURIComponent(idReporte));
+            espera.remove();
+
+            if (!r.ok) {
+                burbujaBot(r.error || 'No pudimos consultar los horarios. Intente de nuevo en unos minutos.');
+                return;
+            }
+            if (r.ya_solicitada) {
+                const s = r.solicitud || {};
+                burbujaBot('Ya envió una solicitud de cita para este reporte'
+                    + (s.con_horario ? ' (' + s.fecha + ', ' + s.hora + ')' : '')
+                    + '. El personal de la clínica se pondrá en contacto con usted.');
+                return;
+            }
+            if (!r.hay_disponibilidad) {
+                ofrecerSinHorario(idReporte);      // escenario 2
+                return;
+            }
+            pintarHorarios(idReporte, r.dias);     // escenario 1
+        } catch (e) {
+            espera.remove();
+            errorDeRed(e);
+        } finally {
+            fijarOcupado(false);
+        }
+    }
+
+    /** Escenario 2: no hay horarios; se puede enviar la solicitud para que el personal la coordine */
+    function ofrecerSinHorario(idReporte) {
+        const opciones = el('div', 'asi-opciones');
+        opciones.append(
+            botonAccion('Enviar solicitud sin horario', 'send', 'asi-btn-primario', () => {
+                bloquear(opciones);
+                burbujaUsuario('Enviar solicitud sin horario');
+                enviarSolicitud(idReporte, null);
+            }),
+            botonAccion('Cancelar', 'x-circle', 'asi-btn-secundario', () => {
+                bloquear(opciones);
+                burbujaUsuario('Cancelar');
+                descartarSolicitud(idReporte);
+            })
+        );
+        burbujaBot('Por ahora no hay horarios disponibles en los próximos días. Si lo desea, puede enviar la solicitud sin horario y el personal de la clínica se pondrá en contacto con usted para coordinar la cita.', opciones);
+    }
+
+    /** Escenario 1: elegir día, luego hora, y confirmar */
+    function pintarHorarios(idReporte, dias) {
+        const caja         = el('div', 'asi-cita');
+        const filaDias     = el('div', 'asi-opciones');
+        const tituloHoras  = el('p', 'asi-cita-sub');
+        const filaHoras    = el('div', 'asi-opciones');
+        const confirmacion = el('div', 'asi-cita-confirmar');
+        tituloHoras.hidden = true;
+        filaHoras.hidden = true;
+        confirmacion.hidden = true;
+
+        const marcar = (grupo, boton) => {
+            grupo.querySelectorAll('.asi-chip').forEach(b => b.classList.remove('asi-chip-activo'));
+            boton.classList.add('asi-chip-activo');
+        };
+
+        function mostrarConfirmacion(dia, hora) {
+            confirmacion.replaceChildren();
+
+            const tarjeta = el('div', 'asi-tarjeta');
+            tarjeta.appendChild(el('h4', null, 'Su solicitud de cita'));
+            const dl = el('dl', 'asi-datos');
+            [['Día', dia.etiqueta], ['Hora', hora.hora_texto], ['Odontólogo', hora.odontologo]].forEach(([k, v]) => {
+                const fila = el('div');
+                fila.append(el('dt', null, k), el('dd', null, v));
+                dl.appendChild(fila);
+            });
+            tarjeta.appendChild(dl);
+
+            const acciones = el('div', 'asi-opciones');
+            acciones.append(
+                botonAccion('Confirmar solicitud', 'check2-circle', 'asi-btn-primario', () => {
+                    bloquear(caja);
+                    burbujaUsuario('Confirmar: ' + dia.etiqueta + ', ' + hora.hora_texto);
+                    enviarSolicitud(idReporte, { fecha: dia.fecha, hora: hora.hora, id_odontologo: hora.id_odontologo });
+                }),
+                botonAccion('Cancelar', 'x-circle', 'asi-btn-secundario', () => {
+                    bloquear(caja);
+                    burbujaUsuario('Cancelar');
+                    descartarSolicitud(idReporte);
+                })
+            );
+
+            confirmacion.append(tarjeta, acciones);
+            confirmacion.hidden = false;
+            bajar();
+        }
+
+        dias.forEach(dia => {
+            const b = el('button', 'asi-chip', dia.etiqueta);
+            b.type = 'button';
+            b.addEventListener('click', () => {
+                marcar(filaDias, b);
+                confirmacion.hidden = true;
+                confirmacion.replaceChildren();
+
+                tituloHoras.textContent = 'Horarios disponibles: ' + dia.etiqueta;
+                tituloHoras.hidden = false;
+                filaHoras.hidden = false;
+                filaHoras.replaceChildren();
+
+                dia.horas.forEach(hora => {
+                    const hb = el('button', 'asi-chip', hora.hora_texto);
+                    hb.type = 'button';
+                    hb.title = 'Con ' + hora.odontologo;
+                    hb.addEventListener('click', () => {
+                        marcar(filaHoras, hb);
+                        mostrarConfirmacion(dia, hora);
+                    });
+                    filaHoras.appendChild(hb);
+                });
+                bajar();
+            });
+            filaDias.appendChild(b);
+        });
+
+        caja.append(filaDias, tituloHoras, filaHoras, confirmacion);
+        burbujaBot('Estos son los próximos horarios disponibles. Elija un día y luego la hora que le convenga:', caja);
+    }
+
+    async function enviarSolicitud(idReporte, horario) {
+        if (estado.ocupado) return;
+        fijarOcupado(true);
+        const espera = escribiendo();
+        let volverAConsultar = false;
+
+        try {
+            const r = await api('asistente.solicitud.crear', Object.assign({ id_reporte: idReporte }, horario || {}));
+            espera.remove();
+
+            if (r.ok) {
+                pintarSolicitudEnviada(r);
+            } else {
+                burbujaBot(r.error || 'No pudimos enviar su solicitud. Intente de nuevo en unos segundos.');
+                volverAConsultar = true;       // se muestran de nuevo los horarios vigentes
+            }
+        } catch (e) {
+            espera.remove();
+            errorDeRed(e);
+        } finally {
+            fijarOcupado(false);
+        }
+
+        if (volverAConsultar) cargarHorarios(idReporte);
+    }
+
+    function pintarSolicitudEnviada(r) {
+        const s = r.solicitud || {};
+        const caja = el('div', 'asi-resultado asi-resultado-normal');
+
+        const cab = el('div', 'asi-resultado-cab');
+        cab.append(icono('calendar-check-fill'), el('strong', null, 'Solicitud de cita enviada'));
+        caja.append(cab, el('p', null, r.mensaje));
+
+        if (s.con_horario) {
+            caja.appendChild(el('p', null, 'Horario solicitado: ' + s.fecha + ', ' + s.hora
+                + (s.odontologo ? ' con ' + s.odontologo : '') + '.'));
+        }
+        caja.appendChild(el('small', null, 'Solicitud N.º ' + r.id + ' · queda pendiente de confirmación por el personal.'));
+        burbujaBot(caja);
+    }
+
+    /** Escenario 3: el paciente no quiere solicitar cita; el reporte se conserva */
+    async function descartarSolicitud(idReporte) {
+        let mensaje = 'Entendido, no se generó ninguna solicitud. Su reporte quedó guardado.';
+        try {
+            const r = await api('asistente.solicitud.cancelar', { id_reporte: idReporte });
+            if (r && r.ok && r.mensaje) mensaje = r.mensaje;
+        } catch (e) { /* no bloquea al paciente */ }
+        burbujaBot(mensaje);
+    }
     /* ── Eventos ────────────────────────────────────────────── */
 
     $form.addEventListener('submit', function (e) {

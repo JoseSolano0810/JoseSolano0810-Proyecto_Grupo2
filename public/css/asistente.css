@@ -348,3 +348,29 @@
 @media (prefers-reduced-motion: reduce) {
     .asi-alerta-urgente, .asi-escribiendo span { animation: none; }
 }
+
+/* ── ASI-05: solicitud de cita ───────────────────────────── */
+.asi-cita {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.asi-cita [hidden] { display: none !important; }
+.asi-cita-sub {
+    margin: 4px 0 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gris-azulado);
+}
+.asi-cita-confirmar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+.asi-chip-activo {
+    border-color: var(--verde-odent);
+    background: #e0f2f1;
+    color: #1f5f5b;
+    font-weight: 600;
+}
