@@ -263,24 +263,29 @@ switch ($accion) {
 
     // ── Cotizaciones ──────────────────────────────────────────
     case 'cotizaciones.listar':
-        $ctrl = new CotizacionController();
-        echo json_encode($ctrl->listar());
+        (new CotizacionController())->listarJson();
         break;
 
     case 'cotizaciones.crear':
-        $ctrl = new CotizacionController();
-        $ctrl->crear();
+        (new CotizacionController())->crear();
+        break;
+
+    case 'cotizaciones.estado':
+        (new CotizacionController())->cambiarEstado();
+        break;
+
+    case 'cotizaciones.tratamientosDisponibles':
+        (new CotizacionController())->tratamientosDisponibles();
         break;
 
     // ── Pagos ─────────────────────────────────────────────────
     case 'pagos.listar':
-        $ctrl = new PagoController();
-        echo json_encode($ctrl->listar());
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode((new PagoController())->listar());
         break;
 
     case 'pagos.registrar':
-        $ctrl = new PagoController();
-        $ctrl->registrar();
+        (new PagoController())->registrar();
         break;
 
     // ── Expedientes clínicos  ────────────────
@@ -339,21 +344,18 @@ switch ($accion) {
         (new DocumentoController())->eliminar();
         break;
 
+    // ── Tratamientos ──────────────────────────────────────────
         // ── Tratamientos ──────────────────────────────────────────
     case 'tratamientos.listar':
-        (new TratamientoController())->consultar();
-        break;
-
-    case 'tratamientos.catalogos':
-        (new TratamientoController())->catalogos();
+        (new TratamientoController())->listarJson();
         break;
 
     case 'tratamientos.detalle':
         (new TratamientoController())->detalle();
         break;
 
-    case 'tratamientos.odontograma':
-        (new TratamientoController())->odontograma();
+    case 'tratamientos.catalogos':
+        (new TratamientoController())->catalogos();
         break;
 
     case 'tratamientos.crear':
@@ -368,6 +370,14 @@ switch ($accion) {
         (new TratamientoController())->asociar();
         break;
 
+    case 'tratamientos.historial':
+        (new TratamientoController())->historial();
+        break;
+
+    case 'tratamientos.odontograma':
+        (new TratamientoController())->odontograma();
+        break;
+    default:
           // ── Reportes del administrador (REP-01 y REP-02) ──────────
       case 'reportes.citas':
           (new ReporteController())->citas();
