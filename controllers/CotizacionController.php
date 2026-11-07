@@ -11,7 +11,7 @@ class CotizacionController
 
     public function __construct()
     {
-        AuthService::requerir(['asistente_dental', 'recepcionista', 'administrador']);
+        AuthService::requerir(['recepcionista', 'administrador', 'odontologo']);
         $this->model = new Cotizacion();
     }
 
@@ -209,6 +209,10 @@ class CotizacionController
 
     private function bodyJson(): array
     {
+        // Soporta tanto JSON (odontologo/guardarJSON) como FormData (recepcionista)
+        if (!empty($_POST)) {
+            return $_POST;
+        }
         $raw  = file_get_contents('php://input');
         if (!$raw) return [];
         $data = json_decode($raw, true);

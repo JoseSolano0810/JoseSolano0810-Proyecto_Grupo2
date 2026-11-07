@@ -23,15 +23,17 @@ class PacienteController
     {
         $filas = $this->model->obtenerTodos();
         return array_map(fn($p) => [
-            'id'         => $p['id_usuario'],
-            'id_usuario' => $p['id_usuario'],
-            'nombre'     => $p['nombre_completo'],
-            'cedula'     => $p['identificacion'] ?? '',
-            'telefono'   => $p['telefono']        ?? '',
-            'correo'     => $p['correo']           ?? '',
-            'usuario'    => $p['nombre_usuario']   ?? '',
-            'edad'       => $p['edad']             ?? null,
-            'estado'     => $p['estado_usuario']   ?? 'activo',
+            'id'             => $p['id_usuario'],
+            'id_usuario'     => $p['id_usuario'],
+            'id_paciente'    => $p['id_paciente']    ?? null,
+            'nombre'         => $p['nombre_completo'],
+            'nombre_completo'=> $p['nombre_completo'],
+            'cedula'         => $p['identificacion'] ?? '',
+            'telefono'       => $p['telefono']        ?? '',
+            'correo'         => $p['correo']           ?? '',
+            'usuario'        => $p['nombre_usuario']   ?? '',
+            'edad'           => $p['edad']             ?? null,
+            'estado'         => $p['estado_usuario']   ?? 'activo',
         ], $filas);
     }
 
@@ -101,12 +103,5 @@ class PacienteController
         } catch (Throwable $e) {
             echo json_encode(['ok' => false, 'mensaje' => 'Error al actualizar: ' . $e->getMessage()]);
         }
-    }
-
-    public function inactivar(): void
-    {
-        AuthService::requerir(['recepcionista', 'administrador']);
-        // Pendiente de implementar
-        echo json_encode(['ok' => true, 'demo' => true]);
     }
 }
