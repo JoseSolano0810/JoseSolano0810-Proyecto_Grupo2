@@ -347,7 +347,7 @@ switch ($accion) {
     // ── Tratamientos ──────────────────────────────────────────
         // ── Tratamientos ──────────────────────────────────────────
     case 'tratamientos.listar':
-        (new TratamientoController())->listarJson();
+        (new TratamientoController())->consultar();
         break;
 
     case 'tratamientos.detalle':
