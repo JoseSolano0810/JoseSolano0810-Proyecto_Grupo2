@@ -407,16 +407,14 @@ function cargarPanel(array $sesion): void
             $citas        = (new CitaController())->listar();
             $pacientes    = (new PacienteController())->listar();
             $tratamientos = (new TratamientoController())->listar();
+            $cotizaciones = (new CotizacionController())->listar();
+            $pagos        = (new PagoController())->listar();
             $usuarios_sistema = [];
             $roles            = [];
-            $cotizaciones     = [];
-            $pagos            = [];
             if ($rol === 'administrador') {
                 $datos            = (new UsuarioController())->datosVista();
                 $usuarios_sistema = $datos['usuarios'];
                 $roles            = $datos['roles'];
-                $cotizaciones     = (new CotizacionController())->listar();
-                $pagos            = (new PagoController())->listar();
             }
 
             require ROOT_PATH . '/views/odontologo/index.php';

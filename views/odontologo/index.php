@@ -275,7 +275,7 @@
                             <?php foreach ($pacientes as $p): ?>
                                 <tr class="fila-paciente">
                                     <td><?= $p['id'] ?></td>
-                                    <td><strong><?= htmlspecialchars($p['nombre']) ?></strong></td>
+                                    <td><strong><?= htmlspecialchars($p['nombre_completo']) ?></strong></td>
                                     <td><?= htmlspecialchars($p['cedula']) ?></td>
                                     <td><?= htmlspecialchars($p['telefono'] ?: '—') ?></td>
                                     <td><?= htmlspecialchars($p['correo']) ?></td>
@@ -699,28 +699,19 @@
                                 <th>Fecha</th>
                                 <th>Total</th>
                                 <th>Estado</th>
-                                <th>Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="cot-tbody">
                             <?php foreach ($cotizaciones as $c): ?>
                                 <tr>
-                                    <td><strong><?= $c['id'] ?></strong></td>
+                                    <td><strong>#<?= $c['id_cotizacion'] ?></strong></td>
                                     <td><?= htmlspecialchars($c['paciente']) ?></td>
                                     <td><?= $c['fecha'] ?></td>
                                     <td>₡<?= number_format($c['total'], 0, ',', '.') ?></td>
                                     <td>
-                                        <span class="badge-estado badge-<?= $c['estado'] === 'aprobada' ? 'confirmada' : ($c['estado'] === 'rechazada' ? 'cancelada' : 'pendiente') ?>">
+                                        <span class="badge-estado badge-<?= $c['estado'] === 'aprobada' ? 'confirmada' : ($c['estado'] === 'rechazada' ? 'cancelada' : ($c['estado'] === 'pagada' ? 'completada' : 'pendiente')) ?>">
                                             <?= ucfirst($c['estado']) ?>
                                         </span>
-                                    </td>
-                                    <td style="display:flex;gap:6px;">
-                                        <button class="btn-outline-odent" style="font-size:12px;padding:4px 10px;"><i class="bi bi-eye"></i> Ver</button>
-                                        <?php if ($rol === 'administrador' && $c['estado'] === 'aprobada'): ?>
-                                            <button class="btn-odent" onclick="abrirModal('modal-nuevo-pago')" style="font-size:12px;padding:4px 10px;">
-                                                <i class="bi bi-cash"></i> Cobrar
-                                            </button>
-                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -733,23 +724,29 @@
                 <div class="panel-titulo" style="margin-bottom:20px;">
                     <h2>Registro de pagos</h2>
                     <?php if ($rol === 'administrador'): ?>
-                    <button class="btn-odent" onclick="abrirModal('modal-nuevo-pago')">
+                    <button class="btn-odent" onclick="pagoAbrirNuevo()">
                         <i class="bi bi-plus-lg"></i> Registrar pago
                     </button>
                     <?php endif; ?>
                 </div>
+                <?php
+                    $hoy = date('d/m/Y');
+                    $cobrado_hoy    = array_sum(array_map(fn($p) => $p['monto'], array_filter($pagos, fn($p) => $p['fecha'] === $hoy)));
+                    $pendiente_cobro = array_sum(array_map(fn($c) => $c['total'], array_filter($cotizaciones, fn($c) => in_array($c['estado'], ['pendiente','aprobada'], true))));
+                    $fmt = fn($n) => $n >= 1000000 ? '₡' . number_format($n/1000000, 1) . 'M' : ($n >= 1000 ? '₡' . number_format($n/1000, 0) . 'K' : '₡' . number_format($n, 0));
+                ?>
                 <div class="kpi-grid" style="margin-bottom:22px;">
                     <div class="kpi-card">
                         <div class="kpi-icono verde"><i class="bi bi-cash-stack"></i></div>
                         <div>
-                            <div class="kpi-numero">₡150K</div>
+                            <div class="kpi-numero"><?= $fmt($cobrado_hoy) ?></div>
                             <div class="kpi-etiqueta">Cobrado hoy</div>
                         </div>
                     </div>
                     <div class="kpi-card">
                         <div class="kpi-icono amarillo"><i class="bi bi-hourglass"></i></div>
                         <div>
-                            <div class="kpi-numero">₡60K</div>
+                            <div class="kpi-numero"><?= $fmt($pendiente_cobro) ?></div>
                             <div class="kpi-etiqueta">Pendiente de cobro</div>
                         </div>
                     </div>
@@ -767,16 +764,16 @@
                                 <th>Estado</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="pago-tbody">
                             <?php foreach ($pagos as $p): ?>
                                 <tr>
-                                    <td><strong><?= $p['id'] ?></strong></td>
+                                    <td><strong>#<?= $p['id_pago'] ?></strong></td>
                                     <td><?= htmlspecialchars($p['paciente']) ?></td>
                                     <td><?= $p['fecha'] ?></td>
                                     <td>₡<?= number_format($p['monto'], 0, ',', '.') ?></td>
                                     <td><?= $p['metodo'] ?></td>
-                                    <td><?= $p['cotizacion'] ?></td>
-                                    <td><span class="badge-estado badge-<?= $p['estado'] ?>"><?= ucfirst($p['estado']) ?></span></td>
+                                    <td>#<?= $p['id_cotizacion'] ?></td>
+                                    <td><span class="badge-estado badge-<?= $p['cotizacion_estado'] === 'pagada' ? 'completada' : 'confirmada' ?>"><?= ucfirst($p['cotizacion_estado']) ?></span></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -1050,29 +1047,53 @@
                 <h3>Registrar pago</h3>
                 <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-pago')"><i class="bi bi-x-lg"></i></button>
             </div>
+            <input type="hidden" id="pago-id-cotizacion">
             <div class="campo-grupo">
-                <label>Cotización</label>
-                <select>
-                    <?php foreach ($cotizaciones as $c): if ($c['estado'] === 'aprobada'): ?>
-                        <option value="<?= $c['id'] ?>"><?= $c['id'] ?> — <?= htmlspecialchars($c['paciente']) ?> (₡<?= number_format($c['total'], 0, ',', '.') ?>)</option>
-                    <?php endif; endforeach; ?>
+                <label>Paciente *</label>
+                <select id="pago-id-paciente" onchange="pagoCargarCotizaciones(this.value)">
+                    <option value="">— Seleccione un paciente —</option>
+                    <?php foreach ($pacientes as $p): ?>
+                        <option value="<?= $p['id_paciente'] ?>"><?= htmlspecialchars($p['nombre_completo']) ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
-            <div class="campo-grupo"><label>Monto recibido (₡)</label><input type="number" placeholder="0"></div>
             <div class="campo-grupo">
-                <label>Método de pago</label>
-                <select>
-                    <option>Efectivo</option>
-                    <option>Tarjeta débito</option>
-                    <option>Tarjeta crédito</option>
-                    <option>Sinpe Móvil</option>
-                    <option>Transferencia</option>
+                <label>Cotización *</label>
+                <select id="pago-sel-cotizacion" onchange="pagoSeleccionarCotizacion(this)">
+                    <option value="">— Seleccione primero un paciente —</option>
                 </select>
             </div>
-            <div class="campo-grupo"><label>Comprobante (opcional)</label><input type="text" placeholder="N.° comprobante o referencia"></div>
+            <div id="pago-saldo-info" style="display:none;background:var(--fondo-odent);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;">
+                <span>Total cotización: <strong id="pago-total-cot">—</strong></span>
+                &nbsp;·&nbsp;
+                <span style="color:var(--rojo-odent,#C0392B);">Saldo pendiente: <strong id="pago-saldo-pend">—</strong></span>
+            </div>
+            <div class="campo-grupo">
+                <label>Monto a pagar (₡) *</label>
+                <input type="number" id="pago-monto" placeholder="0" min="0">
+            </div>
+            <div class="campo-grupo">
+                <label>Método de pago *</label>
+                <select id="pago-metodo">
+                    <option value="efectivo">Efectivo</option>
+                    <option value="sinpe">SINPE Móvil</option>
+                    <option value="tarjeta">Tarjeta</option>
+                    <option value="transferencia">Transferencia</option>
+                </select>
+            </div>
+            <div class="campo-grupo">
+                <label>Comprobante <span style="color:var(--gris-azulado);font-size:12px;">(opcional)</span></label>
+                <input type="text" id="pago-referencia" placeholder="N.° comprobante, voucher o referencia">
+            </div>
+            <div class="campo-grupo">
+                <label>Fecha del pago *</label>
+                <input type="date" id="pago-fecha">
+            </div>
             <div class="modal-footer">
                 <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-pago')">Cancelar</button>
-                <button class="btn-odent"><i class="bi bi-check-lg"></i> Registrar</button>
+                <button class="btn-odent" id="pago-btn-guardar" onclick="pagoGuardar()">
+                    <i class="bi bi-check-lg"></i> Registrar
+                </button>
             </div>
         </div>
     </div>
@@ -1123,21 +1144,50 @@
                 <h3>Nueva cotización</h3>
                 <button class="modal-cerrar" onclick="cerrarModal('modal-nueva-cotizacion')"><i class="bi bi-x-lg"></i></button>
             </div>
-            <div class="campo-grupo"><label>Paciente</label>
-                <select>
-                    <option value="">Seleccione un paciente</option>
+            <div class="campo-grupo">
+                <label>Paciente *</label>
+                <select id="cot-id-paciente" onchange="cotCargarTratamientos(this.value)">
+                    <option value="">— Seleccione un paciente —</option>
                     <?php foreach ($pacientes as $p): ?>
-                        <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nombre']) ?></option>
+                        <option value="<?= $p['id_paciente'] ?>"><?= htmlspecialchars($p['nombre_completo']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="campo-grupo"><label>Tratamiento</label><input type="text" placeholder="Descripción del tratamiento"></div>
-            <div class="campo-grupo"><label>Monto (₡)</label><input type="number" placeholder="0" id="cot-monto"></div>
-            <div class="campo-grupo"><label>IVA (13%)</label><input type="text" id="cot-iva" readonly placeholder="Se calcula automáticamente"></div>
-            <div class="campo-grupo"><label>Total</label><input type="text" id="cot-total" readonly placeholder="Se calcula automáticamente"></div>
+            <div class="campo-grupo">
+                <label>Tratamiento *</label>
+                <select id="cot-id-tratamiento">
+                    <option value="">— Seleccione primero un paciente —</option>
+                </select>
+            </div>
+            <div class="campo-grupo">
+                <label>Subtotal (₡) *</label>
+                <input type="number" id="cot-subtotal" placeholder="0" min="0" oninput="cotRecalcular()">
+            </div>
+            <div class="campo-grupo">
+                <label>Descuento (₡)</label>
+                <input type="number" id="cot-descuento" placeholder="0" min="0" value="0" oninput="cotRecalcular()">
+            </div>
+            <div class="campo-grupo">
+                <label>IVA (13%)</label>
+                <input type="text" id="cot-iva" readonly placeholder="Se calcula automáticamente" style="background:var(--fondo-odent);">
+            </div>
+            <div class="campo-grupo">
+                <label>Total</label>
+                <input type="text" id="cot-total" readonly placeholder="Se calcula automáticamente" style="background:var(--fondo-odent);font-weight:600;">
+            </div>
+            <div class="campo-grupo">
+                <label>Descripción *</label>
+                <textarea id="cot-descripcion" rows="2" placeholder="Descripción del servicio cotizado…"></textarea>
+            </div>
+            <div class="campo-grupo">
+                <label>Observaciones <span style="color:var(--gris-azulado);font-size:12px;">(opcional)</span></label>
+                <textarea id="cot-observaciones" rows="2" placeholder="Notas adicionales…"></textarea>
+            </div>
             <div class="modal-footer">
                 <button class="btn-outline-odent" onclick="cerrarModal('modal-nueva-cotizacion')">Cancelar</button>
-                <button class="btn-odent"><i class="bi bi-check-lg"></i> Crear cotización</button>
+                <button class="btn-odent" id="cot-btn-guardar" onclick="cotGuardar()">
+                    <i class="bi bi-check-lg"></i> Crear cotización
+                </button>
             </div>
         </div>
     </div>
@@ -2446,6 +2496,260 @@
                 cerrarModal: 'modal-confirmar-estado',
                 exito: nuevoEstado === 'activo' ? 'Usuario activado con éxito.' : 'Usuario inactivado con éxito.',
                 recargar: ['usuarios', 'inicio']
+            });
+        }
+
+        /* ── Recarga de tablas Cotizaciones / Pagos ─────────────── */
+
+        async function recargarCotizaciones() {
+            try {
+                const res  = await fetch(`${BASE}/index.php?accion=cotizaciones.listar`);
+                const data = await res.json();
+                if (!Array.isArray(data)) return;
+                const tbody = document.getElementById('cot-tbody');
+                if (!tbody) return;
+                tbody.innerHTML = data.length ? data.map(c => {
+                    const badgeClass = c.estado === 'aprobada' ? 'confirmada'
+                        : c.estado === 'rechazada' ? 'cancelada'
+                        : c.estado === 'pagada'    ? 'completada' : 'pendiente';
+                    return `<tr>
+                        <td><strong>#${c.id_cotizacion}</strong></td>
+                        <td>${escapar(c.paciente)}</td>
+                        <td>${c.fecha}</td>
+                        <td>₡${Number(c.total).toLocaleString('es-CR')}</td>
+                        <td><span class="badge-estado badge-${badgeClass}">${c.estado.charAt(0).toUpperCase()+c.estado.slice(1)}</span></td>
+                    </tr>`;
+                }).join('') : '<tr><td colspan="5" style="text-align:center;color:#888;">Sin cotizaciones registradas</td></tr>';
+            } catch(e) {}
+        }
+
+        async function recargarPagos() {
+            try {
+                const res  = await fetch(`${BASE}/index.php?accion=pagos.listar`);
+                const rows = await res.json();
+                if (!Array.isArray(rows)) return;
+                const tbody = document.getElementById('pago-tbody');
+                if (!tbody) return;
+                tbody.innerHTML = rows.length ? rows.map(p => `<tr>
+                    <td><strong>#${p.id_pago}</strong></td>
+                    <td>${escapar(p.paciente)}</td>
+                    <td>${p.fecha}</td>
+                    <td>₡${Number(p.monto).toLocaleString('es-CR')}</td>
+                    <td>${p.metodo.charAt(0).toUpperCase()+p.metodo.slice(1)}</td>
+                    <td>#${p.id_cotizacion}</td>
+                    <td><span class="badge-estado badge-${p.cotizacion_estado === 'pagada' ? 'completada' : 'pendiente'}">${p.cotizacion_estado ? p.cotizacion_estado.charAt(0).toUpperCase()+p.cotizacion_estado.slice(1) : '—'}</span></td>
+                </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:#888;">Sin pagos registrados</td></tr>';
+            } catch(e) {}
+        }
+
+        /* ── Cotizaciones (FIN-01) ──────────────────────────────── */
+
+        let _cotTratamientos = [];
+
+        async function cotCargarTratamientos(idPaciente) {
+            const sel = document.getElementById('cot-id-tratamiento');
+            sel.innerHTML = '<option value="">Cargando…</option>';
+            if (!idPaciente) {
+                sel.innerHTML = '<option value="">— Seleccione primero un paciente —</option>';
+                return;
+            }
+            try {
+                const res  = await fetch(`${BASE}/index.php?accion=cotizaciones.tratamientosDisponibles`);
+                const data = await res.json();
+                if (!data.ok) throw new Error(data.mensaje);
+                _cotTratamientos = (data.tratamientos || []).filter(t => String(t.id_paciente) === String(idPaciente));
+                if (!_cotTratamientos.length) {
+                    sel.innerHTML = '<option value="">Sin tratamientos disponibles</option>';
+                    return;
+                }
+                sel.innerHTML = '<option value="">— Seleccione un tratamiento —</option>' +
+                    _cotTratamientos.map(t => `<option value="${t.id_tratamiento}">${escapar(t.nombre)}</option>`).join('');
+            } catch(e) {
+                sel.innerHTML = '<option value="">Error al cargar tratamientos</option>';
+                mostrarToast('No se pudieron cargar los tratamientos.', 'error');
+            }
+        }
+
+        function cotRecalcular() {
+            const sub  = parseFloat(document.getElementById('cot-subtotal').value)  || 0;
+            const desc = parseFloat(document.getElementById('cot-descuento').value) || 0;
+            const base = Math.max(0, sub - desc);
+            const iva  = Math.round(base * 0.13 * 100) / 100;
+            const tot  = Math.round((base + iva) * 100) / 100;
+            document.getElementById('cot-iva').value   = iva > 0   ? '₡' + tot.toLocaleString('es-CR', {minimumFractionDigits:2}) : '';
+            document.getElementById('cot-total').value = tot > 0   ? '₡' + tot.toLocaleString('es-CR', {minimumFractionDigits:2}) : '';
+        }
+
+        async function cotGuardar() {
+            const idPaciente    = document.getElementById('cot-id-paciente').value;
+            const idTratamiento = document.getElementById('cot-id-tratamiento').value;
+            const subtotal      = parseFloat(document.getElementById('cot-subtotal').value)  || 0;
+            const descuento     = parseFloat(document.getElementById('cot-descuento').value) || 0;
+            const descripcion   = document.getElementById('cot-descripcion').value.trim();
+
+            if (!idPaciente)    return mostrarToast('Seleccione un paciente.',    'aviso');
+            if (!idTratamiento) return mostrarToast('Seleccione un tratamiento.', 'aviso');
+            if (subtotal <= 0)  return mostrarToast('Ingrese un subtotal mayor a 0.', 'aviso');
+            if (!descripcion)   return mostrarToast('Ingrese una descripción.',   'aviso');
+
+            await guardarJSON('cotizaciones.crear', {
+                id_paciente:    parseInt(idPaciente),
+                id_tratamiento: parseInt(idTratamiento),
+                subtotal,
+                descuento,
+                descripcion,
+                observaciones: document.getElementById('cot-observaciones').value.trim(),
+            }, {
+                boton:       document.getElementById('cot-btn-guardar'),
+                cerrarModal: 'modal-nueva-cotizacion',
+                exito:       'Cotización creada correctamente.',
+                alExito: () => {
+                    document.getElementById('cot-id-paciente').value    = '';
+                    document.getElementById('cot-id-tratamiento').innerHTML = '<option value="">— Seleccione primero un paciente —</option>';
+                    document.getElementById('cot-subtotal').value       = '';
+                    document.getElementById('cot-descuento').value      = '0';
+                    document.getElementById('cot-iva').value            = '';
+                    document.getElementById('cot-total').value          = '';
+                    document.getElementById('cot-descripcion').value    = '';
+                    document.getElementById('cot-observaciones').value  = '';
+                    recargarCotizaciones();
+                }
+            });
+        }
+
+        /* ── Pagos (FIN-03) ─────────────────────────────────────── */
+
+        let _pagoCotizacionesCache = [];
+
+        function pagoAbrirNuevo() {
+            document.getElementById('pago-fecha').value = new Date().toISOString().slice(0, 10);
+            abrirModal('modal-nuevo-pago');
+        }
+
+        async function pagoCargarCotizaciones(idPaciente) {
+            const sel = document.getElementById('pago-sel-cotizacion');
+            document.getElementById('pago-saldo-info').style.display = 'none';
+            document.getElementById('pago-id-cotizacion').value = '';
+            sel.innerHTML = '<option value="">Cargando…</option>';
+            if (!idPaciente) {
+                sel.innerHTML = '<option value="">— Seleccione primero un paciente —</option>';
+                return;
+            }
+            try {
+                const res  = await fetch(`${BASE}/index.php?accion=cotizaciones.listar`);
+                const data = await res.json();
+                _pagoCotizacionesCache = Array.isArray(data)
+                    ? data.filter(c => String(c.id_paciente) === String(idPaciente) && !['rechazada','pagada'].includes(c.estado))
+                    : [];
+                if (!_pagoCotizacionesCache.length) {
+                    sel.innerHTML = '<option value="">Sin cotizaciones para este paciente</option>';
+                    return;
+                }
+                sel.innerHTML = '<option value="">— Seleccione una cotización —</option>' +
+                    _pagoCotizacionesCache.map(c =>
+                        `<option value="${c.id_cotizacion}">#${c.id_cotizacion} — ${escapar(c.tratamiento)} — ₡${Number(c.total).toLocaleString('es-CR')} (${c.estado})</option>`
+                    ).join('');
+            } catch(e) {
+                sel.innerHTML = '<option value="">Error al cargar cotizaciones</option>';
+            }
+        }
+
+        async function pagoSeleccionarCotizacion(sel) {
+            const idCot = sel.value;
+            document.getElementById('pago-id-cotizacion').value = idCot;
+            const info = document.getElementById('pago-saldo-info');
+            if (!idCot) { info.style.display = 'none'; return; }
+
+            const cot = _pagoCotizacionesCache.find(c => String(c.id_cotizacion) === String(idCot));
+            if (!cot) { info.style.display = 'none'; return; }
+
+            info.style.display = '';
+            document.getElementById('pago-total-cot').textContent = '₡' + Number(cot.total).toLocaleString('es-CR');
+
+            // Consultar saldo real desde el servidor
+            try {
+                const res  = await fetch(`${BASE}/index.php?accion=pagos.listar`);
+                const rows = await res.json();
+                const pagados = Array.isArray(rows)
+                    ? rows.filter(p => String(p.id_cotizacion) === String(idCot)).reduce((s, p) => s + Number(p.monto), 0)
+                    : 0;
+                const saldo = Math.max(0, Number(cot.total) - pagados);
+                document.getElementById('pago-saldo-pend').textContent = '₡' + saldo.toLocaleString('es-CR');
+                document.getElementById('pago-monto').value = saldo > 0 ? saldo : '';
+            } catch(e) {
+                document.getElementById('pago-saldo-pend').textContent = '—';
+            }
+        }
+
+        function pagoAbrirDesdeCotizacion(idCot, paciente, total) {
+            // Pre-seleccionar paciente y cotización al hacer clic en "Cobrar" desde la tabla
+            document.getElementById('pago-fecha').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('pago-id-cotizacion').value = idCot;
+            document.getElementById('pago-monto').value = '';
+            document.getElementById('pago-referencia').value = '';
+            document.getElementById('pago-saldo-info').style.display = '';
+            document.getElementById('pago-total-cot').textContent = '₡' + Number(total).toLocaleString('es-CR');
+            document.getElementById('pago-saldo-pend').textContent = '—';
+
+            // Limpiar selects de paciente/cotización (se manejará con el hidden)
+            document.getElementById('pago-id-paciente').value = '';
+            document.getElementById('pago-sel-cotizacion').innerHTML =
+                `<option value="${idCot}" selected>#${idCot} — ${escapar(paciente)}</option>`;
+
+            abrirModal('modal-nuevo-pago');
+
+            // Cargar saldo real
+            fetch(`${BASE}/index.php?accion=pagos.listar`)
+                .then(r => r.json())
+                .then(rows => {
+                    const pagados = Array.isArray(rows)
+                        ? rows.filter(p => String(p.id_cotizacion) === String(idCot)).reduce((s, p) => s + Number(p.monto), 0)
+                        : 0;
+                    const saldo = Math.max(0, Number(total) - pagados);
+                    document.getElementById('pago-saldo-pend').textContent = '₡' + saldo.toLocaleString('es-CR');
+                    document.getElementById('pago-monto').value = saldo > 0 ? saldo : '';
+                }).catch(() => {});
+        }
+
+        async function pagoGuardar() {
+            const idCotizacion = document.getElementById('pago-id-cotizacion').value;
+            const monto        = parseFloat(document.getElementById('pago-monto').value) || 0;
+            const metodo       = document.getElementById('pago-metodo').value;
+
+            if (!idCotizacion) return mostrarToast('Seleccione una cotización.', 'aviso');
+            if (monto <= 0)    return mostrarToast('Ingrese un monto mayor a 0.', 'aviso');
+            if (!metodo)       return mostrarToast('Seleccione un método de pago.', 'aviso');
+
+            // Validar que no supere el saldo pendiente
+            const saldoTexto = document.getElementById('pago-saldo-pend').textContent.replace(/[₡\s.]/g, '').replace(',', '.');
+            const saldo = parseFloat(saldoTexto) || 0;
+            if (saldo > 0 && monto > saldo) {
+                return mostrarToast(`El monto no puede superar el saldo pendiente (₡${saldo.toLocaleString('es-CR')}).`, 'error');
+            }
+
+            const fechaPago = document.getElementById('pago-fecha').value || new Date().toISOString().slice(0, 10);
+
+            await guardarJSON('pagos.registrar', {
+                id_cotizacion: parseInt(idCotizacion),
+                monto,
+                metodo,
+                referencia:    document.getElementById('pago-referencia').value.trim(),
+                fecha_pago:    fechaPago,
+            }, {
+                boton:       document.getElementById('pago-btn-guardar'),
+                cerrarModal: 'modal-nuevo-pago',
+                exito:       'Pago registrado correctamente.',
+                alExito: () => {
+                    document.getElementById('pago-id-cotizacion').value  = '';
+                    document.getElementById('pago-id-paciente').value    = '';
+                    document.getElementById('pago-sel-cotizacion').innerHTML = '<option value="">— Seleccione primero un paciente —</option>';
+                    document.getElementById('pago-monto').value          = '';
+                    document.getElementById('pago-referencia').value     = '';
+                    document.getElementById('pago-fecha').value          = new Date().toISOString().slice(0, 10);
+                    document.getElementById('pago-saldo-info').style.display = 'none';
+                    recargarPagos();
+                    recargarCotizaciones();
+                }
             });
         }
     </script>
