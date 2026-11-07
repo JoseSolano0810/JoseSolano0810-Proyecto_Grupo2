@@ -2878,3 +2878,59 @@ button:disabled {
 @media (max-width: 560px) {
     .rep-fila-barra { grid-template-columns: 90px 1fr auto; }
 }
+
+
+/* ── Reportes: pestañas, serie doble y detalles de REP-01 ── */
+.rep-tabs {
+    display: flex;
+    gap: 6px;
+    border-bottom: 2px solid var(--borde);
+    margin-bottom: 20px;
+}
+.rep-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--gris-azulado);
+    cursor: pointer;
+    transition: var(--transicion);
+}
+.rep-tab:hover { color: var(--azul-odent); }
+.rep-tab-activa { color: var(--azul-odent); border-bottom-color: var(--verde-odent); }
+.rep-panel[hidden] { display: none !important; }
+.rep-btn-derecha { margin-left: auto; }
+.rep-sub { font-size: 12px; color: var(--gris-azulado); }
+
+.rep-pista-roja i { background: #C0392B; }
+
+/* Dos barras por período: ingresos y egresos */
+.rep-col-doble { flex: 1 0 42px; max-width: 90px; }
+.rep-par {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 3px;
+}
+.rep-par i {
+    display: block;
+    width: 45%;
+    max-width: 22px;
+    border-radius: 5px 5px 0 0;
+    min-height: 0;
+}
+.rep-barra-ing { background: #2F7F7A; }
+.rep-barra-egr { background: #C0392B; }
+
+@media (max-width: 700px) {
+    #rep-fin-resultado .kpi-grid { grid-template-columns: 1fr !important; }
+    .rep-btn-derecha { margin-left: 0; }
+}

@@ -382,6 +382,17 @@ switch ($accion) {
     case 'reportes.citas':
         (new ReporteController())->citas();
         break;
+            case 'reportes.financiero':
+        (new ReporteController())->financiero();
+        break;
+
+    case 'reportes.egreso.crear':
+        (new ReporteController())->egresoCrear();
+        break;
+
+    case 'reportes.egreso.eliminar':
+        (new ReporteController())->egresoEliminar();
+        break;
 
     default:
         http_response_code(404);

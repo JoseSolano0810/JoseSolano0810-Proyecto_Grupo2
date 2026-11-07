@@ -141,4 +141,148 @@ class ReporteController
             'agrupacion'  => $datos['agrupacion'],
         ]);
     }
+
+    /* ── REP-01: reporte financiero ─────────────────────────── */
+
+    /** GET desde, hasta (Y-m-d) */
+    public function financiero(): void
+    {
+        $periodo = $this->periodo();
+        $datos   = $this->model->financiero($periodo['desde'], $periodo['hasta']);
+
+        Bitacora::registrar('REPORTE_FINANCIERO', "Reporte financiero del {$periodo['desde_fmt']} al {$periodo['hasta_fmt']}");
+
+        $totalIngresos = round(array_sum(array_column($datos['metodos'], 'total')), 2);
+        $totalEgresos  = round(array_sum(array_column($datos['categorias'], 'total')), 2);
+        $nPagos        = (int) array_sum(array_column($datos['metodos'], 'cantidad'));
+        $nEgresos      = (int) array_sum(array_column($datos['categorias'], 'cantidad'));
+
+        // Escenario 2: ningún movimiento financiero en el período
+        if ($nPagos === 0 && $nEgresos === 0) {
+            $this->responder([
+                'ok'                => true,
+                'vacio'             => true,
+                'periodo'           => $periodo,
+                'pagos_disponibles' => $datos['pagos_disponibles'],
+                'mensaje'           => 'No existen datos financieros para el período seleccionado.',
+            ]);
+        }
+
+        $conPorcentaje = function (array $filas, array $etiquetas, float $total): array {
+            return array_map(fn($f) => [
+                'clave'      => $f['clave'],
+                'texto'      => $etiquetas[$f['clave']] ?? $f['clave'],
+                'cantidad'   => $f['cantidad'],
+                'total'      => $f['total'],
+                'porcentaje' => $total > 0 ? round($f['total'] * 100 / $total, 1) : 0.0,
+            ], $filas);
+        };
+
+        $this->responder([
+            'ok'                => true,
+            'vacio'             => false,
+            'periodo'           => $periodo + ['dias' => $datos['dias']],
+            'pagos_disponibles' => $datos['pagos_disponibles'],
+            'aviso'             => $datos['pagos_disponibles'] ? null
+                : 'Todavía no hay pagos registrados en el sistema, por eso los ingresos aparecen en cero. Se sumarán apenas el módulo de pagos empiece a guardarlos.',
+            'resumen' => [
+                'ingresos'  => $totalIngresos,
+                'egresos'   => $totalEgresos,
+                'balance'   => round($totalIngresos - $totalEgresos, 2),
+                'n_pagos'   => $nPagos,
+                'n_egresos' => $nEgresos,
+            ],
+            'metodos'    => $conPorcentaje($datos['metodos'], Reporte::METODOS, $totalIngresos),
+            'categorias' => $conPorcentaje($datos['categorias'], Reporte::CATEGORIAS, $totalEgresos),
+            'serie'      => array_map(fn($p) => $p + ['etiqueta' => $this->etiquetaSerie($p['periodo'], $datos['agrupacion'])], $datos['serie']),
+            'agrupacion' => $datos['agrupacion'],
+            'gastos'     => array_map(fn($g) => [
+                'id'            => (int) $g['id_egreso'],
+                'fecha_fmt'     => date('d/m/Y', strtotime($g['fecha'])),
+                'categoria'     => Reporte::CATEGORIAS[$g['categoria']] ?? $g['categoria'],
+                'concepto'      => $g['concepto'],
+                'monto'         => round((float) $g['monto'], 2),
+                'observaciones' => $g['observaciones'] ?? '',
+                'registrado_por'=> $g['registrado_por'],
+            ], $datos['gastos']),
+        ]);
+    }
+
+    /* ── Egresos: registrar y eliminar gastos ───────────────── */
+
+    private function entrada(): array
+    {
+        $d = json_decode(file_get_contents('php://input'), true);
+        return is_array($d) ? $d : [];
+    }
+
+    /** POST {fecha, categoria, concepto, monto, observaciones} */
+    public function egresoCrear(): void
+    {
+        $d         = $this->entrada();
+        $fecha     = trim((string) ($d['fecha'] ?? ''));
+        $categoria = trim((string) ($d['categoria'] ?? ''));
+        $concepto  = trim((string) ($d['concepto'] ?? ''));
+        $montoTxt  = trim((string) ($d['monto'] ?? ''));
+        $obs       = trim((string) ($d['observaciones'] ?? ''));
+
+        $faltan = [];
+        if ($fecha === '')     $faltan[] = 'fecha';
+        if ($categoria === '') $faltan[] = 'categoría';
+        if ($concepto === '')  $faltan[] = 'concepto';
+        if ($montoTxt === '')  $faltan[] = 'monto';
+        if ($faltan) {
+            $this->responder(['ok' => false, 'error' => 'Para registrar el gasto falta completar: ' . implode(', ', $faltan) . '.'], 400);
+        }
+
+        if (!$this->esFecha($fecha)) {
+            $this->responder(['ok' => false, 'error' => 'La fecha del gasto no es válida.'], 400);
+        }
+        if ($fecha > date('Y-m-d')) {
+            $this->responder(['ok' => false, 'error' => 'La fecha del gasto no puede ser futura.'], 400);
+        }
+        if (!array_key_exists($categoria, Reporte::CATEGORIAS)) {
+            $this->responder(['ok' => false, 'error' => 'La categoría seleccionada no es válida.'], 400);
+        }
+        if (mb_strlen($concepto) > 150 || mb_strlen($obs) > 500) {
+            $this->responder(['ok' => false, 'error' => 'El concepto (150) o las observaciones (500) superan el largo permitido.'], 400);
+        }
+
+        $montoTxt = str_replace([' ', '₡'], '', $montoTxt);
+        if (!is_numeric($montoTxt) || (float) $montoTxt <= 0 || (float) $montoTxt > 99999999.99) {
+            $this->responder(['ok' => false, 'error' => 'El monto debe ser un número mayor que cero.'], 400);
+        }
+        $monto = round((float) $montoTxt, 2);
+
+        try {
+            $id = $this->model->crearEgreso([
+                'fecha' => $fecha, 'categoria' => $categoria, 'concepto' => $concepto, 'monto' => $monto,
+                'observaciones' => $obs, 'id_registrado_por' => (int) (AuthService::usuarioActual()['id'] ?? 0),
+            ]);
+            Bitacora::registrar('EGRESO_REGISTRADO', "Gasto #{$id} «" . mb_substr($concepto, 0, 80) . "» por ₡" . number_format($monto, 2, ',', '.'));
+            $this->responder(['ok' => true, 'id' => $id, 'mensaje' => 'El gasto quedó registrado.'], 201);
+        } catch (Throwable $e) {
+            error_log('REP-01 egresoCrear: ' . $e->getMessage());
+            $this->responder(['ok' => false, 'error' => 'No pudimos registrar el gasto. Intente de nuevo.'], 500);
+        }
+    }
+
+    /** POST {id} */
+    public function egresoEliminar(): void
+    {
+        $id = (int) ($this->entrada()['id'] ?? 0);
+        $e  = $id ? $this->model->obtenerEgreso($id) : null;
+        if (!$e) {
+            $this->responder(['ok' => false, 'error' => 'No encontramos ese gasto.'], 404);
+        }
+
+        try {
+            $this->model->eliminarEgreso($id);
+            Bitacora::registrar('EGRESO_ELIMINADO', "Gasto #{$id} «" . mb_substr($e['concepto'], 0, 80) . "» eliminado");
+            $this->responder(['ok' => true, 'mensaje' => 'El gasto se eliminó.']);
+        } catch (Throwable $err) {
+            error_log('REP-01 egresoEliminar: ' . $err->getMessage());
+            $this->responder(['ok' => false, 'error' => 'No pudimos eliminar el gasto.'], 500);
+        }
+    }
 }
