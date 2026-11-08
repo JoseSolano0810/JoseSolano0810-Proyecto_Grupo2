@@ -437,12 +437,22 @@ function cargarPanel(array $sesion): void
 
             require ROOT_PATH . '/views/odontologo/index.php';
             break;
+            
         case 'recepcionista':
-        case 'asistente_dental':
             $citas        = (new CitaController())->listar();
             $pacientes    = (new PacienteController())->listar();
             $cotizaciones = (new CotizacionController())->listar();
             $pagos        = (new PagoController())->listar();
+
+            require ROOT_PATH . '/views/recepcionista/index.php';
+            break;
+
+        case 'asistente_dental':
+            $citas        = (new CitaController())->listar();
+            $pacientes    = (new PacienteController())->listar();
+            $cotizaciones = [];
+            $pagos        = [];
+
             require ROOT_PATH . '/views/recepcionista/index.php';
             break;
 
