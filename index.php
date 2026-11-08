@@ -28,9 +28,9 @@ require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/RecordatorioService.php';
 require_once ROOT_PATH . '/controllers/InventarioController.php';
 require_once ROOT_PATH . '/controllers/AsistenteController.php';
-  require_once ROOT_PATH . '/controllers/ReporteController.php';
-   require_once ROOT_PATH . '/controllers/AsistenteReportesController.php';
-   require_once ROOT_PATH . '/controllers/AsistenteSolicitudController.php';
+require_once ROOT_PATH . '/controllers/ReporteController.php';
+require_once ROOT_PATH . '/controllers/AsistenteReportesController.php';
+require_once ROOT_PATH . '/controllers/AsistenteSolicitudController.php';
 
 $accion = $_GET['accion'] ?? 'inicio';
 $metodo = $_SERVER['REQUEST_METHOD'];
@@ -118,7 +118,7 @@ switch ($accion) {
         (new AsistenteController())->enviarReporte();
         break;
 
-        case 'asistente.reporte.cancelar':
+    case 'asistente.reporte.cancelar':
         (new AsistenteController())->cancelarReporte();
         break;
 
@@ -280,13 +280,20 @@ switch ($accion) {
 
     // ── Pagos ─────────────────────────────────────────────────
     case 'pagos.listar':
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode((new PagoController())->listar());
+        $ctrl = new PagoController();
+        echo json_encode($ctrl->listar());
+        break;
+
+    case 'pagos.estadoFinanciero':
+        $ctrl = new PagoController();
+        $ctrl->estadoFinanciero();
         break;
 
     case 'pagos.registrar':
-        (new PagoController())->registrar();
+        $ctrl = new PagoController();
+        $ctrl->registrar();
         break;
+
 
     // ── Expedientes clínicos  ────────────────
     case 'expedientes.pacientes':
@@ -345,7 +352,7 @@ switch ($accion) {
         break;
 
     // ── Tratamientos ──────────────────────────────────────────
-        // ── Tratamientos ──────────────────────────────────────────
+    // ── Tratamientos ──────────────────────────────────────────
     case 'tratamientos.listar':
         (new TratamientoController())->consultar();
         break;
@@ -382,7 +389,7 @@ switch ($accion) {
     case 'reportes.citas':
         (new ReporteController())->citas();
         break;
-            case 'reportes.financiero':
+    case 'reportes.financiero':
         (new ReporteController())->financiero();
         break;
 
