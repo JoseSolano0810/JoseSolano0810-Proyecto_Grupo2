@@ -187,7 +187,9 @@ class Reporte
             );
             $stmt->execute($params);
             $metodos = array_map(fn($r) => [
-                'clave' => $r['metodo'], 'cantidad' => (int) $r['n'], 'total' => round((float) $r['total'], 2),
+                'clave' => $r['metodo'],
+                'cantidad' => (int) $r['n'],
+                'total' => round((float) $r['total'], 2),
             ], $stmt->fetchAll());
         }
 
@@ -199,8 +201,65 @@ class Reporte
         );
         $stmt->execute($params);
         $categorias = array_map(fn($r) => [
-            'clave' => $r['categoria'], 'cantidad' => (int) $r['n'], 'total' => round((float) $r['total'], 2),
+            'clave' => $r['categoria'],
+            'cantidad' => (int) $r['n'],
+            'total' => round((float) $r['total'], 2),
         ], $stmt->fetchAll());
+
+
+        $cuentasPorCobrar = [];
+
+        if ($this->existeTabla('cotizacion')) {
+            if ($hayPagos) {
+                $stmt = $this->db->query(
+                    "SELECT
+                c.id_cotizacion,
+                c.id_paciente,
+                u.nombre_completo AS paciente,
+                c.total,
+                COALESCE(SUM(p.monto), 0) AS pagado,
+                GREATEST(c.total - COALESCE(SUM(p.monto), 0), 0) AS saldo
+             FROM cotizacion c
+             INNER JOIN paciente pa ON pa.id_paciente = c.id_paciente
+             INNER JOIN usuario u ON u.id_usuario = pa.id_usuario
+             LEFT JOIN pago p ON p.id_cotizacion = c.id_cotizacion
+             WHERE c.estado <> 'rechazada'
+             GROUP BY
+                c.id_cotizacion,
+                c.id_paciente,
+                u.nombre_completo,
+                c.total
+             HAVING saldo > 0.009
+             ORDER BY saldo DESC"
+                );
+            } else {
+                $stmt = $this->db->query(
+                    "SELECT
+                c.id_cotizacion,
+                c.id_paciente,
+                u.nombre_completo AS paciente,
+                c.total,
+                0 AS pagado,
+                c.total AS saldo
+             FROM cotizacion c
+             INNER JOIN paciente pa ON pa.id_paciente = c.id_paciente
+             INNER JOIN usuario u ON u.id_usuario = pa.id_usuario
+             WHERE c.estado <> 'rechazada'
+               AND c.total > 0
+             ORDER BY c.total DESC"
+                );
+            }
+
+            $cuentasPorCobrar = array_map(fn($r) => [
+                'id_cotizacion' => (int) $r['id_cotizacion'],
+                'id_paciente'   => (int) $r['id_paciente'],
+                'paciente'      => $r['paciente'],
+                'total'         => round((float) $r['total'], 2),
+                'pagado'        => round((float) $r['pagado'], 2),
+                'saldo'         => round((float) $r['saldo'], 2),
+            ], $stmt->fetchAll());
+        }
+
 
         // Evolución: ingresos y egresos por día (o por mes)
         $ing = [];
@@ -239,6 +298,7 @@ class Reporte
             'categorias'        => $categorias,
             'serie'             => $serie,
             'gastos'            => $stmt->fetchAll(),
+            'cuentas_por_cobrar' => $cuentasPorCobrar,
             'agrupacion'        => $porMes ? 'mes' : 'dia',
             'dias'              => $dias,
         ];
@@ -252,7 +312,10 @@ class Reporte
             "INSERT INTO egreso (fecha, categoria, concepto, monto, observaciones, id_registrado_por)
              VALUES (?, ?, ?, ?, ?, ?)"
         )->execute([
-            $d['fecha'], $d['categoria'], $d['concepto'], $d['monto'],
+            $d['fecha'],
+            $d['categoria'],
+            $d['concepto'],
+            $d['monto'],
             ($d['observaciones'] ?? '') !== '' ? $d['observaciones'] : null,
             (int) $d['id_registrado_por'],
         ]);

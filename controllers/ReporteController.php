@@ -156,6 +156,8 @@ class ReporteController
         $totalEgresos  = round(array_sum(array_column($datos['categorias'], 'total')), 2);
         $nPagos        = (int) array_sum(array_column($datos['metodos'], 'cantidad'));
         $nEgresos      = (int) array_sum(array_column($datos['categorias'], 'cantidad'));
+        $totalPorCobrar = round(array_sum(array_column($datos['cuentas_por_cobrar'], 'saldo')), 2);
+
 
         // Escenario 2: ningún movimiento financiero en el período
         if ($nPagos === 0 && $nEgresos === 0) {
@@ -186,14 +188,17 @@ class ReporteController
             'aviso'             => $datos['pagos_disponibles'] ? null
                 : 'Todavía no hay pagos registrados en el sistema, por eso los ingresos aparecen en cero. Se sumarán apenas el módulo de pagos empiece a guardarlos.',
             'resumen' => [
-                'ingresos'  => $totalIngresos,
-                'egresos'   => $totalEgresos,
-                'balance'   => round($totalIngresos - $totalEgresos, 2),
-                'n_pagos'   => $nPagos,
-                'n_egresos' => $nEgresos,
+                'ingresos'          => $totalIngresos,
+                'egresos'           => $totalEgresos,
+                'balance'           => round($totalIngresos - $totalEgresos, 2),
+                'por_cobrar'        => $totalPorCobrar,
+                'n_pagos'           => $nPagos,
+                'n_egresos'         => $nEgresos,
+                'n_cuentas_cobrar'  => count($datos['cuentas_por_cobrar']),
             ],
             'metodos'    => $conPorcentaje($datos['metodos'], Reporte::METODOS, $totalIngresos),
             'categorias' => $conPorcentaje($datos['categorias'], Reporte::CATEGORIAS, $totalEgresos),
+            'cuentas_por_cobrar' => $datos['cuentas_por_cobrar'],
             'serie'      => array_map(fn($p) => $p + ['etiqueta' => $this->etiquetaSerie($p['periodo'], $datos['agrupacion'])], $datos['serie']),
             'agrupacion' => $datos['agrupacion'],
             'gastos'     => array_map(fn($g) => [
@@ -203,7 +208,7 @@ class ReporteController
                 'concepto'      => $g['concepto'],
                 'monto'         => round((float) $g['monto'], 2),
                 'observaciones' => $g['observaciones'] ?? '',
-                'registrado_por'=> $g['registrado_por'],
+                'registrado_por' => $g['registrado_por'],
             ], $datos['gastos']),
         ]);
     }
@@ -256,8 +261,12 @@ class ReporteController
 
         try {
             $id = $this->model->crearEgreso([
-                'fecha' => $fecha, 'categoria' => $categoria, 'concepto' => $concepto, 'monto' => $monto,
-                'observaciones' => $obs, 'id_registrado_por' => (int) (AuthService::usuarioActual()['id'] ?? 0),
+                'fecha' => $fecha,
+                'categoria' => $categoria,
+                'concepto' => $concepto,
+                'monto' => $monto,
+                'observaciones' => $obs,
+                'id_registrado_por' => (int) (AuthService::usuarioActual()['id'] ?? 0),
             ]);
             Bitacora::registrar('EGRESO_REGISTRADO', "Gasto #{$id} «" . mb_substr($concepto, 0, 80) . "» por ₡" . number_format($monto, 2, ',', '.'));
             $this->responder(['ok' => true, 'id' => $id, 'mensaje' => 'El gasto quedó registrado.'], 201);
