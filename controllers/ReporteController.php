@@ -148,68 +148,169 @@ class ReporteController
     public function financiero(): void
     {
         $periodo = $this->periodo();
-        $datos   = $this->model->financiero($periodo['desde'], $periodo['hasta']);
 
-        Bitacora::registrar('REPORTE_FINANCIERO', "Reporte financiero del {$periodo['desde_fmt']} al {$periodo['hasta_fmt']}");
+        $metodo = trim((string) ($_GET['metodo'] ?? ''));
 
-        $totalIngresos = round(array_sum(array_column($datos['metodos'], 'total')), 2);
-        $totalEgresos  = round(array_sum(array_column($datos['categorias'], 'total')), 2);
-        $nPagos        = (int) array_sum(array_column($datos['metodos'], 'cantidad'));
-        $nEgresos      = (int) array_sum(array_column($datos['categorias'], 'cantidad'));
-        $totalPorCobrar = round(array_sum(array_column($datos['cuentas_por_cobrar'], 'saldo')), 2);
+        if ($metodo !== '' && !array_key_exists($metodo, Reporte::METODOS)) {
+            $this->responder([
+                'ok' => false,
+                'error' => 'El método de pago seleccionado no es válido.',
+            ], 400);
+        }
 
+        $datos = $this->model->financiero(
+            $periodo['desde'],
+            $periodo['hasta'],
+            $metodo
+        );
 
-        // Escenario 2: ningún movimiento financiero en el período
+        $metodoTexto = $metodo !== ''
+            ? (Reporte::METODOS[$metodo] ?? $metodo)
+            : 'Todos los métodos';
+
+        Bitacora::registrar(
+            'REPORTE_FINANCIERO',
+            "Reporte financiero del {$periodo['desde_fmt']} al {$periodo['hasta_fmt']} - Método: {$metodoTexto}"
+        );
+
+        $totalIngresos = round(
+            array_sum(array_column($datos['metodos'], 'total')),
+            2
+        );
+
+        $totalEgresos = round(
+            array_sum(array_column($datos['categorias'], 'total')),
+            2
+        );
+
+        $nPagos = (int) array_sum(
+            array_column($datos['metodos'], 'cantidad')
+        );
+
+        $nEgresos = (int) array_sum(
+            array_column($datos['categorias'], 'cantidad')
+        );
+
+        $totalPorCobrar = round(
+            array_sum(
+                array_column(
+                    $datos['cuentas_por_cobrar'],
+                    'saldo'
+                )
+            ),
+            2
+        );
+
         if ($nPagos === 0 && $nEgresos === 0) {
             $this->responder([
-                'ok'                => true,
-                'vacio'             => true,
-                'periodo'           => $periodo,
+                'ok' => true,
+                'vacio' => true,
+                'periodo' => $periodo,
                 'pagos_disponibles' => $datos['pagos_disponibles'],
-                'mensaje'           => 'No existen datos financieros para el período seleccionado.',
+                'metodo' => $metodo,
+                'metodo_texto' => $metodoTexto,
+                'mensaje' => $metodo !== ''
+                    ? "No existen ingresos registrados con {$metodoTexto} para el período seleccionado."
+                    : 'No existen datos financieros para el período seleccionado.',
             ]);
         }
 
-        $conPorcentaje = function (array $filas, array $etiquetas, float $total): array {
-            return array_map(fn($f) => [
-                'clave'      => $f['clave'],
-                'texto'      => $etiquetas[$f['clave']] ?? $f['clave'],
-                'cantidad'   => $f['cantidad'],
-                'total'      => $f['total'],
-                'porcentaje' => $total > 0 ? round($f['total'] * 100 / $total, 1) : 0.0,
-            ], $filas);
+        $conPorcentaje = function (
+            array $filas,
+            array $etiquetas,
+            float $total
+        ): array {
+            return array_map(
+                fn($f) => [
+                    'clave' => $f['clave'],
+                    'texto' => $etiquetas[$f['clave']] ?? $f['clave'],
+                    'cantidad' => $f['cantidad'],
+                    'total' => $f['total'],
+                    'porcentaje' => $total > 0
+                        ? round($f['total'] * 100 / $total, 1)
+                        : 0.0,
+                ],
+                $filas
+            );
         };
 
         $this->responder([
-            'ok'                => true,
-            'vacio'             => false,
-            'periodo'           => $periodo + ['dias' => $datos['dias']],
-            'pagos_disponibles' => $datos['pagos_disponibles'],
-            'aviso'             => $datos['pagos_disponibles'] ? null
-                : 'Todavía no hay pagos registrados en el sistema, por eso los ingresos aparecen en cero. Se sumarán apenas el módulo de pagos empiece a guardarlos.',
-            'resumen' => [
-                'ingresos'          => $totalIngresos,
-                'egresos'           => $totalEgresos,
-                'balance'           => round($totalIngresos - $totalEgresos, 2),
-                'por_cobrar'        => $totalPorCobrar,
-                'n_pagos'           => $nPagos,
-                'n_egresos'         => $nEgresos,
-                'n_cuentas_cobrar'  => count($datos['cuentas_por_cobrar']),
+            'ok' => true,
+            'vacio' => false,
+
+            'periodo' => $periodo + [
+                'dias' => $datos['dias']
             ],
-            'metodos'    => $conPorcentaje($datos['metodos'], Reporte::METODOS, $totalIngresos),
-            'categorias' => $conPorcentaje($datos['categorias'], Reporte::CATEGORIAS, $totalEgresos),
+
+            'metodo' => $metodo,
+            'metodo_texto' => $metodoTexto,
+
+            'pagos_disponibles' => $datos['pagos_disponibles'],
+
+            'aviso' => $datos['pagos_disponibles']
+                ? null
+                : 'Todavía no hay pagos registrados en el sistema, por eso los ingresos aparecen en cero. Se sumarán apenas el módulo de pagos empiece a guardarlos.',
+
+            'resumen' => [
+                'ingresos' => $totalIngresos,
+                'egresos' => $totalEgresos,
+                'balance' => round(
+                    $totalIngresos - $totalEgresos,
+                    2
+                ),
+                'por_cobrar' => $totalPorCobrar,
+                'n_pagos' => $nPagos,
+                'n_egresos' => $nEgresos,
+                'n_cuentas_cobrar' => count(
+                    $datos['cuentas_por_cobrar']
+                ),
+            ],
+
+            'metodos' => $conPorcentaje(
+                $datos['metodos'],
+                Reporte::METODOS,
+                $totalIngresos
+            ),
+
+            'categorias' => $conPorcentaje(
+                $datos['categorias'],
+                Reporte::CATEGORIAS,
+                $totalEgresos
+            ),
+
             'cuentas_por_cobrar' => $datos['cuentas_por_cobrar'],
-            'serie'      => array_map(fn($p) => $p + ['etiqueta' => $this->etiquetaSerie($p['periodo'], $datos['agrupacion'])], $datos['serie']),
+
+            'serie' => array_map(
+                fn($p) => $p + [
+                    'etiqueta' => $this->etiquetaSerie(
+                        $p['periodo'],
+                        $datos['agrupacion']
+                    )
+                ],
+                $datos['serie']
+            ),
+
             'agrupacion' => $datos['agrupacion'],
-            'gastos'     => array_map(fn($g) => [
-                'id'            => (int) $g['id_egreso'],
-                'fecha_fmt'     => date('d/m/Y', strtotime($g['fecha'])),
-                'categoria'     => Reporte::CATEGORIAS[$g['categoria']] ?? $g['categoria'],
-                'concepto'      => $g['concepto'],
-                'monto'         => round((float) $g['monto'], 2),
-                'observaciones' => $g['observaciones'] ?? '',
-                'registrado_por' => $g['registrado_por'],
-            ], $datos['gastos']),
+
+            'gastos' => array_map(
+                fn($g) => [
+                    'id' => (int) $g['id_egreso'],
+                    'fecha_fmt' => date(
+                        'd/m/Y',
+                        strtotime($g['fecha'])
+                    ),
+                    'categoria' => Reporte::CATEGORIAS[$g['categoria']]
+                        ?? $g['categoria'],
+                    'concepto' => $g['concepto'],
+                    'monto' => round(
+                        (float) $g['monto'],
+                        2
+                    ),
+                    'observaciones' => $g['observaciones'] ?? '',
+                    'registrado_por' => $g['registrado_por'],
+                ],
+                $datos['gastos']
+            ),
         ]);
     }
 

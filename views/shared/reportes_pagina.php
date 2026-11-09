@@ -1,4 +1,5 @@
 <?php
+
 /**
  * reportes_pagina.php — REP-01 y REP-02
  * Reportes financiero y de citas para el administrador.
@@ -31,17 +32,46 @@
             <p class="rep-ayuda">Elija el período y presione «Generar Reporte» para ver los ingresos, los egresos y el balance general.</p>
 
             <div class="rep-filtros">
-                <label class="rep-campo">Fecha inicial
-                    <input type="date" id="rep-fin-desde" onchange="repQuitarError('rep-fin')">
+                <label class="rep-campo">
+                    Fecha inicial
+                    <input
+                        type="date"
+                        id="rep-fin-desde"
+                        onchange="repQuitarError('rep-fin')">
                 </label>
-                <label class="rep-campo">Fecha final
-                    <input type="date" id="rep-fin-hasta" onchange="repQuitarError('rep-fin')">
+
+                <label class="rep-campo">
+                    Fecha final
+                    <input
+                        type="date"
+                        id="rep-fin-hasta"
+                        onchange="repQuitarError('rep-fin')">
                 </label>
-                <button class="btn-odent" id="rep-fin-btn" onclick="repFinGenerar()">
-                    <i class="bi bi-bar-chart-line"></i> Generar Reporte
+
+                <label class="rep-campo">
+                    Método de pago
+                    <select id="rep-fin-metodo">
+                        <option value="">Todos los métodos</option>
+                        <option value="sinpe">SINPE Móvil</option>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="tarjeta">Tarjeta</option>
+                        <option value="transferencia">Transferencia</option>
+                    </select>
+                </label>
+
+                <button
+                    class="btn-odent"
+                    id="rep-fin-btn"
+                    onclick="repFinGenerar()">
+                    <i class="bi bi-bar-chart-line"></i>
+                    Generar reporte
                 </button>
-                <button class="btn-outline-odent rep-btn-derecha" onclick="repGastoAbrir()">
-                    <i class="bi bi-plus-lg"></i> Registrar gasto
+
+                <button
+                    class="btn-outline-odent rep-btn-derecha"
+                    onclick="repGastoAbrir()">
+                    <i class="bi bi-plus-lg"></i>
+                    Registrar gasto
                 </button>
             </div>
         </div>

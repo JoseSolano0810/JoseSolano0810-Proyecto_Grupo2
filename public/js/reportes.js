@@ -657,14 +657,15 @@ async function repPost(accion, cuerpo) {
 }
 
 async function repFinGenerar() {
-    const periodo =
-        repPeriodoValido('rep-fin');
-
+    const periodo = repPeriodoValido('rep-fin');
     if (!periodo) {
         return;
     }
-
-    await repFinCargar(periodo);
+    const metodo = _rep('rep-fin-metodo')?.value || '';
+    await repFinCargar({
+        ...periodo,
+        metodo
+    });
 }
 
 async function repFinCargar(periodo) {
