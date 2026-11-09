@@ -171,76 +171,227 @@ class Reporte
      * Ingresos (tabla pago), egresos (tabla egreso) y su evolución en el período [$desde, $hasta].
      * Si el módulo de Finanzas todavía no creó la tabla `pago`, los ingresos quedan en cero.
      */
-    public function financiero(string $desde, string $hasta): array
+    public function financiero(string $desde, string $hasta, string $metodo = ''): array
     {
-        $params   = [$desde, $hasta];
+        $params = [$desde, $hasta];
+        $paramsPagos = [$desde, $hasta];
+
         $hayPagos = $this->existeTabla('pago');
         [$porMes, $dias] = $this->porMes($desde, $hasta);
 
-        // Ingresos por método de pago
+        $filtroMetodo = '';
+
+        if ($metodo !== '') {
+            $filtroMetodo = ' AND metodo = ?';
+            $paramsPagos[] = $metodo;
+        }
+
         $metodos = [];
+
         if ($hayPagos) {
             $stmt = $this->db->prepare(
                 "SELECT metodo, COUNT(*) AS n, SUM(monto) AS total
-                 FROM pago WHERE fecha_pago BETWEEN ? AND ?
-                 GROUP BY metodo ORDER BY total DESC"
+             FROM pago
+             WHERE fecha_pago BETWEEN ? AND ?
+             $filtroMetodo
+             GROUP BY metodo
+             ORDER BY total DESC"
             );
-            $stmt->execute($params);
-            $metodos = array_map(fn($r) => [
-                'clave' => $r['metodo'], 'cantidad' => (int) $r['n'], 'total' => round((float) $r['total'], 2),
-            ], $stmt->fetchAll());
+
+            $stmt->execute($paramsPagos);
+
+            $metodos = array_map(
+                fn($r) => [
+                    'clave' => $r['metodo'],
+                    'cantidad' => (int) $r['n'],
+                    'total' => round((float) $r['total'], 2),
+                ],
+                $stmt->fetchAll()
+            );
         }
 
-        // Egresos por categoría
         $stmt = $this->db->prepare(
             "SELECT categoria, COUNT(*) AS n, SUM(monto) AS total
-             FROM egreso WHERE fecha BETWEEN ? AND ?
-             GROUP BY categoria ORDER BY total DESC"
+         FROM egreso
+         WHERE fecha BETWEEN ? AND ?
+         GROUP BY categoria
+         ORDER BY total DESC"
         );
-        $stmt->execute($params);
-        $categorias = array_map(fn($r) => [
-            'clave' => $r['categoria'], 'cantidad' => (int) $r['n'], 'total' => round((float) $r['total'], 2),
-        ], $stmt->fetchAll());
 
-        // Evolución: ingresos y egresos por día (o por mes)
-        $ing = [];
-        if ($hayPagos) {
-            $e = $porMes ? "DATE_FORMAT(fecha_pago, '%Y-%m')" : "fecha_pago";
-            $stmt = $this->db->prepare("SELECT $e AS periodo, SUM(monto) AS total FROM pago WHERE fecha_pago BETWEEN ? AND ? GROUP BY periodo");
-            $stmt->execute($params);
-            foreach ($stmt->fetchAll() as $r) $ing[$r['periodo']] = round((float) $r['total'], 2);
+        $stmt->execute($params);
+
+        $categorias = array_map(
+            fn($r) => [
+                'clave' => $r['categoria'],
+                'cantidad' => (int) $r['n'],
+                'total' => round((float) $r['total'], 2),
+            ],
+            $stmt->fetchAll()
+        );
+
+        $cuentasPorCobrar = [];
+
+        if ($this->existeTabla('cotizacion')) {
+            if ($hayPagos) {
+                $stmt = $this->db->query(
+                    "SELECT
+                    c.id_cotizacion,
+                    c.id_paciente,
+                    u.nombre_completo AS paciente,
+                    c.total,
+                    COALESCE(SUM(p.monto), 0) AS pagado,
+                    GREATEST(
+                        c.total - COALESCE(SUM(p.monto), 0),
+                        0
+                    ) AS saldo
+                 FROM cotizacion c
+                 INNER JOIN paciente pa
+                    ON pa.id_paciente = c.id_paciente
+                 INNER JOIN usuario u
+                    ON u.id_usuario = pa.id_usuario
+                 LEFT JOIN pago p
+                    ON p.id_cotizacion = c.id_cotizacion
+                 WHERE c.estado <> 'rechazada'
+                 GROUP BY
+                    c.id_cotizacion,
+                    c.id_paciente,
+                    u.nombre_completo,
+                    c.total
+                 HAVING saldo > 0.009
+                 ORDER BY saldo DESC"
+                );
+            } else {
+                $stmt = $this->db->query(
+                    "SELECT
+                    c.id_cotizacion,
+                    c.id_paciente,
+                    u.nombre_completo AS paciente,
+                    c.total,
+                    0 AS pagado,
+                    c.total AS saldo
+                 FROM cotizacion c
+                 INNER JOIN paciente pa
+                    ON pa.id_paciente = c.id_paciente
+                 INNER JOIN usuario u
+                    ON u.id_usuario = pa.id_usuario
+                 WHERE c.estado <> 'rechazada'
+                   AND c.total > 0
+                 ORDER BY c.total DESC"
+                );
+            }
+
+            $cuentasPorCobrar = array_map(
+                fn($r) => [
+                    'id_cotizacion' => (int) $r['id_cotizacion'],
+                    'id_paciente' => (int) $r['id_paciente'],
+                    'paciente' => $r['paciente'],
+                    'total' => round((float) $r['total'], 2),
+                    'pagado' => round((float) $r['pagado'], 2),
+                    'saldo' => round((float) $r['saldo'], 2),
+                ],
+                $stmt->fetchAll()
+            );
         }
 
-        $e = $porMes ? "DATE_FORMAT(fecha, '%Y-%m')" : "fecha";
-        $stmt = $this->db->prepare("SELECT $e AS periodo, SUM(monto) AS total FROM egreso WHERE fecha BETWEEN ? AND ? GROUP BY periodo");
-        $stmt->execute($params);
-        $egr = [];
-        foreach ($stmt->fetchAll() as $r) $egr[$r['periodo']] = round((float) $r['total'], 2);
+        $ing = [];
 
-        $periodos = array_unique(array_merge(array_keys($ing), array_keys($egr)));
-        sort($periodos);
-        $serie = array_map(fn($p) => ['periodo' => $p, 'ingresos' => $ing[$p] ?? 0.0, 'egresos' => $egr[$p] ?? 0.0], $periodos);
+        if ($hayPagos) {
+            $expresionPago = $porMes
+                ? "DATE_FORMAT(fecha_pago, '%Y-%m')"
+                : "fecha_pago";
 
-        // Gastos del período, para poder revisarlos o corregirlos
+            $stmt = $this->db->prepare(
+                "SELECT
+                $expresionPago AS periodo,
+                SUM(monto) AS total
+             FROM pago
+             WHERE fecha_pago BETWEEN ? AND ?
+             $filtroMetodo
+             GROUP BY periodo"
+            );
+
+            $stmt->execute($paramsPagos);
+
+            foreach ($stmt->fetchAll() as $r) {
+                $ing[$r['periodo']] =
+                    round((float) $r['total'], 2);
+            }
+        }
+
+        $expresionEgreso = $porMes
+            ? "DATE_FORMAT(fecha, '%Y-%m')"
+            : "fecha";
+
         $stmt = $this->db->prepare(
-            "SELECT e.id_egreso, e.fecha, e.categoria, e.concepto, e.monto, e.observaciones,
-                    COALESCE(u.nombre_completo, 'Sistema') AS registrado_por
-             FROM egreso e
-             LEFT JOIN usuario u ON u.id_usuario = e.id_registrado_por
-             WHERE e.fecha BETWEEN ? AND ?
-             ORDER BY e.fecha DESC, e.id_egreso DESC
-             LIMIT 200"
+            "SELECT
+            $expresionEgreso AS periodo,
+            SUM(monto) AS total
+         FROM egreso
+         WHERE fecha BETWEEN ? AND ?
+         GROUP BY periodo"
         );
+
         $stmt->execute($params);
+
+        $egr = [];
+
+        foreach ($stmt->fetchAll() as $r) {
+            $egr[$r['periodo']] =
+                round((float) $r['total'], 2);
+        }
+
+        $periodos = array_unique(
+            array_merge(
+                array_keys($ing),
+                array_keys($egr)
+            )
+        );
+
+        sort($periodos);
+
+        $serie = array_map(
+            fn($p) => [
+                'periodo' => $p,
+                'ingresos' => $ing[$p] ?? 0.0,
+                'egresos' => $egr[$p] ?? 0.0,
+            ],
+            $periodos
+        );
+
+        $stmt = $this->db->prepare(
+            "SELECT
+            e.id_egreso,
+            e.fecha,
+            e.categoria,
+            e.concepto,
+            e.monto,
+            e.observaciones,
+            COALESCE(
+                u.nombre_completo,
+                'Sistema'
+            ) AS registrado_por
+         FROM egreso e
+         LEFT JOIN usuario u
+            ON u.id_usuario = e.id_registrado_por
+         WHERE e.fecha BETWEEN ? AND ?
+         ORDER BY
+            e.fecha DESC,
+            e.id_egreso DESC
+         LIMIT 200"
+        );
+
+        $stmt->execute($params);
+        $gastos = $stmt->fetchAll();
 
         return [
             'pagos_disponibles' => $hayPagos,
-            'metodos'           => $metodos,
-            'categorias'        => $categorias,
-            'serie'             => $serie,
-            'gastos'            => $stmt->fetchAll(),
-            'agrupacion'        => $porMes ? 'mes' : 'dia',
-            'dias'              => $dias,
+            'metodos' => $metodos,
+            'categorias' => $categorias,
+            'serie' => $serie,
+            'gastos' => $gastos,
+            'cuentas_por_cobrar' => $cuentasPorCobrar,
+            'agrupacion' => $porMes ? 'mes' : 'dia',
+            'dias' => $dias,
         ];
     }
 
@@ -252,7 +403,10 @@ class Reporte
             "INSERT INTO egreso (fecha, categoria, concepto, monto, observaciones, id_registrado_por)
              VALUES (?, ?, ?, ?, ?, ?)"
         )->execute([
-            $d['fecha'], $d['categoria'], $d['concepto'], $d['monto'],
+            $d['fecha'],
+            $d['categoria'],
+            $d['concepto'],
+            $d['monto'],
             ($d['observaciones'] ?? '') !== '' ? $d['observaciones'] : null,
             (int) $d['id_registrado_por'],
         ]);

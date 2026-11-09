@@ -12,7 +12,13 @@ class PagoController
 
     public function __construct()
     {
-        AuthService::requerir(['recepcionista', 'administrador', 'odontologo']);
+        AuthService::requerir([
+            'recepcionista',
+            'asistente_dental',
+            'administrador',
+            'odontologo'
+        ]);
+
         $this->model           = new Pago();
         $this->cotizacionModel = new Cotizacion();
     }
@@ -27,22 +33,82 @@ class PagoController
         try {
             $rows = $this->model->obtenerTodos();
             $out  = [];
+
             foreach ($rows as $r) {
                 $out[] = [
-                    'id_pago'         => (int) $r['id_pago'],
-                    'id_cotizacion'   => (int) $r['id_cotizacion'],
-                    'paciente'        => $r['paciente_nombre']    ?? '—',
-                    'monto'           => (float) $r['monto'],
-                    'metodo'          => ucfirst($r['metodo']),
-                    'referencia'      => $r['referencia']         ?? '',
-                    'fecha'           => date('d/m/Y', strtotime($r['fecha_pago'])),
-                    'cotizacion_total' => (float) $r['cotizacion_total'],
-                    'cotizacion_estado' => $r['cotizacion_estado'],
+                    'id_pago'            => (int) $r['id_pago'],
+                    'id_cotizacion'      => (int) $r['id_cotizacion'],
+                    'paciente'           => $r['paciente_nombre'] ?? '—',
+                    'monto'              => (float) $r['monto'],
+                    'metodo'             => ucfirst($r['metodo']),
+                    'referencia'         => $r['referencia'] ?? '',
+                    'fecha'              => date(
+                        'd/m/Y',
+                        strtotime($r['fecha_pago'])
+                    ),
+                    'cotizacion_total'   => (float) $r['cotizacion_total'],
+                    'cotizacion_estado'  => $r['cotizacion_estado'],
                 ];
             }
+
             return $out;
+
         } catch (\Throwable $e) {
             return [];
+        }
+    }
+
+    /* ── FIN-05 Estado financiero del paciente ──────────────────── */
+
+    /**
+     * GET ?accion=pagos.estadoFinanciero&id_paciente=1
+     */
+    public function estadoFinanciero(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            $idPaciente = (int) ($_GET['id_paciente'] ?? 0);
+
+            if ($idPaciente <= 0) {
+                http_response_code(400);
+
+                echo json_encode([
+                    'ok'      => false,
+                    'mensaje' => 'Debe indicar un paciente válido.',
+                ]);
+
+                return;
+            }
+
+            $datos = $this->model->estadoFinancieroPaciente($idPaciente);
+
+            if (!$datos) {
+                http_response_code(404);
+
+                echo json_encode([
+                    'ok'      => false,
+                    'mensaje' => 'Paciente no encontrado.',
+                ]);
+
+                return;
+            }
+
+            echo json_encode(
+                [
+                    'ok' => true,
+                    'data' => $datos,
+                ],
+                JSON_UNESCAPED_UNICODE
+            );
+
+        } catch (\Throwable $e) {
+            http_response_code(500);
+
+            echo json_encode([
+                'ok'      => false,
+                'mensaje' => 'No se pudo consultar el estado financiero.',
+            ]);
         }
     }
 
@@ -50,57 +116,85 @@ class PagoController
 
     /**
      * POST ?accion=pagos.registrar
-     * Body JSON: id_cotizacion, monto, metodo, referencia(optional),
-     *            observaciones(optional), fecha_pago(YYYY-MM-DD, default hoy)
      */
     public function registrar(): void
     {
         header('Content-Type: application/json; charset=utf-8');
+
         try {
             $datos  = $this->bodyJson();
             $sesion = AuthService::usuarioActual();
 
-            $idCotizacion = (int)   ($datos['id_cotizacion'] ?? 0);
-            $monto        = (float) ($datos['monto']         ?? 0);
-            $metodo       = trim($datos['metodo']            ?? '');
-            $fechaPago    = trim($datos['fecha_pago']        ?? date('Y-m-d'));
+            $idCotizacion = (int) ($datos['id_cotizacion'] ?? 0);
+            $monto        = (float) ($datos['monto'] ?? 0);
+            $metodo       = trim($datos['metodo'] ?? '');
+            $fechaPago    = trim(
+                $datos['fecha_pago'] ?? date('Y-m-d')
+            );
 
-            $metodosValidos = ['sinpe', 'efectivo', 'tarjeta', 'transferencia'];
-            if (!$idCotizacion || $monto <= 0 || !in_array($metodo, $metodosValidos, true)) {
+            $metodosValidos = [
+                'sinpe',
+                'efectivo',
+                'tarjeta',
+                'transferencia'
+            ];
+
+            if (
+                !$idCotizacion ||
+                $monto <= 0 ||
+                !in_array($metodo, $metodosValidos, true)
+            ) {
                 http_response_code(400);
+
                 echo json_encode([
                     'ok'      => false,
                     'mensaje' => 'id_cotizacion, monto > 0 y método válido (sinpe/efectivo/tarjeta/transferencia) son requeridos.',
                 ]);
+
                 return;
             }
 
-            // Verificar que la cotización existe
-            $cotizacion = $this->cotizacionModel->obtenerPorId($idCotizacion);
+            $cotizacion = $this->cotizacionModel->obtenerPorId(
+                $idCotizacion
+            );
+
             if (!$cotizacion) {
                 http_response_code(404);
-                echo json_encode(['ok' => false, 'mensaje' => 'Cotización no encontrada.']);
+
+                echo json_encode([
+                    'ok'      => false,
+                    'mensaje' => 'Cotización no encontrada.',
+                ]);
+
                 return;
             }
 
-            // Registrar el pago
             $idPago = $this->model->crear([
-                'id_cotizacion'    => $idCotizacion,
-                'monto'            => $monto,
-                'metodo'           => $metodo,
-                'referencia'       => $datos['referencia']    ?? '',
-                'observaciones'    => $datos['observaciones'] ?? '',
+                'id_cotizacion'     => $idCotizacion,
+                'monto'             => $monto,
+                'metodo'            => $metodo,
+                'referencia'        => $datos['referencia'] ?? '',
+                'observaciones'     => $datos['observaciones'] ?? '',
                 'id_registrado_por' => $sesion['id'],
-                'fecha_pago'       => $fechaPago,
+                'fecha_pago'        => $fechaPago,
             ]);
 
-            // Calcular total pagado y actualizar estado si se saldó
-            $totalPagado = $this->model->totalPagado($idCotizacion);
-            $totalCot    = (float) $cotizacion['total'];
-            $saldoPend   = max(0, $totalCot - $totalPagado);
+            $totalPagado = $this->model->totalPagado(
+                $idCotizacion
+            );
+
+            $totalCot = (float) $cotizacion['total'];
+
+            $saldoPend = max(
+                0,
+                $totalCot - $totalPagado
+            );
 
             if ($totalPagado >= $totalCot) {
-                $this->cotizacionModel->cambiarEstado($idCotizacion, 'pagada');
+                $this->cotizacionModel->cambiarEstado(
+                    $idCotizacion,
+                    'pagada'
+                );
             }
 
             Bitacora::registrar(
@@ -111,16 +205,25 @@ class PagoController
             );
 
             echo json_encode([
-                'ok'           => true,
-                'id_pago'      => $idPago,
-                'total_pagado' => $totalPagado,
-                'saldo_pendiente' => $saldoPend,
-                'estado_cotizacion' => $totalPagado >= $totalCot ? 'pagada' : $cotizacion['estado'],
-                'mensaje'      => 'Pago registrado correctamente.',
+                'ok'                  => true,
+                'id_pago'             => $idPago,
+                'total_pagado'        => $totalPagado,
+                'saldo_pendiente'     => $saldoPend,
+                'estado_cotizacion'   =>
+                    $totalPagado >= $totalCot
+                        ? 'pagada'
+                        : $cotizacion['estado'],
+                'mensaje'             =>
+                    'Pago registrado correctamente.',
             ]);
+
         } catch (\Throwable $e) {
             http_response_code(500);
-            echo json_encode(['ok' => false, 'mensaje' => $e->getMessage()]);
+
+            echo json_encode([
+                'ok'      => false,
+                'mensaje' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -128,13 +231,20 @@ class PagoController
 
     private function bodyJson(): array
     {
-        // Soporta tanto JSON (odontologo/guardarJSON) como FormData (recepcionista)
         if (!empty($_POST)) {
             return $_POST;
         }
-        $raw  = file_get_contents('php://input');
-        if (!$raw) return [];
+
+        $raw = file_get_contents('php://input');
+
+        if (!$raw) {
+            return [];
+        }
+
         $data = json_decode($raw, true);
-        return is_array($data) ? $data : [];
+
+        return is_array($data)
+            ? $data
+            : [];
     }
 }
