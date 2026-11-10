@@ -763,20 +763,20 @@
                 $hoy = date('d/m/Y');
                 $cobrado_hoy    = array_sum(array_map(fn($p) => $p['monto'], array_filter($pagos, fn($p) => $p['fecha'] === $hoy)));
                 $pendiente_cobro = array_sum(array_map(fn($c) => $c['total'], array_filter($cotizaciones, fn($c) => in_array($c['estado'], ['pendiente', 'aprobada'], true))));
-                $fmt = fn($n) => $n >= 1000000 ? '₡' . number_format($n / 1000000, 1) . 'M' : ($n >= 1000 ? '₡' . number_format($n / 1000, 0) . 'K' : '₡' . number_format($n, 0));
+                $fmt = fn($n) => '₡' . number_format($n, 0, ',', '.');
                 ?>
                 <div class="kpi-grid" style="margin-bottom:22px;">
                     <div class="kpi-card">
                         <div class="kpi-icono verde"><i class="bi bi-cash-stack"></i></div>
                         <div>
-                            <div class="kpi-numero"><?= $fmt($cobrado_hoy) ?></div>
+                            <div class="kpi-numero" data-kpi="cobrado-hoy"><?= $fmt($cobrado_hoy) ?></div>
                             <div class="kpi-etiqueta">Cobrado hoy</div>
                         </div>
                     </div>
                     <div class="kpi-card">
                         <div class="kpi-icono amarillo"><i class="bi bi-hourglass"></i></div>
                         <div>
-                            <div class="kpi-numero"><?= $fmt($pendiente_cobro) ?></div>
+                            <div class="kpi-numero" data-kpi="pendiente-cobro"><?= $fmt($pendiente_cobro) ?></div>
                             <div class="kpi-etiqueta">Pendiente de cobro</div>
                         </div>
                     </div>
@@ -3034,6 +3034,7 @@
                     <td>#${p.id_cotizacion}</td>
                     <td><span class="badge-estado badge-${p.cotizacion_estado === 'pagada' ? 'completada' : 'pendiente'}">${p.cotizacion_estado ? p.cotizacion_estado.charAt(0).toUpperCase()+p.cotizacion_estado.slice(1) : '—'}</span></td>
                 </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:#888;">Sin pagos registrados</td></tr>';
+                if (window.actualizarKpisCobro) window.actualizarKpisCobro();
             } catch (e) {}
         }
 

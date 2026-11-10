@@ -87,7 +87,7 @@
                                     'monto'
                                 ));
                                 ?>
-                                <div class="kpi-numero">₡<?= $cobradoHoy > 0 ? number_format($cobradoHoy / 1000, 0) . 'K' : '0' ?></div>
+                                <div class="kpi-numero" data-kpi="cobrado-hoy">₡<?= number_format($cobradoHoy, 0, ',', '.') ?></div>
                                 <div class="kpi-etiqueta">Cobrado hoy</div>
                             </div>
                         </div>
@@ -357,7 +357,7 @@
                         'monto'
                     ));
                     $pendiente   = array_sum(array_filter(array_map(
-                        fn($c) => $c['estado'] !== 'pagada' ? (float)$c['total'] : 0,
+                        fn($c) => in_array($c['estado'], ['pendiente', 'aprobada'], true) ? (float)$c['total'] : 0,
                         $cotizaciones
                     )));
                     ?>
@@ -365,7 +365,7 @@
                         <div class="kpi-card">
                             <div class="kpi-icono verde"><i class="bi bi-cash-stack"></i></div>
                             <div>
-                                <div class="kpi-numero">₡<?= $cobradoHoy2 > 0 ? number_format($cobradoHoy2 / 1000, 0) . 'K' : '0' ?></div>
+                                <div class="kpi-numero" data-kpi="cobrado-hoy">₡<?= number_format($cobradoHoy2, 0, ',', '.') ?></div>
                                 <div class="kpi-etiqueta">Cobrado hoy</div>
                             </div>
                         </div>
@@ -373,7 +373,7 @@
                         <div class="kpi-card">
                             <div class="kpi-icono amarillo"><i class="bi bi-hourglass"></i></div>
                             <div>
-                                <div class="kpi-numero">₡<?= $pendiente > 0 ? number_format($pendiente / 1000, 0) . 'K' : '0' ?></div>
+                                <div class="kpi-numero" data-kpi="pendiente-cobro">₡<?= number_format($pendiente, 0, ',', '.') ?></div>
                                 <div class="kpi-etiqueta">Pendiente de cobro</div>
                             </div>
                         </div>
@@ -2658,6 +2658,7 @@
                 <td>#${p.id_cotizacion}</td>
                 <td><span class="badge-estado badge-${p.cotizacion_estado === 'pagada' ? 'completada' : 'confirmada'}">${p.cotizacion_estado ? p.cotizacion_estado.charAt(0).toUpperCase()+p.cotizacion_estado.slice(1) : '—'}</span></td>
             </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:#888;">Sin pagos registrados</td></tr>';
+                if (window.actualizarKpisCobro) window.actualizarKpisCobro();
                 } catch (e) {}
             }
 

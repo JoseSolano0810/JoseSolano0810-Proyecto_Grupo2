@@ -158,6 +158,31 @@ $cotx_clinica = defined('CLINICA_NOMBRE') ? (string) CLINICA_NOMBRE : 'Odent Cen
                 tbody.innerHTML = data.length ?
                     data.map(filaCotizacion).join('') :
                     `<tr><td colspan="${cols}" style="text-align:center;color:#888;">Sin cotizaciones registradas</td></tr>`;
+                window.actualizarKpisCobro();
+            } catch (e) {}
+        };
+
+        /* Refresca los KPI «Cobrado hoy» y «Pendiente de cobro» sin recargar la página */
+        window.actualizarKpisCobro = async function() {
+            const elCobrado = document.querySelectorAll('[data-kpi="cobrado-hoy"]');
+            const elPendiente = document.querySelectorAll('[data-kpi="pendiente-cobro"]');
+            if (!elCobrado.length && !elPendiente.length) return;
+            const colones = (n) => '₡' + Math.round(n).toLocaleString('es-CR', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+            try {
+                const [pagos, cots] = await Promise.all([api('pagos.listar'), api('cotizaciones.listar')]);
+                if (Array.isArray(pagos.data)) {
+                    const d = new Date();
+                    const hoy = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+                    const total = pagos.data.filter((p) => p.fecha === hoy).reduce((s, p) => s + Number(p.monto), 0);
+                    elCobrado.forEach((el) => el.textContent = colones(total));
+                }
+                if (Array.isArray(cots.data)) {
+                    const total = cots.data.filter((c) => ['pendiente', 'aprobada'].includes(c.estado)).reduce((s, c) => s + Number(c.total), 0);
+                    elPendiente.forEach((el) => el.textContent = colones(total));
+                }
             } catch (e) {}
         };
 
