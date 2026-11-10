@@ -79,6 +79,10 @@
             <a class="sidebar-enlace <?= $pagina_activa === 'reportes' ? 'activo' : '' ?>" onclick="mostrarPagina('reportes')">
                 <i class="bi bi-bar-chart-line"></i> Reportes
             </a>
+
+            <a class="sidebar-enlace <?= $pagina_activa === 'asistente-reportes' ? 'activo' : '' ?>" onclick="mostrarPagina('asistente-reportes')">
+                <i class="bi bi-robot"></i> Reportes del asistente
+            </a>
             <?php endif; ?>
 
             <?php if ($rol === 'administrador'): ?>

@@ -1,207 +1,235 @@
 <?php
 
+require_once ROOT_PATH . '/models/Pago.php';
 require_once ROOT_PATH . '/models/Cotizacion.php';
 require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/AuthService.php';
 
-class CotizacionController
+class PagoController
 {
-    private Cotizacion $model;
-    private const IVA = 0.13;
+    private Pago       $model;
+    private Cotizacion $cotizacionModel;
 
     public function __construct()
     {
-        AuthService::requerir(['recepcionista', 'administrador', 'odontologo']);
-        $this->model = new Cotizacion();
+        AuthService::requerir([
+            'recepcionista',
+            'asistente_dental',
+            'administrador',
+            'odontologo'
+        ]);
+
+        $this->model           = new Pago();
+        $this->cotizacionModel = new Cotizacion();
     }
 
-    /* ── GET (para cargarPanel) ──────────────────────────────────── */
+    /* ── Para cargarPanel ────────────────────────────────────────── */
 
     /**
-     * Retorna todas las cotizaciones formateadas para la vista PHP.
-     * Siempre devuelve un array (nunca lanza excepción pública).
+     * Devuelve todos los pagos formateados para la vista PHP.
      */
     public function listar(): array
     {
         try {
-            $rows = $this->model->obtenerTodas();
+            $rows = $this->model->obtenerTodos();
             $out  = [];
+
             foreach ($rows as $r) {
                 $out[] = [
+                    'id_pago'            => (int) $r['id_pago'],
                     'id_cotizacion'      => (int) $r['id_cotizacion'],
-                    'id_tratamiento'     => (int) $r['id_tratamiento'],
-                    'id_paciente'        => (int) $r['id_paciente'],
-                    'paciente'           => $r['paciente_nombre']    ?? '—',
-                    'tratamiento'        => $r['tratamiento_nombre'] ?? '—',
-                    'descripcion'        => $r['descripcion']        ?? '',
-                    'subtotal'           => (float) $r['subtotal'],
-                    'descuento'          => (float) $r['descuento'],
-                    'iva'                => (float) $r['iva'],
-                    'total'              => (float) $r['total'],
-                    'estado'             => $r['estado'],
-                    'observaciones'      => $r['observaciones'] ?? '',
-                    'fecha'              => date('d/m/Y', strtotime($r['created_at'])),
+                    'paciente'           => $r['paciente_nombre'] ?? '—',
+                    'monto'              => (float) $r['monto'],
+                    'metodo'             => ucfirst($r['metodo']),
+                    'referencia'         => $r['referencia'] ?? '',
+                    'fecha'              => date(
+                        'd/m/Y',
+                        strtotime($r['fecha_pago'])
+                    ),
+                    'cotizacion_total'   => (float) $r['cotizacion_total'],
+                    'cotizacion_estado'  => $r['cotizacion_estado'],
                 ];
             }
+
             return $out;
+
         } catch (\Throwable $e) {
-            // Si la tabla aún no existe en el primer arranque devolvemos []
             return [];
+        }
+    }
+
+    /* ── FIN-05 Estado financiero del paciente ──────────────────── */
+
+    /**
+     * GET ?accion=pagos.estadoFinanciero&id_paciente=1
+     */
+    public function estadoFinanciero(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            $idPaciente = (int) ($_GET['id_paciente'] ?? 0);
+
+            if ($idPaciente <= 0) {
+                http_response_code(400);
+
+                echo json_encode([
+                    'ok'      => false,
+                    'mensaje' => 'Debe indicar un paciente válido.',
+                ]);
+
+                return;
+            }
+
+            $datos = $this->model->estadoFinancieroPaciente($idPaciente);
+
+            if (!$datos) {
+                http_response_code(404);
+
+                echo json_encode([
+                    'ok'      => false,
+                    'mensaje' => 'Paciente no encontrado.',
+                ]);
+
+                return;
+            }
+
+            echo json_encode(
+                [
+                    'ok' => true,
+                    'data' => $datos,
+                ],
+                JSON_UNESCAPED_UNICODE
+            );
+
+        } catch (\Throwable $e) {
+            http_response_code(500);
+
+            echo json_encode([
+                'ok'      => false,
+                'mensaje' => 'No se pudo consultar el estado financiero.',
+            ]);
         }
     }
 
     /* ── JSON endpoints ─────────────────────────────────────────── */
 
     /**
-     * GET ?accion=cotizaciones.listarJson
-     * Devuelve el mismo array pero en JSON (para recargas AJAX).
+     * POST ?accion=pagos.registrar
      */
-    public function listarJson(): void
+    public function registrar(): void
     {
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($this->listar());
-    }
 
-    /**
-     * GET ?accion=cotizaciones.tratamientosDisponibles
-     * Lista los tratamientos sin cotización para el selector del modal.
-     */
-    public function tratamientosDisponibles(): void
-    {
-        header('Content-Type: application/json; charset=utf-8');
-        try {
-            $rows = $this->model->tratamientosSinCotizacion();
-            $out  = [];
-            foreach ($rows as $r) {
-                $out[] = [
-                    'id_tratamiento'  => (int) $r['id_tratamiento'],
-                    'nombre'          => $r['nombre'],
-                    'costo_estimado'  => (float) ($r['costo_estimado'] ?? 0),
-                    'id_paciente'     => (int) $r['id_paciente'],
-                    'paciente_nombre' => $r['paciente_nombre'],
-                    'estado'          => $r['estado'],
-                ];
-            }
-            echo json_encode(['ok' => true, 'tratamientos' => $out]);
-        } catch (\Throwable $e) {
-            http_response_code(500);
-            echo json_encode(['ok' => false, 'mensaje' => $e->getMessage()]);
-        }
-    }
-
-    /**
-     * POST ?accion=cotizaciones.crear
-     * Body JSON: id_tratamiento, id_paciente, descripcion,
-     *            subtotal, descuento, observaciones
-     */
-    public function crear(): void
-    {
-        header('Content-Type: application/json; charset=utf-8');
         try {
             $datos  = $this->bodyJson();
             $sesion = AuthService::usuarioActual();
 
-            // Validar campos obligatorios
-            $idTratamiento = (int) ($datos['id_tratamiento'] ?? 0);
-            $idPaciente    = (int) ($datos['id_paciente']    ?? 0);
-            $descripcion   = trim($datos['descripcion']      ?? '');
-            $subtotal      = (float) ($datos['subtotal']     ?? 0);
-            $descuento     = (float) ($datos['descuento']    ?? 0);
+            $idCotizacion = (int) ($datos['id_cotizacion'] ?? 0);
+            $monto        = (float) ($datos['monto'] ?? 0);
+            $metodo       = trim($datos['metodo'] ?? '');
+            $fechaPago    = trim(
+                $datos['fecha_pago'] ?? date('Y-m-d')
+            );
 
-            if (!$idTratamiento || !$idPaciente || $descripcion === '') {
-                http_response_code(400);
-                echo json_encode(['ok' => false, 'mensaje' => 'Tratamiento, paciente y descripción son requeridos.']);
-                return;
-            }
-            if ($subtotal <= 0) {
-                http_response_code(400);
-                echo json_encode(['ok' => false, 'mensaje' => 'El subtotal debe ser mayor a 0.']);
-                return;
-            }
-            if ($descuento < 0 || $descuento > $subtotal) {
-                http_response_code(400);
-                echo json_encode(['ok' => false, 'mensaje' => 'El descuento no puede ser negativo ni mayor al subtotal.']);
+            $metodosValidos = [
+                'sinpe',
+                'efectivo',
+                'tarjeta',
+                'transferencia'
+            ];
+
+            if ($monto <= 0) {
+                http_response_code(422);
+                echo json_encode(['ok' => false, 'mensaje' => 'El monto ingresado no es válido: debe ser mayor a cero.']);
                 return;
             }
 
-            // Calcular montos
-            $base  = $subtotal - $descuento;
-            $iva   = round($base * self::IVA, 2);
-            $total = round($base + $iva, 2);
+            if (
+                !$idCotizacion ||
+                !in_array($metodo, $metodosValidos, true)
+            ) {
+                http_response_code(400);
 
-            $idCotizacion = $this->model->crear([
-                'id_tratamiento'  => $idTratamiento,
-                'id_paciente'     => $idPaciente,
-                'descripcion'     => $descripcion,
-                'subtotal'        => $subtotal,
-                'descuento'       => $descuento,
-                'iva'             => $iva,
-                'total'           => $total,
-                'observaciones'   => $datos['observaciones'] ?? '',
-                'id_creado_por'   => $sesion['id'],
-            ]);
+                echo json_encode([
+                    'ok'      => false,
+                    'mensaje' => 'La cotización y un método de pago válido (sinpe/efectivo/tarjeta/transferencia) son requeridos.',
+                ]);
+
+                return;
+            }
+
+            $cotizacion = $this->cotizacionModel->obtenerPorId(
+                $idCotizacion
+            );
+
+            if (!$cotizacion) {
+                http_response_code(404);
+
+                echo json_encode([
+                    'ok'      => false,
+                    'mensaje' => 'Cotización no encontrada.',
+                ]);
+
+                return;
+            }
+
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaPago) || strtotime($fechaPago) === false) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'mensaje' => 'La fecha del pago no es válida.']);
+                return;
+            }
+
+            // FIN-03 esc. 2: la validación del monto vs. saldo se hace en el servidor
+            // (dentro de una transacción), no solo en el navegador.
+            try {
+                $r = $this->model->crearValidado([
+                    'id_cotizacion'     => $idCotizacion,
+                    'monto'             => $monto,
+                    'metodo'            => $metodo,
+                    'referencia'        => $datos['referencia'] ?? '',
+                    'observaciones'     => $datos['observaciones'] ?? '',
+                    'id_registrado_por' => $sesion['id'],
+                    'fecha_pago'        => $fechaPago,
+                ]);
+            } catch (\DomainException $e) {
+                http_response_code(422);
+                echo json_encode(['ok' => false, 'mensaje' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            $idPago      = $r['id_pago'];
+            $totalPagado = $r['total_pagado'];
+            $totalCot    = $r['total'];
+            $saldoPend   = $r['saldo_pendiente'];
+
+            if ($saldoPend <= 0.009) {
+                $this->cotizacionModel->cambiarEstado($idCotizacion, 'pagada');
+            }
 
             Bitacora::registrar(
-                'COTIZACION_CREADA',
-                "Cotización #{$idCotizacion} creada para tratamiento #{$idTratamiento} (total ₡{$total})",
+                'PAGO_REGISTRADO',
+                "Pago #{$idPago} de ₡{$monto} ({$metodo}) en cotización #{$idCotizacion}. Saldo pendiente: ₡{$saldoPend}",
                 $sesion['id'],
                 $sesion['nombre_usuario']
             );
 
             echo json_encode([
-                'ok'           => true,
-                'id_cotizacion' => $idCotizacion,
-                'total'        => $total,
-                'mensaje'      => 'Cotización creada correctamente.',
+                'ok'                => true,
+                'id_pago'           => $idPago,
+                'total_pagado'      => $totalPagado,
+                'saldo_pendiente'   => $saldoPend,
+                'estado_cotizacion' => $saldoPend <= 0.009 ? 'pagada' : $cotizacion['estado'],
+                'mensaje'           => 'Pago registrado correctamente.',
+            ], JSON_UNESCAPED_UNICODE);
+
+        } catch (\Throwable $e) {
+            http_response_code(500);
+
+            echo json_encode([
+                'ok'      => false,
+                'mensaje' => $e->getMessage(),
             ]);
-        } catch (\PDOException $e) {
-            // Violación de UNIQUE (tratamiento ya tiene cotización)
-            if ($e->getCode() === '23000' || str_contains($e->getMessage(), '23000')) {
-                http_response_code(409);
-                echo json_encode(['ok' => false, 'mensaje' => 'Este tratamiento ya tiene una cotización asignada.']);
-            } else {
-                http_response_code(500);
-                echo json_encode(['ok' => false, 'mensaje' => 'Error al guardar: ' . $e->getMessage()]);
-            }
-        } catch (\Throwable $e) {
-            http_response_code(500);
-            echo json_encode(['ok' => false, 'mensaje' => 'Error interno: ' . $e->getMessage()]);
-        }
-    }
-
-    /**
-     * POST ?accion=cotizaciones.estado
-     * Body JSON: id_cotizacion, estado (pendiente|aprobada|rechazada|pagada)
-     */
-    public function cambiarEstado(): void
-    {
-        header('Content-Type: application/json; charset=utf-8');
-        try {
-            $datos        = $this->bodyJson();
-            $idCotizacion = (int) ($datos['id_cotizacion'] ?? 0);
-            $estado       = trim($datos['estado']          ?? '');
-
-            $permitidos = ['pendiente', 'aprobada', 'rechazada', 'pagada'];
-            if (!$idCotizacion || !in_array($estado, $permitidos, true)) {
-                http_response_code(400);
-                echo json_encode(['ok' => false, 'mensaje' => 'id_cotizacion y estado válido son requeridos.']);
-                return;
-            }
-
-            $this->model->cambiarEstado($idCotizacion, $estado);
-
-            $sesion = AuthService::usuarioActual();
-            Bitacora::registrar(
-                'COTIZACION_ESTADO',
-                "Cotización #{$idCotizacion} cambió a estado '{$estado}'",
-                $sesion['id'],
-                $sesion['nombre_usuario']
-            );
-
-            echo json_encode(['ok' => true, 'mensaje' => "Estado actualizado a '{$estado}'."]);
-        } catch (\Throwable $e) {
-            http_response_code(500);
-            echo json_encode(['ok' => false, 'mensaje' => $e->getMessage()]);
         }
     }
 
@@ -209,13 +237,20 @@ class CotizacionController
 
     private function bodyJson(): array
     {
-        // Soporta tanto JSON (odontologo/guardarJSON) como FormData (recepcionista)
         if (!empty($_POST)) {
             return $_POST;
         }
-        $raw  = file_get_contents('php://input');
-        if (!$raw) return [];
+
+        $raw = file_get_contents('php://input');
+
+        if (!$raw) {
+            return [];
+        }
+
         $data = json_decode($raw, true);
-        return is_array($data) ? $data : [];
+
+        return is_array($data)
+            ? $data
+            : [];
     }
 }

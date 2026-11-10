@@ -139,16 +139,21 @@ class PagoController
                 'transferencia'
             ];
 
+            if ($monto <= 0) {
+                http_response_code(422);
+                echo json_encode(['ok' => false, 'mensaje' => 'El monto ingresado no es válido: debe ser mayor a cero.']);
+                return;
+            }
+
             if (
                 !$idCotizacion ||
-                $monto <= 0 ||
                 !in_array($metodo, $metodosValidos, true)
             ) {
                 http_response_code(400);
 
                 echo json_encode([
                     'ok'      => false,
-                    'mensaje' => 'id_cotizacion, monto > 0 y método válido (sinpe/efectivo/tarjeta/transferencia) son requeridos.',
+                    'mensaje' => 'La cotización y un método de pago válido (sinpe/efectivo/tarjeta/transferencia) son requeridos.',
                 ]);
 
                 return;
@@ -169,32 +174,37 @@ class PagoController
                 return;
             }
 
-            $idPago = $this->model->crear([
-                'id_cotizacion'     => $idCotizacion,
-                'monto'             => $monto,
-                'metodo'            => $metodo,
-                'referencia'        => $datos['referencia'] ?? '',
-                'observaciones'     => $datos['observaciones'] ?? '',
-                'id_registrado_por' => $sesion['id'],
-                'fecha_pago'        => $fechaPago,
-            ]);
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaPago) || strtotime($fechaPago) === false) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'mensaje' => 'La fecha del pago no es válida.']);
+                return;
+            }
 
-            $totalPagado = $this->model->totalPagado(
-                $idCotizacion
-            );
+            // FIN-03 esc. 2: la validación del monto vs. saldo se hace en el servidor
+            // (dentro de una transacción), no solo en el navegador.
+            try {
+                $r = $this->model->crearValidado([
+                    'id_cotizacion'     => $idCotizacion,
+                    'monto'             => $monto,
+                    'metodo'            => $metodo,
+                    'referencia'        => $datos['referencia'] ?? '',
+                    'observaciones'     => $datos['observaciones'] ?? '',
+                    'id_registrado_por' => $sesion['id'],
+                    'fecha_pago'        => $fechaPago,
+                ]);
+            } catch (\DomainException $e) {
+                http_response_code(422);
+                echo json_encode(['ok' => false, 'mensaje' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+                return;
+            }
 
-            $totalCot = (float) $cotizacion['total'];
+            $idPago      = $r['id_pago'];
+            $totalPagado = $r['total_pagado'];
+            $totalCot    = $r['total'];
+            $saldoPend   = $r['saldo_pendiente'];
 
-            $saldoPend = max(
-                0,
-                $totalCot - $totalPagado
-            );
-
-            if ($totalPagado >= $totalCot) {
-                $this->cotizacionModel->cambiarEstado(
-                    $idCotizacion,
-                    'pagada'
-                );
+            if ($saldoPend <= 0.009) {
+                $this->cotizacionModel->cambiarEstado($idCotizacion, 'pagada');
             }
 
             Bitacora::registrar(
@@ -205,17 +215,13 @@ class PagoController
             );
 
             echo json_encode([
-                'ok'                  => true,
-                'id_pago'             => $idPago,
-                'total_pagado'        => $totalPagado,
-                'saldo_pendiente'     => $saldoPend,
-                'estado_cotizacion'   =>
-                    $totalPagado >= $totalCot
-                        ? 'pagada'
-                        : $cotizacion['estado'],
-                'mensaje'             =>
-                    'Pago registrado correctamente.',
-            ]);
+                'ok'                => true,
+                'id_pago'           => $idPago,
+                'total_pagado'      => $totalPagado,
+                'saldo_pendiente'   => $saldoPend,
+                'estado_cotizacion' => $saldoPend <= 0.009 ? 'pagada' : $cotizacion['estado'],
+                'mensaje'           => 'Pago registrado correctamente.',
+            ], JSON_UNESCAPED_UNICODE);
 
         } catch (\Throwable $e) {
             http_response_code(500);
