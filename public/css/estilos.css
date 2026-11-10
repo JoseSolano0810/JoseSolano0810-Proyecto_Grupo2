@@ -3082,3 +3082,7 @@ button:disabled {
     .arep-det-meta { grid-template-columns: 1fr; }
     .arep-filtros input[type="text"] { flex-basis: 100%; }
 }
+
+/* Odontograma de cotizaciones: solo lectura (refleja el tratamiento elegido) */
+#cot-picker .tr-pieza { pointer-events: none; cursor: default; }
+#cot-picker { background: var(--fondo-odent); }
