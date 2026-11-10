@@ -307,6 +307,62 @@ class Pago
         );
     }
 
+    /**
+     * Portal del paciente — resumen de pagos REAL (por id de USUARIO). Solo lectura.
+     * Usa la misma fuente que el asistente (pendientesPorPaciente), así ambos coinciden.
+     *
+     * @return array{pagos:array,pendientes:array,saldo:float}
+     */
+    public function resumenPortalPaciente(int $idUsuario): array
+    {
+        $pendientes = $this->pendientesPorPaciente($idUsuario);
+
+        $stmt = $this->db->prepare(
+            "SELECT pa.id_pago, pa.monto, pa.metodo, pa.fecha_pago, pa.id_cotizacion,
+                    COALESCE(t.nombre, c.descripcion) AS concepto
+             FROM pago pa
+             JOIN cotizacion c        ON c.id_cotizacion  = pa.id_cotizacion
+             JOIN paciente p          ON p.id_paciente    = c.id_paciente
+             LEFT JOIN tratamiento t  ON t.id_tratamiento = c.id_tratamiento
+             WHERE p.id_usuario = ?
+             ORDER BY pa.fecha_pago DESC, pa.created_at DESC"
+        );
+        $stmt->execute([$idUsuario]);
+
+        $etiquetaMetodo = [
+            'sinpe' => 'SINPE Móvil', 'efectivo' => 'Efectivo',
+            'tarjeta' => 'Tarjeta',   'transferencia' => 'Transferencia',
+        ];
+
+        $pagos = [];
+        foreach ($pendientes as $p) {
+            $pagos[] = [
+                'id'       => 'COT-' . $p['id_cotizacion'],
+                'fecha'    => $p['fecha'],
+                'concepto' => $p['concepto'],
+                'monto'    => $p['monto'],
+                'metodo'   => '—',
+                'estado'   => 'pendiente',
+            ];
+        }
+        foreach ($stmt->fetchAll() as $r) {
+            $pagos[] = [
+                'id'       => 'PAG-' . str_pad((string) $r['id_pago'], 3, '0', STR_PAD_LEFT),
+                'fecha'    => date('d/m/Y', strtotime($r['fecha_pago'])),
+                'concepto' => (string) $r['concepto'],
+                'monto'    => (float) $r['monto'],
+                'metodo'   => $etiquetaMetodo[$r['metodo']] ?? ucfirst((string) $r['metodo']),
+                'estado'   => 'completada',
+            ];
+        }
+
+        return [
+            'pagos'      => $pagos,
+            'pendientes' => $pendientes,
+            'saldo'      => round(array_sum(array_column($pendientes, 'monto')), 2),
+        ];
+    }
+
     /* ── Escritura ───────────────────────────────────────────────── */
 
     /**

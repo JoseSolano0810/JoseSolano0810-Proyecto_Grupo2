@@ -20,6 +20,7 @@ require_once ROOT_PATH . '/controllers/PacienteController.php';
 require_once ROOT_PATH . '/controllers/TratamientoController.php';
 require_once ROOT_PATH . '/controllers/CotizacionController.php';
 require_once ROOT_PATH . '/controllers/PagoController.php';
+require_once ROOT_PATH . '/models/Pago.php';
 require_once ROOT_PATH . '/controllers/BitacoraController.php';
 require_once ROOT_PATH . '/controllers/ExpedienteController.php';
 require_once ROOT_PATH . '/controllers/OdontogramaController.php';
@@ -465,6 +466,11 @@ function cargarPanel(array $sesion): void
             $mis_citas        = $citaCtrl->listarMisCitas();
             $proxima_cita     = $citaCtrl->proximaCita();
             $mis_tratamientos = (new TratamientoController())->listar();
+            try {
+                $resumen_pagos = (new Pago())->resumenPortalPaciente((int) $sesion['id']);
+            } catch (Throwable $e) {
+                $resumen_pagos = ['pagos' => [], 'pendientes' => [], 'saldo' => 0.0];
+            }
             require ROOT_PATH . '/views/paciente/index.php';
             break;
 

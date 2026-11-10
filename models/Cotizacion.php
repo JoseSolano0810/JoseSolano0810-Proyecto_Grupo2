@@ -118,6 +118,31 @@ class Cotizacion
         }
     }
 
+    /**
+     * Piezas dentales (FDI) de cada tratamiento: [id_tratamiento => [11, 12, ...]].
+     * Nunca lanza: si la tabla no existe devuelve [] para no romper el selector.
+     */
+    public function piezasPorTratamiento(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (!$ids) return [];
+        try {
+            $in   = implode(',', array_fill(0, count($ids), '?'));
+            $stmt = $this->db->prepare(
+                "SELECT id_tratamiento, numero_pieza FROM tratamiento_pieza
+                 WHERE id_tratamiento IN ($in) ORDER BY numero_pieza"
+            );
+            $stmt->execute($ids);
+            $mapa = [];
+            foreach ($stmt->fetchAll() as $r) {
+                $mapa[(int) $r['id_tratamiento']][] = (int) $r['numero_pieza'];
+            }
+            return $mapa;
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
     /* ── Escritura ───────────────────────────────────────────────── */
 
     /**

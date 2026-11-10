@@ -363,6 +363,7 @@ $cotx_clinica = defined('CLINICA_NOMBRE') ? (string) CLINICA_NOMBRE : 'Odent Cen
                 });
                 if ($('cot-descuento')) $('cot-descuento').value = '0';
                 if ($('cot-iva-pct')) $('cot-iva-pct').value = '13';
+                cotRenderPicker([]);
                 if ($(ids.tratamiento)) $(ids.tratamiento).innerHTML = '<option value="">— Seleccione primero un paciente —</option>';
                 window.recargarCotizaciones();
             } catch (e) {
@@ -391,11 +392,131 @@ $cotx_clinica = defined('CLINICA_NOMBRE') ? (string) CLINICA_NOMBRE : 'Odent Cen
             }
         };
 
+
+        /* ── Odontograma para elegir las piezas (FDI) ─────────────
+           Usa las mismas clases (.tr-pieza, .d-molar…) del módulo de tratamientos.
+           El valor viaja en #cot-piezas como «16, 26, 36», igual que antes. */
+        const COT_SUP = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
+        const COT_INF = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
+
+        function cotTipoDiente(n) {
+            const u = n % 10;
+            return u <= 2 ? 'incisivo' : u === 3 ? 'canino' : u <= 5 ? 'premolar' : 'molar';
+        }
+
+        function cotSincronizarPiezas() {
+            const activas = [...document.querySelectorAll('#cot-picker .tr-pieza.activa')]
+                .map((b) => Number(b.dataset.pieza)).sort((a, b) => a - b);
+            if ($('cot-piezas')) $('cot-piezas').value = activas.join(', ');
+            const res = $('cot-picker-resumen');
+            if (res) {
+                res.innerHTML = activas.length ?
+                    `Piezas seleccionadas (${activas.length}): ` + activas.map((p) => `<span class="tr-chip">${p}</span>`).join('') :
+                    'Toque las piezas dentales que incluye la cotización.';
+            }
+        }
+
+        function cotRenderPicker(seleccionadas) {
+            const cont = $('cot-picker');
+            if (!cont) return;
+            const sel = new Set((seleccionadas || []).map(Number));
+            const fila = (nums, zona) => nums.map((n) =>
+                `<button type="button" class="tr-pieza d-${cotTipoDiente(n)} ${zona} ${sel.has(n) ? 'activa' : ''}"
+                    data-pieza="${n}" title="Pieza ${n}" aria-pressed="${sel.has(n)}"><span>${n}</span></button>`).join('');
+            cont.innerHTML = `
+                <p class="tr-picker-etq">MAXILAR SUPERIOR</p>
+                <div class="tr-picker-fila">${fila(COT_SUP, 'sup')}</div>
+                <div class="tr-picker-linea"></div>
+                <div class="tr-picker-fila">${fila(COT_INF, 'inf')}</div>
+                <p class="tr-picker-etq" style="margin:8px 0 0;">MAXILAR INFERIOR</p>`;
+            cotSincronizarPiezas();
+        }
+        window.cotRenderPicker = cotRenderPicker;
+
+        document.addEventListener('click', (e) => {
+            const b = e.target.closest('#cot-picker .tr-pieza');
+            if (!b) return;
+            const activa = b.classList.toggle('activa');
+            b.setAttribute('aria-pressed', activa);
+            cotSincronizarPiezas();
+        });
+
+        /* ── Tratamientos del paciente (siempre desde el servidor) ─ */
+        let _cotTrats = [];
+
+        window.cotCargarTratamientos = async function(idPaciente, conservar) {
+            const ids = idsForm();
+            const sel = $(ids.tratamiento);
+            if (!sel) return;
+            if (idPaciente === undefined || idPaciente === null) idPaciente = $(ids.paciente)?.value;
+            if (!idPaciente) {
+                sel.innerHTML = '<option value="">— Seleccione primero un paciente —</option>';
+                _cotTrats = [];
+                return;
+            }
+            const previo = conservar ? sel.value : '';
+            sel.innerHTML = '<option value="">— Cargando… —</option>';
+            try {
+                const res = await fetch(`${COTX_BASE}/index.php?accion=cotizaciones.tratamientosDisponibles&_=${Date.now()}`, {
+                    cache: 'no-store',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (!data.ok) throw new Error(data.mensaje);
+                // el paciente pudo cambiar mientras llegaba la respuesta
+                if (String($(ids.paciente)?.value) !== String(idPaciente)) return;
+                _cotTrats = (data.tratamientos || []).filter((t) => String(t.id_paciente) === String(idPaciente));
+                if (!_cotTrats.length) {
+                    sel.innerHTML = '<option value="">— Sin tratamientos disponibles —</option>';
+                    return;
+                }
+                sel.innerHTML = '<option value="">— Seleccione un tratamiento —</option>' +
+                    _cotTrats.map((t) => `<option value="${t.id_tratamiento}">${esc(t.nombre ?? 'Tratamiento #' + t.id_tratamiento)}</option>`).join('');
+                if (previo && _cotTrats.some((t) => String(t.id_tratamiento) === String(previo))) sel.value = previo;
+            } catch (e) {
+                sel.innerHTML = '<option value="">— Error al cargar tratamientos —</option>';
+            }
+        };
+
+        /** Lo llama el módulo de tratamientos al crear un plan, para que aparezca sin recargar la página */
+        window.cotRefrescarTratamientos = function() {
+            if ($(idsForm().paciente)?.value) window.cotCargarTratamientos(undefined, true);
+        };
+
+        /* Al elegir tratamiento se precargan sus piezas en el odontograma */
+        document.addEventListener('change', (e) => {
+            if (!e.target || e.target.id !== idsForm().tratamiento) return;
+            const t = _cotTrats.find((x) => String(x.id_tratamiento) === String(e.target.value));
+            if (t && Array.isArray(t.piezas) && t.piezas.length) cotRenderPicker(t.piezas);
+        });
+
+        /* Cada vez que se abre el modal: odontograma limpio y tratamientos al día */
+        function observarModalCotizacion() {
+            const overlay = $('modal-nueva-cotizacion');
+            if (!overlay) return;
+            let abierto = overlay.classList.contains('abierto');
+            new MutationObserver(() => {
+                const ahora = overlay.classList.contains('abierto');
+                if (ahora && !abierto) {
+                    if (!$('cot-piezas')?.value) cotRenderPicker([]);
+                    window.cotCargarTratamientos(undefined, true);
+                }
+                abierto = ahora;
+            }).observe(overlay, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+        }
+
         /* ── arranque ─────────────────────────────────────────── */
         function iniciar() {
             ['cot-iva-pct', 'cot-subtotal', 'cot-descuento'].forEach((id) => {
                 $(id)?.addEventListener('input', window.cotRecalcular);
             });
+            cotRenderPicker([]);
+            observarModalCotizacion();
             window.recargarCotizaciones();
         }
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);

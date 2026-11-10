@@ -743,4 +743,11 @@
     /* ── Saludo inicial ─────────────────────────────────────── */
 
     burbujaBot('Hola, soy el asistente de ' + CLINICA + '. Puedo mostrarle información de su atención o ayudarle a reportar una molestia. Elija una opción o escriba su consulta.');
+
+    // Aviso proactivo: si el paciente tiene saldo pendiente, el asistente lo dice sin que tenga que preguntar
+    const SALDO = parseFloat(app.dataset.saldo || '0') || 0;
+    if (SALDO > 0) {
+        burbujaBot('Le recuerdo que tiene un saldo pendiente de ₡' + Math.round(SALDO).toLocaleString('es-CR') +
+            '. Pulse «Pagos pendientes» para ver el detalle y comuníquese con recepción para coordinar el pago.');
+    }
 })();
