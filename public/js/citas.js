@@ -430,6 +430,11 @@ window.Citas = (function () {
             $('cita-hora').classList.add('campo-invalido');
             return false;
         }
+        if ((m(hora) - m(cl.apertura)) % cl.paso !== 0) {
+            mostrarToast('La hora debe ir en intervalos de ' + cl.paso + ' minutos desde las ' + cl.apertura + ' (por ejemplo 9:30, 9:45, 10:00).', 'aviso');
+            $('cita-hora').classList.add('campo-invalido');
+            return false;
+        }
         return true;
     }
 
@@ -478,6 +483,15 @@ window.Citas = (function () {
 
     async function guardarReprogramacion(btn) {
         if (!validarRequeridos([['rep-fecha', 'Nueva fecha'], ['rep-hora', 'Nueva hora']])) return;
+        {
+            const cl = S.cat.clinica, h = $('rep-hora').value;
+            if (cl && h) {
+                const m = x => parseInt(x.slice(0, 2), 10) * 60 + parseInt(x.slice(3, 5), 10);
+                if ((m(h) - m(cl.apertura)) % cl.paso !== 0) {
+                    return mostrarToast('La hora debe ir en intervalos de ' + cl.paso + ' minutos desde las ' + cl.apertura + ' (por ejemplo 9:30, 9:45, 10:00).', 'aviso');
+                }
+            }
+        }
         await guardarJSON('citas.reprogramar', {
             id: Number($('rep-id').value), fecha: $('rep-fecha').value, hora: $('rep-hora').value,
         }, {
