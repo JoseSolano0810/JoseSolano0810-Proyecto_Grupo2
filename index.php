@@ -461,8 +461,6 @@ function cargarPanel(array $sesion): void
             $mis_citas        = $citaCtrl->listarMisCitas();
             $proxima_cita     = $citaCtrl->proximaCita();
             $mis_tratamientos = (new TratamientoController())->listar();
-            $mis_pagos        = (new PagoController())->listar();
-            $saldo_pendiente  = 60000;
             require ROOT_PATH . '/views/paciente/index.php';
             break;
 
