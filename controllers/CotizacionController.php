@@ -74,8 +74,9 @@ class CotizacionController
     {
         header('Content-Type: application/json; charset=utf-8');
         try {
-            $rows = $this->model->tratamientosSinCotizacion();
-            $out  = [];
+            $rows   = $this->model->tratamientosSinCotizacion();
+            $piezas = $this->model->piezasPorTratamiento(array_column($rows, 'id_tratamiento'));
+            $out    = [];
             foreach ($rows as $r) {
                 $out[] = [
                     'id_tratamiento'  => (int) $r['id_tratamiento'],
@@ -84,6 +85,7 @@ class CotizacionController
                     'id_paciente'     => (int) $r['id_paciente'],
                     'paciente_nombre' => $r['paciente_nombre'],
                     'estado'          => $r['estado'],
+                    'piezas'          => $piezas[(int) $r['id_tratamiento']] ?? [],
                 ];
             }
             echo json_encode(['ok' => true, 'tratamientos' => $out]);

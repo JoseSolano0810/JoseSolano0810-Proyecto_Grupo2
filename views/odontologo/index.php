@@ -1397,7 +1397,9 @@
             </div>
             <div class="campo-grupo">
                     <label>Piezas dentales (FDI) *</label>
-                    <input type="text" id="cot-piezas" maxlength="100" placeholder="Ej.: 16, 26, 36">
+                    <div class="tr-picker" id="cot-picker"></div>
+                    <div class="tr-picker-resumen" id="cot-picker-resumen"></div>
+                    <input type="hidden" id="cot-piezas">
                 </div>
                 <div class="campo-grupo">
                     <label>Impuesto (IVA %) *</label>

@@ -24,12 +24,11 @@ $mis_citas    = $mis_citas    ?? [];
 $mis_tratamientos = $mis_tratamientos ?? [];
 $etiquetas_trat   = ['pendiente' => 'Pendiente', 'proceso' => 'En proceso', 'finalizado' => 'Finalizado', 'cancelado' => 'Cancelado'];
 
-$mis_pagos = [
-    ['id'=>'PAG-001','fecha'=>'28/07/2026','concepto'=>'Limpieza dental','monto'=>50000,'metodo'=>'Tarjeta','estado'=>'completada'],
-    ['id'=>'PAG-003','fecha'=>'03/08/2026','concepto'=>'Cuota ortodoncia 8/12','monto'=>60000,'metodo'=>'Sinpe','estado'=>'pendiente'],
-];
-
-$saldo_pendiente = 60000;
+// Pagos reales (Pago::resumenPortalPaciente); misma fuente que el asistente
+$resumen_pagos    = $resumen_pagos ?? ['pagos' => [], 'pendientes' => [], 'saldo' => 0.0];
+$mis_pagos        = $resumen_pagos['pagos'];
+$mis_pendientes   = $resumen_pagos['pendientes'];
+$saldo_pendiente  = (float) $resumen_pagos['saldo'];
 ?>
 
 <div class="layout-app">
@@ -44,7 +43,7 @@ $saldo_pendiente = 60000;
                 <span class="topbar-fecha"><?= date('d/m/Y') ?></span>
                 <div class="topbar-notificacion">
                     <i class="bi bi-bell"></i>
-                    <span class="notif-badge">1</span>
+                    <?php if ($saldo_pendiente > 0): ?><span class="notif-badge"><?= count($mis_pendientes) ?></span><?php endif; ?>
                 </div>
             </div>
         </header>
@@ -88,7 +87,13 @@ $saldo_pendiente = 60000;
                         <?php if($saldo_pendiente > 0): ?>
                         <div class="saldo-card">
                             <div class="saldo-monto">₡<?= number_format($saldo_pendiente,0,',','.') ?></div>
-                            <p style="font-size:13px;color:#856404;margin-top:6px;">Cuota de ortodoncia pendiente</p>
+                            <p style="font-size:13px;color:#856404;margin-top:6px;">
+                                <?php if (count($mis_pendientes) === 1): ?>
+                                    <?= htmlspecialchars($mis_pendientes[0]['concepto']) ?> pendiente
+                                <?php else: ?>
+                                    <?= count($mis_pendientes) ?> cobros pendientes
+                                <?php endif; ?>
+                            </p>
                         </div>
                         <div class="alerta aviso" style="margin-top:12px;">
                             <i class="bi bi-exclamation-triangle"></i>
@@ -222,13 +227,16 @@ $saldo_pendiente = 60000;
                         <tr><th>ID</th><th>Fecha</th><th>Concepto</th><th>Monto</th><th>Método</th><th>Estado</th></tr>
                     </thead>
                     <tbody>
+                        <?php if (!$mis_pagos): ?>
+                        <tr><td colspan="6" style="text-align:center;color:var(--gris-azulado);">Aún no tiene pagos registrados.</td></tr>
+                        <?php endif; ?>
                         <?php foreach ($mis_pagos as $p): ?>
                         <tr>
                             <td><strong><?= $p['id'] ?></strong></td>
                             <td><?= $p['fecha'] ?></td>
                             <td><?= htmlspecialchars($p['concepto']) ?></td>
                             <td>₡<?= number_format($p['monto'],0,',','.') ?></td>
-                            <td><?= $p['metodo'] ?></td>
+                            <td><?= htmlspecialchars($p['metodo']) ?></td>
                             <td><span class="badge-estado badge-<?= $p['estado'] ?>"><?= ucfirst($p['estado']) ?></span></td>
                         </tr>
                         <?php endforeach; ?>
