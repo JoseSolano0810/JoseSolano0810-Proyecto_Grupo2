@@ -728,6 +728,7 @@
                                 <th>Fecha</th>
                                 <th>Total</th>
                                 <th>Estado</th>
+                                    <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="cot-tbody">
@@ -819,6 +820,10 @@
             <?php endif; ?>
 
             <?php if ($rol === 'administrador'): ?>
+                <?php include ROOT_PATH . '/views/shared/asistente_reportes_pagina.php'; ?>
+            <?php endif; ?>
+
+            <?php if ($rol === 'administrador'): ?>
                 <div class="pagina" id="pagina-bitacora">
                     <div class="panel-titulo" style="margin-bottom:20px;">
                         <h2>Bitácora de auditoría</h2>
@@ -873,6 +878,7 @@
     <?php include ROOT_PATH . '/views/shared/agenda_modales.php'; ?>
     <?php if ($rol === 'administrador'): ?>
         <?php include ROOT_PATH . '/views/shared/inventario_modales.php'; ?>
+        <?php include ROOT_PATH . '/views/shared/asistente_reportes_modales.php'; ?>
     <?php endif; ?>
 
     <div class="modal-overlay" id="modal-nuevo-paciente">
@@ -1129,7 +1135,7 @@
                     <input type="date" id="pago-fecha">
                 </div>
                 <div class="modal-footer">
-                    <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-pago')">Cancelar</button>
+                    <button class="btn-outline-odent" onclick="pagoCancelar()">Cancelar</button>
                     <button class="btn-odent" id="pago-btn-guardar" onclick="pagoGuardar()">
                         <i class="bi bi-check-lg"></i> Registrar
                     </button>
@@ -1390,7 +1396,16 @@
                 <input type="number" id="cot-descuento" placeholder="0" min="0" value="0" oninput="cotRecalcular()">
             </div>
             <div class="campo-grupo">
-                <label>IVA (13%)</label>
+                    <label>Piezas dentales (FDI) *</label>
+                    <input type="text" id="cot-piezas" maxlength="100" placeholder="Ej.: 16, 26, 36">
+                </div>
+                <div class="campo-grupo">
+                    <label>Impuesto (IVA %) *</label>
+                    <input type="number" id="cot-iva-pct" min="0" max="100" step="0.01" value="13" oninput="cotRecalcular()">
+                </div>
+                
+            <div class="campo-grupo">
+                <label>IVA (según %)</label>
                 <input type="text" id="cot-iva" readonly placeholder="Se calcula automáticamente" style="background:var(--fondo-odent);">
             </div>
             <div class="campo-grupo">
@@ -1583,6 +1598,7 @@
     <?php endif; ?>
     <?php if ($rol === 'administrador'): ?>
         <script src="<?= BASE_URL ?>/public/js/inventario.js?v=<?= @filemtime(ROOT_PATH . '/public/js/inventario.js') ?>"></script>
+        <script src="<?= BASE_URL ?>/public/js/asistente_reportes.js?v=<?= @filemtime(ROOT_PATH . '/public/js/asistente_reportes.js') ?>"></script>
     <?php endif; ?>
     <script>
         const BASE = '<?= BASE_URL ?>';
@@ -3239,6 +3255,8 @@
             });
         }
     </script>
+    <?php include ROOT_PATH . '/views/shared/cotizaciones_acciones.php'; ?>
+
 </body>
 
 </html>

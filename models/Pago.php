@@ -272,6 +272,41 @@ class Pago
         ];
     }
 
+    /**
+     * ASI-01 — Cotizaciones con saldo pendiente de un paciente (por id de USUARIO).
+     * Devuelve filas con: concepto, monto (saldo pendiente) y fecha. Solo lectura.
+     */
+    public function pendientesPorPaciente(int $idUsuario): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT
+                c.id_cotizacion,
+                COALESCE(t.nombre, c.descripcion)               AS concepto,
+                c.total - COALESCE(SUM(pa.monto), 0)             AS saldo_pendiente,
+                c.created_at
+             FROM cotizacion c
+             JOIN paciente p             ON p.id_paciente    = c.id_paciente
+             LEFT JOIN tratamiento t     ON t.id_tratamiento = c.id_tratamiento
+             LEFT JOIN pago pa           ON pa.id_cotizacion = c.id_cotizacion
+             WHERE p.id_usuario = ?
+               AND c.estado NOT IN ('rechazada', 'pagada')
+             GROUP BY c.id_cotizacion, t.nombre, c.descripcion, c.total, c.created_at
+             HAVING saldo_pendiente > 0.009
+             ORDER BY c.created_at ASC"
+        );
+        $stmt->execute([$idUsuario]);
+
+        return array_map(
+            fn($r) => [
+                'id_cotizacion' => (int) $r['id_cotizacion'],
+                'concepto'      => (string) $r['concepto'],
+                'monto'         => round((float) $r['saldo_pendiente'], 2),
+                'fecha'         => date('d/m/Y', strtotime($r['created_at'])),
+            ],
+            $stmt->fetchAll()
+        );
+    }
+
     /* ── Escritura ───────────────────────────────────────────────── */
 
     /**
@@ -304,5 +339,63 @@ class Pago
         ]);
 
         return (int) $this->db->lastInsertId();
+    }
+
+    /**
+     * @throws \DomainException si la cotización no existe, está rechazada, ya está saldada
+     *                          o el monto supera el saldo pendiente.
+     * @return array{id_pago:int,total_pagado:float,saldo_pendiente:float,total:float}
+     */
+    public function crearValidado(array $datos): array
+    {
+        $idCot = (int) $datos['id_cotizacion'];
+        $monto = round((float) $datos['monto'], 2);
+
+        $this->db->beginTransaction();
+        try {
+            $stmt = $this->db->prepare(
+                "SELECT total, estado FROM cotizacion WHERE id_cotizacion = ? FOR UPDATE"
+            );
+            $stmt->execute([$idCot]);
+            $cot = $stmt->fetch();
+
+            if (!$cot) {
+                throw new \DomainException('Cotización no encontrada.');
+            }
+            if ($cot['estado'] === 'rechazada') {
+                throw new \DomainException('No se pueden registrar pagos en una cotización rechazada.');
+            }
+
+            $total  = round((float) $cot['total'], 2);
+            $pagado = round($this->totalPagado($idCot), 2);
+            $saldo  = round($total - $pagado, 2);
+
+            if ($saldo <= 0.009) {
+                throw new \DomainException('La cotización ya está saldada; no tiene saldo pendiente.');
+            }
+            if ($monto <= 0 || $monto > $saldo + 0.009) {
+                throw new \DomainException(
+                    'El monto ingresado no es válido: no puede ser cero ni mayor al saldo pendiente (₡'
+                    . number_format($saldo, 2, ',', '.') . ').'
+                );
+            }
+
+            $idPago = $this->crear($datos);
+
+            $this->db->commit();
+
+            $nuevoPagado = round($pagado + $monto, 2);
+            return [
+                'id_pago'         => $idPago,
+                'total'           => $total,
+                'total_pagado'    => $nuevoPagado,
+                'saldo_pendiente' => max(0.0, round($total - $nuevoPagado, 2)),
+            ];
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
     }
 }

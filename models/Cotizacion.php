@@ -132,17 +132,19 @@ class Cotizacion
     {
         $stmt = $this->db->prepare(
             "INSERT INTO cotizacion
-                (id_tratamiento, id_paciente, descripcion,
-                 subtotal, descuento, iva, total,
+                (id_tratamiento, id_paciente, descripcion, piezas_dentales,
+                 subtotal, descuento, tasa_iva, iva, total,
                  observaciones, id_creado_por)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         $stmt->execute([
             (int)   $datos['id_tratamiento'],
             (int)   $datos['id_paciente'],
                     $datos['descripcion'],
+                    ($datos['piezas_dentales'] ?? '') ?: null,
             (float) $datos['subtotal'],
             (float) ($datos['descuento']   ?? 0),
+            (float) ($datos['tasa_iva']    ?? 13),
             (float) $datos['iva'],
             (float) $datos['total'],
                     ($datos['observaciones'] ?? '') ?: null,
@@ -151,9 +153,23 @@ class Cotizacion
         return (int) $this->db->lastInsertId();
     }
 
-    /** Actualiza el estado de una cotización (pendiente / aprobada / rechazada / pagada). */
-    public function cambiarEstado(int $id, string $estado): void
+    /**
+     * Actualiza el estado de una cotización (pendiente / aprobada / rechazada / pagada).
+     * Cuando es una decisión del paciente (aprobada / rechazada) guarda además la fecha,
+     * las observaciones y quién la registró (FIN-02).
+     */
+    public function cambiarEstado(int $id, string $estado, ?string $observaciones = null, ?int $idUsuario = null): void
     {
+        if (in_array($estado, ['aprobada', 'rechazada'], true)) {
+            $stmt = $this->db->prepare(
+                "UPDATE cotizacion
+                 SET estado = ?, fecha_decision = NOW(), observaciones_decision = ?, id_decidido_por = ?
+                 WHERE id_cotizacion = ?"
+            );
+            $stmt->execute([$estado, ($observaciones ?? '') !== '' ? $observaciones : null, $idUsuario, $id]);
+            return;
+        }
+
         $stmt = $this->db->prepare(
             "UPDATE cotizacion SET estado = ? WHERE id_cotizacion = ?"
         );

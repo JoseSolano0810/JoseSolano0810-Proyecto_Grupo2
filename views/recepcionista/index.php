@@ -311,6 +311,7 @@
                                     <th>Fecha</th>
                                     <th>Total</th>
                                     <th>Estado</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="cot-tbody">
@@ -841,7 +842,7 @@
 
                     <div class="modal-footer">
                         <button type="button" class="btn-outline-odent"
-                            onclick="cerrarModal('modal-nuevo-pago')">Cancelar</button>
+                            onclick="pagoCancelar()">Cancelar</button>
                         <button type="submit" class="btn-odent" id="pago-btn-guardar">
                             <i class="bi bi-check-lg"></i> Registrar
                         </button>
@@ -901,10 +902,19 @@
                         </div>
                     </div>
 
+                    <div class="campo-grupo">
+                        <label>Piezas dentales (FDI) *</label>
+                        <input type="text" id="cot-piezas" maxlength="100" placeholder="Ej.: 16, 26, 36">
+                    </div>
+                    <div class="campo-grupo">
+                        <label>Impuesto (IVA %) *</label>
+                        <input type="number" id="cot-iva-pct" min="0" max="100" step="0.01" value="13" oninput="cotRecalcular()">
+                    </div>
+                    
                     <!-- IVA y Total (sólo lectura) -->
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                         <div class="campo-grupo">
-                            <label>IVA 13%</label>
+                            <label>IVA (según %)</label>
                             <input type="text" id="cot-iva" readonly
                                 style="background:#f5f5f5;" placeholder="₡0">
                         </div>
@@ -2915,6 +2925,10 @@
                 }
             }
         </script>
+    <?php endif; ?>
+
+    <?php if ($esRecepcionista): ?>
+        <?php include ROOT_PATH . '/views/shared/cotizaciones_acciones.php'; ?>
     <?php endif; ?>
 
 </body>

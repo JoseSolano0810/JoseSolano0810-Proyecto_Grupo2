@@ -274,6 +274,10 @@ switch ($accion) {
         (new CotizacionController())->cambiarEstado();
         break;
 
+    case 'cotizaciones.detalle':
+        (new CotizacionController())->detalle();
+        break;
+
     case 'cotizaciones.tratamientosDisponibles':
         (new CotizacionController())->tratamientosDisponibles();
         break;
