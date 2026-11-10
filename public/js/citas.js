@@ -99,16 +99,35 @@ window.Citas = (function () {
         } catch (e) {}
     }
 
-    /** Limita la hora al horario de la clínica y a la cuadrícula de la agenda */
+    /** Las horas se eligen de una lista: solo bloques de 15 min dentro del horario de la clínica */
     function configurarHorario(cl) {
         if (!cl) return;
+        const m = h => parseInt(h.slice(0, 2), 10) * 60 + parseInt(h.slice(3, 5), 10);
+        const horas = [];
+        for (let t = m(cl.apertura); t < m(cl.cierre); t += cl.paso) horas.push(pad(Math.floor(t / 60)) + ':' + pad(t % 60));
+        S.horas = horas;
         ['cita-hora', 'rep-hora'].forEach(id => {
             const el = $(id);
             if (!el) return;
-            el.min = cl.apertura;
-            el.max = cl.cierre;
-            el.step = cl.paso * 60;
+            el.innerHTML = '<option value="">Seleccione</option>' +
+                horas.map(h => '<option value="' + h + '">' + h12(h) + '</option>').join('');
         });
+    }
+
+    function h12(h) {
+        const hh = parseInt(h.slice(0, 2), 10);
+        return ((hh % 12) || 12) + ':' + h.slice(3, 5) + ' ' + (hh < 12 ? 'a. m.' : 'p. m.');
+    }
+
+    /** Pone la hora en el select; si es una cita antigua con una hora fuera de la lista, la agrega para no perderla */
+    function ponerHora(id, hora) {
+        const el = $(id);
+        if (hora && ![...el.options].some(o => o.value === hora)) {
+            const o = document.createElement('option');
+            o.value = hora; o.textContent = h12(hora) + ' (hora anterior)';
+            el.appendChild(o);
+        }
+        el.value = hora || '';
     }
 
     /** Al elegir el tipo de consulta: solo se ofrecen duraciones lógicas y se sugiere la habitual */
@@ -406,7 +425,7 @@ window.Citas = (function () {
         $('cita-odontologo').value = c.id_odontologo;
         $('cita-fecha').min = c.fecha < hoy() ? c.fecha : hoy();
         $('cita-fecha').value = c.fecha;
-        $('cita-hora').value = c.hora;
+        ponerHora('cita-hora', c.hora);
         $('cita-duracion').value = c.duracion;
         $('cita-tipo').value = c.tipo_consulta;
         $('cita-obs').value = c.observaciones || '';
@@ -476,7 +495,7 @@ window.Citas = (function () {
             '<br>Actual: ' + esc(c.fecha_fmt) + ' a las ' + esc(c.hora) + ' (' + c.duracion + ' min)';
         $('rep-fecha').min = hoy();
         $('rep-fecha').value = c.fecha;
-        $('rep-hora').value = c.hora;
+        ponerHora('rep-hora', c.hora);
         ['rep-fecha', 'rep-hora'].forEach(id => $(id).classList.remove('campo-invalido'));
         abrirModal('modal-cita-reprogramar');
     }

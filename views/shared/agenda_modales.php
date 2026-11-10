@@ -20,7 +20,7 @@ $puedeGestionarCitas = in_array($rol ?? '', ['recepcionista', 'asistente_dental'
         </div>
         <div class="campo-fila">
             <div class="campo-grupo"><label>Fecha *</label><input type="date" id="cita-fecha"></div>
-            <div class="campo-grupo"><label>Hora *</label><input type="time" id="cita-hora" step="900"></div>
+            <div class="campo-grupo"><label>Hora *</label><select id="cita-hora"><option value="">Seleccione</option></select></div>
         </div>
         <div class="campo-fila">
             <div class="campo-grupo"><label>Duración *</label>
@@ -57,7 +57,7 @@ $puedeGestionarCitas = in_array($rol ?? '', ['recepcionista', 'asistente_dental'
         <div class="alerta info" id="rep-info" style="margin-bottom:18px;"></div>
         <div class="campo-fila">
             <div class="campo-grupo"><label>Nueva fecha *</label><input type="date" id="rep-fecha"></div>
-            <div class="campo-grupo"><label>Nueva hora *</label><input type="time" id="rep-hora" step="900"></div>
+            <div class="campo-grupo"><label>Nueva hora *</label><select id="rep-hora"><option value="">Seleccione</option></select></div>
         </div>
         <div class="modal-footer">
             <button class="btn-outline-odent" onclick="cerrarModal('modal-cita-reprogramar')">Cancelar</button>
