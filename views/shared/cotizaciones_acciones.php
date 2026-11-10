@@ -373,11 +373,8 @@ $cotx_clinica = defined('CLINICA_NOMBRE') ? (string) CLINICA_NOMBRE : 'Odent Cen
             }
         };
 
-        /* ── FIN-03 esc. 3: cancelar el registro de pago ──────── */
-        /** Descarta lo escrito y lleva al estado financiero del paciente, sin guardar nada */
+        /* ── Cancelar el registro de pago: descarta lo escrito y cierra, sin abrir nada más ── */
         window.pagoCancelar = function() {
-            const idPaciente = $('pago-id-paciente')?.value || '';
-
             if ($('pago-id-cotizacion')) $('pago-id-cotizacion').value = '';
             if ($('pago-id-paciente')) $('pago-id-paciente').value = '';
             if ($('pago-sel-cotizacion')) $('pago-sel-cotizacion').innerHTML = '<option value="">— Seleccione primero un paciente —</option>';
@@ -386,10 +383,6 @@ $cotx_clinica = defined('CLINICA_NOMBRE') ? (string) CLINICA_NOMBRE : 'Odent Cen
             if ($('pago-saldo-info')) $('pago-saldo-info').style.display = 'none';
 
             cerrarModal('modal-nuevo-pago');
-
-            if (idPaciente && typeof window.finAbrirEstadoPaciente === 'function') {
-                window.finAbrirEstadoPaciente(idPaciente);
-            }
         };
 
 
@@ -410,9 +403,10 @@ $cotx_clinica = defined('CLINICA_NOMBRE') ? (string) CLINICA_NOMBRE : 'Odent Cen
             if ($('cot-piezas')) $('cot-piezas').value = activas.join(', ');
             const res = $('cot-picker-resumen');
             if (res) {
+                const hayTrat = !!$(idsForm().tratamiento)?.value;
                 res.innerHTML = activas.length ?
-                    `Piezas seleccionadas (${activas.length}): ` + activas.map((p) => `<span class="tr-chip">${p}</span>`).join('') :
-                    'Toque las piezas dentales que incluye la cotización.';
+                    `Piezas del tratamiento (${activas.length}): ` + activas.map((p) => `<span class="tr-chip">${p}</span>`).join('') :
+                    (hayTrat ? 'Este tratamiento no tiene piezas registradas.' : 'Seleccione un tratamiento para ver sus piezas dentales.');
             }
         }
 
@@ -422,7 +416,7 @@ $cotx_clinica = defined('CLINICA_NOMBRE') ? (string) CLINICA_NOMBRE : 'Odent Cen
             const sel = new Set((seleccionadas || []).map(Number));
             const fila = (nums, zona) => nums.map((n) =>
                 `<button type="button" class="tr-pieza d-${cotTipoDiente(n)} ${zona} ${sel.has(n) ? 'activa' : ''}"
-                    data-pieza="${n}" title="Pieza ${n}" aria-pressed="${sel.has(n)}"><span>${n}</span></button>`).join('');
+                    data-pieza="${n}" title="Pieza ${n}" tabindex="-1" aria-disabled="true"><span>${n}</span></button>`).join('');
             cont.innerHTML = `
                 <p class="tr-picker-etq">MAXILAR SUPERIOR</p>
                 <div class="tr-picker-fila">${fila(COT_SUP, 'sup')}</div>
@@ -433,13 +427,12 @@ $cotx_clinica = defined('CLINICA_NOMBRE') ? (string) CLINICA_NOMBRE : 'Odent Cen
         }
         window.cotRenderPicker = cotRenderPicker;
 
-        document.addEventListener('click', (e) => {
-            const b = e.target.closest('#cot-picker .tr-pieza');
-            if (!b) return;
-            const activa = b.classList.toggle('activa');
-            b.setAttribute('aria-pressed', activa);
-            cotSincronizarPiezas();
-        });
+        /** El odontograma es de solo lectura: siempre refleja las piezas del tratamiento elegido */
+        function cotAplicarPiezas() {
+            const sel = $(idsForm().tratamiento);
+            const t = _cotTrats.find((x) => String(x.id_tratamiento) === String(sel?.value));
+            cotRenderPicker(t && Array.isArray(t.piezas) ? t.piezas : []);
+        }
 
         /* ── Tratamientos del paciente (siempre desde el servidor) ─ */
         let _cotTrats = [];
@@ -452,6 +445,7 @@ $cotx_clinica = defined('CLINICA_NOMBRE') ? (string) CLINICA_NOMBRE : 'Odent Cen
             if (!idPaciente) {
                 sel.innerHTML = '<option value="">— Seleccione primero un paciente —</option>';
                 _cotTrats = [];
+                cotRenderPicker([]);
                 return;
             }
             const previo = conservar ? sel.value : '';
@@ -470,13 +464,16 @@ $cotx_clinica = defined('CLINICA_NOMBRE') ? (string) CLINICA_NOMBRE : 'Odent Cen
                 _cotTrats = (data.tratamientos || []).filter((t) => String(t.id_paciente) === String(idPaciente));
                 if (!_cotTrats.length) {
                     sel.innerHTML = '<option value="">— Sin tratamientos disponibles —</option>';
+                    cotRenderPicker([]);
                     return;
                 }
                 sel.innerHTML = '<option value="">— Seleccione un tratamiento —</option>' +
                     _cotTrats.map((t) => `<option value="${t.id_tratamiento}">${esc(t.nombre ?? 'Tratamiento #' + t.id_tratamiento)}</option>`).join('');
                 if (previo && _cotTrats.some((t) => String(t.id_tratamiento) === String(previo))) sel.value = previo;
+                cotAplicarPiezas();
             } catch (e) {
                 sel.innerHTML = '<option value="">— Error al cargar tratamientos —</option>';
+                cotRenderPicker([]);
             }
         };
 
@@ -488,8 +485,7 @@ $cotx_clinica = defined('CLINICA_NOMBRE') ? (string) CLINICA_NOMBRE : 'Odent Cen
         /* Al elegir tratamiento se precargan sus piezas en el odontograma */
         document.addEventListener('change', (e) => {
             if (!e.target || e.target.id !== idsForm().tratamiento) return;
-            const t = _cotTrats.find((x) => String(x.id_tratamiento) === String(e.target.value));
-            if (t && Array.isArray(t.piezas) && t.piezas.length) cotRenderPicker(t.piezas);
+            cotAplicarPiezas();
         });
 
         /* Cada vez que se abre el modal: odontograma limpio y tratamientos al día */
@@ -500,7 +496,6 @@ $cotx_clinica = defined('CLINICA_NOMBRE') ? (string) CLINICA_NOMBRE : 'Odent Cen
             new MutationObserver(() => {
                 const ahora = overlay.classList.contains('abierto');
                 if (ahora && !abierto) {
-                    if (!$('cot-piezas')?.value) cotRenderPicker([]);
                     window.cotCargarTratamientos(undefined, true);
                 }
                 abierto = ahora;

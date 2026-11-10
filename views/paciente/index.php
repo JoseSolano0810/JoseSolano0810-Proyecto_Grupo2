@@ -217,8 +217,7 @@ $saldo_pendiente  = (float) $resumen_pagos['saldo'];
             <?php if($saldo_pendiente > 0): ?>
             <div class="alerta aviso">
                 <i class="bi bi-exclamation-triangle"></i>
-                Tiene un saldo pendiente de <strong>₡<?= number_format($saldo_pendiente,0,',','.') ?></strong>.
-                Contacte a recepción para coordinarlo.
+                <span>Tiene un saldo pendiente de <strong>₡<?= number_format($saldo_pendiente,0,',','.') ?></strong>. Contacte a recepción para coordinarlo.</span>
             </div>
             <?php endif; ?>
             <div class="tarjeta">
