@@ -16,6 +16,61 @@ class Cita
     ];
     public const DURACIONES = [15, 30, 45, 60, 90, 120, 180];
 
+    /** Cuadrícula de la agenda (minutos): las citas empiezan en múltiplos de esto desde la apertura */
+    public const PASO_MIN = 15;
+
+    /**
+     * Duración lógica por tipo de consulta: [mínimo, máximo, sugerida] en minutos.
+     * Evita, por ejemplo, una limpieza de 3 horas o una endodoncia de 15 minutos.
+     */
+    public const TIPO_DURACION = [
+        'Limpieza dental'  => [30, 60, 45],
+        'Revisión general' => [15, 45, 30],
+        'Extracción'       => [30, 90, 45],
+        'Ortodoncia'       => [30, 60, 45],
+        'Blanqueamiento'   => [60, 120, 90],
+        'Endodoncia'       => [60, 120, 90],
+        'Restauración'     => [30, 90, 60],
+        'Urgencia'         => [15, 60, 30],
+        'Otro'             => [15, 180, 30],
+    ];
+
+    /** Horario de la clínica (config.php): [apertura, cierre, días de atención] con horas en minutos */
+    public static function horarioClinica(): array
+    {
+        $min = static function (string $h): int {
+            $p = explode(':', $h);
+            return ((int) ($p[0] ?? 0)) * 60 + (int) ($p[1] ?? 0);
+        };
+        $ap   = defined('CLINICA_HORA_APERTURA') ? (string) CLINICA_HORA_APERTURA : '09:30';
+        $ci   = defined('CLINICA_HORA_CIERRE')   ? (string) CLINICA_HORA_CIERRE   : '18:00';
+        $dias = defined('CLINICA_DIAS_ATENCION') ? (array) CLINICA_DIAS_ATENCION  : [1, 2, 3, 4, 5];
+        return [$min($ap), $min($ci), array_map('intval', $dias)];
+    }
+
+    private static function hhmm(int $m): string
+    {
+        return sprintf('%02d:%02d', intdiv($m, 60), $m % 60);
+    }
+
+    /** Mensaje de error si la cita cae fuera del horario de atención de la clínica; null si es válida */
+    public static function errorHorarioClinica(string $fecha, int $inicioMin, int $duracion): ?string
+    {
+        [$apertura, $cierre, $dias] = self::horarioClinica();
+        $dia = (int) date('N', strtotime($fecha));
+        if (!in_array($dia, $dias, true)) {
+            return 'La clínica no atiende ese día.';
+        }
+        $fin = $inicioMin + $duracion;
+        if ($inicioMin < $apertura || $fin > $cierre) {
+            return 'La cita debe quedar dentro del horario de atención (' . self::hhmm($apertura) . ' a ' . self::hhmm($cierre) . ').';
+        }
+        if (($inicioMin - $apertura) % self::PASO_MIN !== 0) {
+            return 'La hora debe ser en intervalos de ' . self::PASO_MIN . ' minutos a partir de las ' . self::hhmm($apertura) . '.';
+        }
+        return null;
+    }
+
     private PDO $db;
     private static bool $tablasListas = false;
 
@@ -163,7 +218,7 @@ class Cita
         return $this->buscarTraslape($odontologoId, $fecha, $horaInicio, $horaFin, $excluirId, false) !== null;
     }
 
-    private function lanzarSiTraslape(int $odontologoId, string $fecha, string $horaInicio, string $horaFin, ?int $excluirId): void
+    private function lanzarSiTraslape(int $odontologoId, string $fecha, string $horaInicio, string $horaFin, ?int $excluirId, ?int $pacienteId = null): void
     {
         $choque = $this->buscarTraslape($odontologoId, $fecha, $horaInicio, $horaFin, $excluirId, true);
         if ($choque) {
@@ -171,6 +226,56 @@ class Cita
                 'El odontólogo no se encuentra disponible en ese horario (ya tiene una cita de '
                 . substr($choque['hora_inicio'], 0, 5) . ' a ' . substr($choque['hora_fin'], 0, 5) . ').'
             );
+        }
+
+        // Espacios que el asistente virtual ya reservó a un paciente (solicitudes pendientes)
+        $reservado = $this->consultarOpcional(
+            "SELECT hora_inicio, hora_fin FROM asistente_solicitud_cita
+             WHERE id_odontologo = ? AND fecha = ? AND estado = 'pendiente'
+               AND hora_inicio < ? AND hora_fin > ? LIMIT 1 FOR UPDATE",
+            [$odontologoId, $fecha, $horaFin, $horaInicio]
+        );
+        if ($reservado) {
+            throw new HorarioNoDisponibleException(
+                'Ese horario ya fue reservado por un paciente desde el asistente ('
+                . substr($reservado['hora_inicio'], 0, 5) . ' a ' . substr($reservado['hora_fin'], 0, 5) . ').'
+            );
+        }
+
+        // El mismo paciente no puede estar en dos citas a la vez (con cualquier odontólogo)
+        if ($pacienteId) {
+            $propia = $this->consultarOpcional(
+                "SELECT hora_inicio, hora_fin FROM cita
+                 WHERE id_paciente = ? AND fecha = ? AND estado <> 'cancelada'
+                   AND hora_inicio < ? AND hora_fin > ? AND id_cita <> ? LIMIT 1 FOR UPDATE",
+                [$pacienteId, $fecha, $horaFin, $horaInicio, $excluirId ?? 0]
+            );
+            if (!$propia) {
+                $propia = $this->consultarOpcional(
+                    "SELECT hora_inicio, hora_fin FROM asistente_solicitud_cita
+                     WHERE id_usuario = ? AND fecha = ? AND estado = 'pendiente'
+                       AND hora_inicio < ? AND hora_fin > ? LIMIT 1 FOR UPDATE",
+                    [$pacienteId, $fecha, $horaFin, $horaInicio]
+                );
+            }
+            if ($propia) {
+                throw new HorarioNoDisponibleException(
+                    'El paciente ya tiene otra cita en ese horario ('
+                    . substr($propia['hora_inicio'], 0, 5) . ' a ' . substr($propia['hora_fin'], 0, 5) . ').'
+                );
+            }
+        }
+    }
+
+    /** Consulta que tolera que la tabla del asistente aún no exista */
+    private function consultarOpcional(string $sql, array $params): ?array
+    {
+        try {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetch() ?: null;
+        } catch (PDOException $e) {
+            return null;
         }
     }
 
@@ -186,7 +291,7 @@ class Cita
     {
         $this->db->beginTransaction();
         try {
-            $this->lanzarSiTraslape((int) $datos['id_odontologo'], $datos['fecha'], $datos['hora_inicio'], $datos['hora_fin'], null);
+            $this->lanzarSiTraslape((int) $datos['id_odontologo'], $datos['fecha'], $datos['hora_inicio'], $datos['hora_fin'], null, (int) $datos['id_paciente']);
 
             $this->db->prepare(
                 "INSERT INTO cita
@@ -223,7 +328,10 @@ class Cita
     {
         $this->db->beginTransaction();
         try {
-            $this->lanzarSiTraslape((int) $datos['id_odontologo'], $datos['fecha'], $datos['hora_inicio'], $datos['hora_fin'], $id);
+            $st = $this->db->prepare("SELECT id_paciente FROM cita WHERE id_cita = ?");
+            $st->execute([$id]);
+            $pacienteId = (int) $st->fetchColumn();
+            $this->lanzarSiTraslape((int) $datos['id_odontologo'], $datos['fecha'], $datos['hora_inicio'], $datos['hora_fin'], $id, $pacienteId ?: null);
 
             $this->db->prepare(
                 "UPDATE cita

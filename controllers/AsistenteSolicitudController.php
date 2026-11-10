@@ -123,7 +123,7 @@ class AsistenteSolicitudController
                 'id_odontologo' => $h['id_odontologo'],
                 'odontologo'    => $h['odontologo'],
             ], $d['horas']),
-        ], $this->solicitudes->disponibilidad());
+        ], $this->solicitudes->disponibilidad($this->idUsuario()));
 
         $this->responder([
             'ok'                 => true,
@@ -166,7 +166,7 @@ class AsistenteSolicitudController
             if (!$this->solicitudes->odontologoActivo($idOdont)) {
                 $this->responder(['ok' => false, 'error' => 'El odontólogo seleccionado no está disponible.'], 400);
             }
-        } elseif ($this->solicitudes->disponibilidad()) {
+        } elseif ($this->solicitudes->disponibilidad($this->idUsuario())) {
             // Escenario 2 solo aplica cuando NO hay horarios; si los hay, debe elegir uno
             $this->responder(['ok' => false, 'error' => 'Seleccione un horario disponible para continuar.'], 400);
         }

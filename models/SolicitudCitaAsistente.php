@@ -123,6 +123,26 @@ class SolicitudCitaAsistente
         return $mapa;
     }
 
+    /** Horas en que el propio paciente ya tiene cita o solicitud reservada: [fecha] => [[ini, fin], ...] */
+    private function ocupadosDelPaciente(int $idUsuario, string $desde, string $hasta): array
+    {
+        $mapa = [];
+        $consultas = [
+            "SELECT fecha, hora_inicio, hora_fin FROM cita
+             WHERE id_paciente = ? AND fecha BETWEEN ? AND ? AND estado <> 'cancelada'",
+            "SELECT fecha, hora_inicio, hora_fin FROM asistente_solicitud_cita
+             WHERE id_usuario = ? AND estado = 'pendiente' AND fecha IS NOT NULL AND fecha BETWEEN ? AND ?",
+        ];
+        foreach ($consultas as $sql) {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$idUsuario, $desde, $hasta]);
+            foreach ($stmt->fetchAll() as $r) {
+                $mapa[$r['fecha']][] = [self::minutos($r['hora_inicio']), self::minutos($r['hora_fin'])];
+            }
+        }
+        return $mapa;
+    }
+
     private function libre(array $ocupados, int $odontologo, string $fecha, int $inicio, int $fin): bool
     {
         foreach ($ocupados[$odontologo][$fecha] ?? [] as [$oi, $of]) {
@@ -136,7 +156,7 @@ class SolicitudCitaAsistente
      * (por orden alfabético) que esté libre.
      * Devuelve [ ['fecha' => 'YYYY-MM-DD', 'horas' => [ ['hora' => 'HH:MM', 'id_odontologo' => n, 'odontologo' => '...'], ... ]], ... ]
      */
-    public function disponibilidad(): array
+    public function disponibilidad(?int $idUsuario = null): array
     {
         $odontologos = $this->citas->odontologosActivos();
         if (!$odontologos) return [];
@@ -149,6 +169,7 @@ class SolicitudCitaAsistente
         $ultimo = $hoy->modify('+' . (self::DIAS_A_REVISAR - 1) . ' days');
 
         $ocupados  = $this->ocupados($hoy->format('Y-m-d'), $ultimo->format('Y-m-d'));
+        $propios   = $idUsuario ? $this->ocupadosDelPaciente($idUsuario, $hoy->format('Y-m-d'), $ultimo->format('Y-m-d')) : [];
         $resultado = [];
 
         for ($i = 0; $i < self::DIAS_A_REVISAR && count($resultado) < self::DIAS_MAX_VISTA; $i++) {
@@ -160,6 +181,7 @@ class SolicitudCitaAsistente
 
             for ($ini = $apertura; $ini + self::DURACION_MIN <= $cierre; $ini += self::DURACION_MIN) {
                 if ($dia->setTime(intdiv($ini, 60), $ini % 60) < $limite) continue;
+                if (!$this->libre([0 => $propios], 0, $fecha, $ini, $ini + self::DURACION_MIN)) continue;
 
                 foreach ($odontologos as $o) {
                     $id = (int) $o['id_usuario'];
@@ -227,7 +249,7 @@ class SolicitudCitaAsistente
         $this->db->beginTransaction();
         try {
             if ($conHorario) {
-                $this->exigirHorarioLibre((int) $d['id_odontologo'], $d['fecha'], $d['hora_inicio'], $d['hora_fin']);
+                $this->exigirHorarioLibre((int) $d['id_odontologo'], $d['fecha'], $d['hora_inicio'], $d['hora_fin'], (int) $d['id_usuario']);
             }
 
             $this->db->prepare(
@@ -253,7 +275,7 @@ class SolicitudCitaAsistente
         }
     }
 
-    private function exigirHorarioLibre(int $odontologo, string $fecha, string $inicio, string $fin): void
+    private function exigirHorarioLibre(int $odontologo, string $fecha, string $inicio, string $fin, ?int $idUsuario = null): void
     {
         $consultas = [
             "SELECT 1 FROM cita
@@ -269,6 +291,22 @@ class SolicitudCitaAsistente
             $stmt->execute([$odontologo, $fecha, $fin, $inicio]);
             if ($stmt->fetchColumn()) {
                 throw new HorarioSolicitudNoDisponibleException('Ese horario acaba de ser tomado. Elija otro, por favor.');
+            }
+        }
+
+        if ($idUsuario) {
+            $propias = [
+                "SELECT 1 FROM cita WHERE id_paciente = ? AND fecha = ? AND estado <> 'cancelada'
+                   AND hora_inicio < ? AND hora_fin > ? LIMIT 1 FOR UPDATE",
+                "SELECT 1 FROM asistente_solicitud_cita WHERE id_usuario = ? AND fecha = ? AND estado = 'pendiente'
+                   AND hora_inicio < ? AND hora_fin > ? LIMIT 1 FOR UPDATE",
+            ];
+            foreach ($propias as $sql) {
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([$idUsuario, $fecha, $fin, $inicio]);
+                if ($stmt->fetchColumn()) {
+                    throw new HorarioSolicitudNoDisponibleException('Usted ya tiene una cita o solicitud en ese horario. Elija otro, por favor.');
+                }
             }
         }
     }
