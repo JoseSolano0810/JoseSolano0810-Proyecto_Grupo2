@@ -1,4 +1,10 @@
 <?php
+/**
+ * diagnostico.php — BORRAR DESPUÉS DE USAR.
+ * Súbalo a la MISMA carpeta donde está index.php y ábralo en el navegador:
+ *   https://SU-SITIO/diagnostico.php
+ * No muestra contraseñas. Solo dice qué archivo falla y en qué línea.
+ */
 ini_set('display_errors', '1');
 error_reporting(E_ALL);
 header('Content-Type: text/plain; charset=utf-8');
@@ -7,6 +13,14 @@ echo "PHP " . PHP_VERSION . "\n";
 echo "Carpeta: " . __DIR__ . "\n\n";
 
 define('ROOT_PATH', str_replace('\\', '/', __DIR__));
+
+// Captura errores fatales que no se pueden atrapar con try/catch (ej.: "Cannot redeclare ...")
+register_shutdown_function(function () {
+    $e = error_get_last();
+    if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_RECOVERABLE_ERROR], true)) {
+        echo "\n!!! ERROR FATAL !!!\n" . $e['message'] . "\nArchivo: " . $e['file'] . " (línea " . $e['line'] . ")\n";
+    }
+});
 
 $archivos = [
     'config/config.php',
