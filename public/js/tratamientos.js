@@ -301,7 +301,11 @@ async function trGuardarNuevo() {
         cerrarModal: 'modal-nuevo-tratamiento',
         exito: 'Listo, el plan de tratamiento quedó guardado.',
         recargar: ['inicio'],
-        alExito: () => trCargar(),
+        alExito: () => {
+            trCargar();
+            // el selector de «Nueva cotización» debe verlo sin refrescar la página
+            if (typeof window.cotRefrescarTratamientos === 'function') window.cotRefrescarTratamientos();
+        },
     });
 }
 

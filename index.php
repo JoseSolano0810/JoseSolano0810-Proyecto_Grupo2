@@ -20,6 +20,7 @@ require_once ROOT_PATH . '/controllers/PacienteController.php';
 require_once ROOT_PATH . '/controllers/TratamientoController.php';
 require_once ROOT_PATH . '/controllers/CotizacionController.php';
 require_once ROOT_PATH . '/controllers/PagoController.php';
+require_once ROOT_PATH . '/models/Pago.php';
 require_once ROOT_PATH . '/controllers/BitacoraController.php';
 require_once ROOT_PATH . '/controllers/ExpedienteController.php';
 require_once ROOT_PATH . '/controllers/OdontogramaController.php';
@@ -28,9 +29,9 @@ require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/RecordatorioService.php';
 require_once ROOT_PATH . '/controllers/InventarioController.php';
 require_once ROOT_PATH . '/controllers/AsistenteController.php';
-  require_once ROOT_PATH . '/controllers/ReporteController.php';
-   require_once ROOT_PATH . '/controllers/AsistenteReportesController.php';
-   require_once ROOT_PATH . '/controllers/AsistenteSolicitudController.php';
+require_once ROOT_PATH . '/controllers/ReporteController.php';
+require_once ROOT_PATH . '/controllers/AsistenteReportesController.php';
+require_once ROOT_PATH . '/controllers/AsistenteSolicitudController.php';
 
 $accion = $_GET['accion'] ?? 'inicio';
 $metodo = $_SERVER['REQUEST_METHOD'];
@@ -118,7 +119,7 @@ switch ($accion) {
         (new AsistenteController())->enviarReporte();
         break;
 
-        case 'asistente.reporte.cancelar':
+    case 'asistente.reporte.cancelar':
         (new AsistenteController())->cancelarReporte();
         break;
 
@@ -274,19 +275,30 @@ switch ($accion) {
         (new CotizacionController())->cambiarEstado();
         break;
 
+    case 'cotizaciones.detalle':
+        (new CotizacionController())->detalle();
+        break;
+
     case 'cotizaciones.tratamientosDisponibles':
         (new CotizacionController())->tratamientosDisponibles();
         break;
 
     // ── Pagos ─────────────────────────────────────────────────
     case 'pagos.listar':
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode((new PagoController())->listar());
+        $ctrl = new PagoController();
+        echo json_encode($ctrl->listar());
+        break;
+
+    case 'pagos.estadoFinanciero':
+        $ctrl = new PagoController();
+        $ctrl->estadoFinanciero();
         break;
 
     case 'pagos.registrar':
-        (new PagoController())->registrar();
+        $ctrl = new PagoController();
+        $ctrl->registrar();
         break;
+
 
     // ── Expedientes clínicos  ────────────────
     case 'expedientes.pacientes':
@@ -345,7 +357,7 @@ switch ($accion) {
         break;
 
     // ── Tratamientos ──────────────────────────────────────────
-        // ── Tratamientos ──────────────────────────────────────────
+    // ── Tratamientos ──────────────────────────────────────────
     case 'tratamientos.listar':
         (new TratamientoController())->consultar();
         break;
@@ -381,6 +393,17 @@ switch ($accion) {
     // ── Reportes del administrador  ──────────
     case 'reportes.citas':
         (new ReporteController())->citas();
+        break;
+    case 'reportes.financiero':
+        (new ReporteController())->financiero();
+        break;
+
+    case 'reportes.egreso.crear':
+        (new ReporteController())->egresoCrear();
+        break;
+
+    case 'reportes.egreso.eliminar':
+        (new ReporteController())->egresoEliminar();
         break;
 
     default:
@@ -419,12 +442,22 @@ function cargarPanel(array $sesion): void
 
             require ROOT_PATH . '/views/odontologo/index.php';
             break;
+            
         case 'recepcionista':
-        case 'asistente_dental':
             $citas        = (new CitaController())->listar();
             $pacientes    = (new PacienteController())->listar();
             $cotizaciones = (new CotizacionController())->listar();
             $pagos        = (new PagoController())->listar();
+
+            require ROOT_PATH . '/views/recepcionista/index.php';
+            break;
+
+        case 'asistente_dental':
+            $citas        = (new CitaController())->listar();
+            $pacientes    = (new PacienteController())->listar();
+            $cotizaciones = [];
+            $pagos        = [];
+
             require ROOT_PATH . '/views/recepcionista/index.php';
             break;
 
@@ -433,8 +466,11 @@ function cargarPanel(array $sesion): void
             $mis_citas        = $citaCtrl->listarMisCitas();
             $proxima_cita     = $citaCtrl->proximaCita();
             $mis_tratamientos = (new TratamientoController())->listar();
-            $mis_pagos        = (new PagoController())->listar();
-            $saldo_pendiente  = 60000;
+            try {
+                $resumen_pagos = (new Pago())->resumenPortalPaciente((int) $sesion['id']);
+            } catch (Throwable $e) {
+                $resumen_pagos = ['pagos' => [], 'pendientes' => [], 'saldo' => 0.0];
+            }
             require ROOT_PATH . '/views/paciente/index.php';
             break;
 

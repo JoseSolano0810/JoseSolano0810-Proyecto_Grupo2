@@ -17,7 +17,7 @@ class LoginController
     public function mostrar(): void
     {
         $usuario = AuthService::usuarioActual();
-        if ($usuario) {
+        if ($usuario && !isset($_GET['error'])) {
             $this->redirigirPorRol();
         }
 

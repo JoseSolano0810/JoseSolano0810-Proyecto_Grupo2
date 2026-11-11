@@ -56,7 +56,7 @@
                         <div class="kpi-icono amarillo"><i class="bi bi-clipboard2-pulse"></i></div>
                         <div>
                             <?php $trat_activos = array_values(array_filter($tratamientos, fn($t) => in_array($t['estado'], ['pendiente', 'en_proceso'], true))); ?>
-<div class="kpi-numero"><?= count($trat_activos) ?></div>
+                            <div class="kpi-numero"><?= count($trat_activos) ?></div>
                             <div class="kpi-etiqueta">Tratamientos en curso</div>
                         </div>
                     </div>
@@ -95,9 +95,9 @@
                             <h3>Tratamientos activos</h3>
                         </div>
                         <?php if (!$trat_activos): ?>
-    <p style="color:var(--gris-azulado);font-size:14px;">No hay tratamientos activos por ahora.</p>
-<?php endif; ?>
-<?php foreach (array_slice($trat_activos, 0, 6) as $t): ?>
+                            <p style="color:var(--gris-azulado);font-size:14px;">No hay tratamientos activos por ahora.</p>
+                        <?php endif; ?>
+                        <?php foreach (array_slice($trat_activos, 0, 6) as $t): ?>
                             <div class="tratamiento-item">
                                 <div class="tratamiento-header">
                                     <span><?= htmlspecialchars($t['paciente']) ?></span>
@@ -192,7 +192,7 @@
                                         <div style="display:flex;flex-wrap:wrap;gap:4px;">
                                             <?php foreach ($u['roles'] as $r): ?>
                                                 <span class="badge-estado <?= $r['nombre'] === 'administrador' ? 'badge-completada' : 'badge-confirmada' ?>"
-                                                      title="<?= $r['principal'] ? 'Rol inicial' : 'Rol adicional' ?>">
+                                                    title="<?= $r['principal'] ? 'Rol inicial' : 'Rol adicional' ?>">
                                                     <?= $r['principal'] ? '<i class="bi bi-star-fill" style="font-size:10px;"></i> ' : '' ?>
                                                     <?= ucfirst(str_replace('_', ' ', $r['nombre'])) ?>
                                                 </span>
@@ -282,17 +282,30 @@
                                     <td><span class="badge-estado badge-<?= $p['estado'] === 'activo' ? 'confirmada' : 'cancelada' ?>"><?= ucfirst($p['estado']) ?></span></td>
                                     <td>
                                         <?php if ($rol === 'administrador'): ?>
-                                        <button class="btn-outline-odent" style="font-size:12px;padding:4px 10px;"
-                                            onclick='pacAbrirEditar(<?= htmlspecialchars(json_encode([
-                                                "id_usuario" => $p["id_usuario"] ?? $p["id"],
-                                                "nombre"     => $p["nombre"],
-                                                "cedula"     => $p["cedula"],
-                                                "telefono"   => $p["telefono"] ?? "",
-                                                "correo"     => $p["correo"],
-                                                "usuario"    => $p["usuario"] ?? "",
-                                            ]), ENT_QUOTES) ?>)'>
-                                            <i class="bi bi-pencil"></i> Editar
-                                        </button>
+
+                                            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+
+                                                <button class="btn-outline-odent"
+                                                    style="font-size:12px;padding:4px 10px;"
+                                                    onclick='pacAbrirEditar(<?= htmlspecialchars(json_encode([
+                                                                                "id_usuario" => $p["id_usuario"] ?? $p["id"],
+                                                                                "nombre"     => $p["nombre"] ?? $p["nombre_completo"] ?? "",
+                                                                                "cedula"     => $p["cedula"],
+                                                                                "telefono"   => $p["telefono"] ?? "",
+                                                                                "correo"     => $p["correo"],
+                                                                                "usuario"    => $p["usuario"] ?? "",
+                                                                            ]), ENT_QUOTES) ?>)'>
+                                                    <i class="bi bi-pencil"></i> Editar
+                                                </button>
+
+                                                <button class="btn-outline-odent"
+                                                    style="font-size:12px;padding:4px 10px;"
+                                                    onclick="finAbrirEstadoPaciente(<?= (int)($p['id_paciente'] ?? 0) ?>)">
+                                                    <i class="bi bi-wallet2"></i> Estado financiero
+                                                </button>
+
+                                            </div>
+
                                         <?php endif; ?>
                                     </td>
                                 </tr>
@@ -337,7 +350,9 @@
                                 </tr>
                             </thead>
                             <tbody id="exp-tbody">
-                                <tr><td colspan="8" style="text-align:center;color:var(--gris-azulado);">Cargando…</td></tr>
+                                <tr>
+                                    <td colspan="8" style="text-align:center;color:var(--gris-azulado);">Cargando…</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -356,7 +371,7 @@
                             <button class="btn-outline-odent" onclick="abrirOdontograma()" id="btn-ver-odontograma" style="display:none;">
                                 <i class="bi bi-grid-3x3"></i> Odontograma
                             </button>
-                                                        <button class="btn-outline-odent" onclick="treAbrirHistorial()" id="btn-ver-historial-trat" style="display:none;">
+                            <button class="btn-outline-odent" onclick="treAbrirHistorial()" id="btn-ver-historial-trat" style="display:none;">
                                 <i class="bi bi-clipboard2-pulse"></i> Ver Historial de Tratamientos
                             </button>
                             <button class="btn-outline-odent" onclick="abrirDocumentos()" id="btn-ver-documentos" style="display:none;">
@@ -490,8 +505,8 @@
                         </div>
                         <div style="margin-bottom:14px;">
                             <input type="text" id="odo-buscar-paciente" placeholder="Buscar paciente…"
-                                   style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:14px;"
-                                   oninput="odoBuscarPaciente(this.value)">
+                                style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:14px;"
+                                oninput="odoBuscarPaciente(this.value)">
                         </div>
                         <div id="odo-lista-pacientes" style="max-height:420px;overflow-y:auto;">
                             <div style="text-align:center;padding:30px;color:var(--gris-azulado);">
@@ -515,13 +530,27 @@
 
                             </div>
                             <div class="leyenda-odontograma">
-                                <div class="leyenda-item"><div class="leyenda-color" style="background:#fff;border-color:var(--borde);"></div> Sano</div>
-                                <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(192,57,43,.2);border-color:#C0392B;"></div> Caries</div>
-                                <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(245,158,11,.2);border-color:#f59e0b;"></div> Corona</div>
-                                <div class="leyenda-item"><div class="leyenda-color" style="background:var(--fondo-odent);border-color:var(--gris-azulado);"></div> Ausente</div>
-                                <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(139,92,246,.15);border-color:#7c3aed;"></div> Endodoncia</div>
-                                <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(239,68,68,.15);border-color:#ef4444;"></div> Extracción</div>
-                                <div class="leyenda-item"><div class="leyenda-color" style="background:rgba(16,185,129,.15);border-color:#10b981;"></div> Implante</div>
+                                <div class="leyenda-item">
+                                    <div class="leyenda-color" style="background:#fff;border-color:var(--borde);"></div> Sano
+                                </div>
+                                <div class="leyenda-item">
+                                    <div class="leyenda-color" style="background:rgba(192,57,43,.2);border-color:#C0392B;"></div> Caries
+                                </div>
+                                <div class="leyenda-item">
+                                    <div class="leyenda-color" style="background:rgba(245,158,11,.2);border-color:#f59e0b;"></div> Corona
+                                </div>
+                                <div class="leyenda-item">
+                                    <div class="leyenda-color" style="background:var(--fondo-odent);border-color:var(--gris-azulado);"></div> Ausente
+                                </div>
+                                <div class="leyenda-item">
+                                    <div class="leyenda-color" style="background:rgba(139,92,246,.15);border-color:#7c3aed;"></div> Endodoncia
+                                </div>
+                                <div class="leyenda-item">
+                                    <div class="leyenda-color" style="background:rgba(239,68,68,.15);border-color:#ef4444;"></div> Extracción
+                                </div>
+                                <div class="leyenda-item">
+                                    <div class="leyenda-color" style="background:rgba(16,185,129,.15);border-color:#10b981;"></div> Implante
+                                </div>
                             </div>
                         </div>
 
@@ -601,8 +630,8 @@
                         </div>
                         <div style="margin-bottom:14px;">
                             <input type="text" id="doc-buscar-paciente" placeholder="Buscar paciente…"
-                                   style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:14px;"
-                                   oninput="docBuscarPaciente(this.value)">
+                                style="width:100%;padding:8px 12px;border:1px solid var(--borde);border-radius:6px;font-size:14px;"
+                                oninput="docBuscarPaciente(this.value)">
                         </div>
                         <div id="doc-lista-pacientes" style="max-height:420px;overflow-y:auto;">
                             <div style="text-align:center;padding:30px;color:var(--gris-azulado);">
@@ -699,6 +728,7 @@
                                 <th>Fecha</th>
                                 <th>Total</th>
                                 <th>Estado</th>
+                                    <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="cot-tbody">
@@ -724,29 +754,29 @@
                 <div class="panel-titulo" style="margin-bottom:20px;">
                     <h2>Registro de pagos</h2>
                     <?php if ($rol === 'administrador'): ?>
-                    <button class="btn-odent" onclick="pagoAbrirNuevo()">
-                        <i class="bi bi-plus-lg"></i> Registrar pago
-                    </button>
+                        <button class="btn-odent" onclick="pagoAbrirNuevo()">
+                            <i class="bi bi-plus-lg"></i> Registrar pago
+                        </button>
                     <?php endif; ?>
                 </div>
                 <?php
-                    $hoy = date('d/m/Y');
-                    $cobrado_hoy    = array_sum(array_map(fn($p) => $p['monto'], array_filter($pagos, fn($p) => $p['fecha'] === $hoy)));
-                    $pendiente_cobro = array_sum(array_map(fn($c) => $c['total'], array_filter($cotizaciones, fn($c) => in_array($c['estado'], ['pendiente','aprobada'], true))));
-                    $fmt = fn($n) => $n >= 1000000 ? '₡' . number_format($n/1000000, 1) . 'M' : ($n >= 1000 ? '₡' . number_format($n/1000, 0) . 'K' : '₡' . number_format($n, 0));
+                $hoy = date('d/m/Y');
+                $cobrado_hoy    = array_sum(array_map(fn($p) => $p['monto'], array_filter($pagos, fn($p) => $p['fecha'] === $hoy)));
+                $pendiente_cobro = array_sum(array_map(fn($c) => $c['total'], array_filter($cotizaciones, fn($c) => in_array($c['estado'], ['pendiente', 'aprobada'], true))));
+                $fmt = fn($n) => '₡' . number_format($n, 0, ',', '.');
                 ?>
                 <div class="kpi-grid" style="margin-bottom:22px;">
                     <div class="kpi-card">
                         <div class="kpi-icono verde"><i class="bi bi-cash-stack"></i></div>
                         <div>
-                            <div class="kpi-numero"><?= $fmt($cobrado_hoy) ?></div>
+                            <div class="kpi-numero" data-kpi="cobrado-hoy"><?= $fmt($cobrado_hoy) ?></div>
                             <div class="kpi-etiqueta">Cobrado hoy</div>
                         </div>
                     </div>
                     <div class="kpi-card">
                         <div class="kpi-icono amarillo"><i class="bi bi-hourglass"></i></div>
                         <div>
-                            <div class="kpi-numero"><?= $fmt($pendiente_cobro) ?></div>
+                            <div class="kpi-numero" data-kpi="pendiente-cobro"><?= $fmt($pendiente_cobro) ?></div>
                             <div class="kpi-etiqueta">Pendiente de cobro</div>
                         </div>
                     </div>
@@ -785,55 +815,70 @@
                 <?php include ROOT_PATH . '/views/shared/inventario_pagina.php'; ?>
             <?php endif; ?>
 
-                          <?php if ($rol === 'administrador'): ?>
-                  <?php include ROOT_PATH . '/views/shared/reportes_pagina.php'; ?>
-              <?php endif; ?>
+            <?php if ($rol === 'administrador'): ?>
+                <?php include ROOT_PATH . '/views/shared/reportes_pagina.php'; ?>
+            <?php endif; ?>
 
             <?php if ($rol === 'administrador'): ?>
-            <div class="pagina" id="pagina-bitacora">
-                <div class="panel-titulo" style="margin-bottom:20px;">
-                    <h2>Bitácora de auditoría</h2>
-                </div>
-                <div class="tarjeta">
-                    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;align-items:flex-end;">
-                        <div class="campo-grupo" style="margin:0;flex:1;min-width:160px;">
-                            <label>Usuario</label>
-                            <input type="text" id="bit-usuario" placeholder="Nombre de usuario">
-                        </div>
-                           <div class="campo-grupo" style="margin:0;min-width:180px;">
-                            <label>Acción</label>
-                            <select id="bit-accion"><option value="">Todas</option></select>
-                        </div>
-                        <div class="campo-grupo" style="margin:0;">
-                            <label>Desde</label>
-                            <input type="date" id="bit-desde">
-                        </div>
-                        <div class="campo-grupo" style="margin:0;">
-                            <label>Hasta</label>
-                            <input type="date" id="bit-hasta">
-                        </div>
-                        <button class="btn-odent" onclick="cargarBitacora()"><i class="bi bi-funnel"></i> Filtrar</button>
-                        <button class="btn-outline-odent" onclick="limpiarFiltrosBitacora()">Limpiar</button>
+                <?php include ROOT_PATH . '/views/shared/asistente_reportes_pagina.php'; ?>
+            <?php endif; ?>
+
+            <?php if ($rol === 'administrador'): ?>
+                <div class="pagina" id="pagina-bitacora">
+                    <div class="panel-titulo" style="margin-bottom:20px;">
+                        <h2>Bitácora de auditoría</h2>
                     </div>
-                    <table class="tabla-odent">
-                        <thead>
-                            <tr><th>Fecha y hora</th><th>Responsable</th><th>Acción</th><th>Detalle</th><th>IP</th></tr>
-                        </thead>
-                        <tbody id="bit-tbody">
-                            <tr><td colspan="5" style="text-align:center;color:var(--gris-azulado);">Cargando...</td></tr>
-                        </tbody>
-                    </table>
+                    <div class="tarjeta">
+                        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;align-items:flex-end;">
+                            <div class="campo-grupo" style="margin:0;flex:1;min-width:160px;">
+                                <label>Usuario</label>
+                                <input type="text" id="bit-usuario" placeholder="Nombre de usuario">
+                            </div>
+                            <div class="campo-grupo" style="margin:0;min-width:180px;">
+                                <label>Acción</label>
+                                <select id="bit-accion">
+                                    <option value="">Todas</option>
+                                </select>
+                            </div>
+                            <div class="campo-grupo" style="margin:0;">
+                                <label>Desde</label>
+                                <input type="date" id="bit-desde">
+                            </div>
+                            <div class="campo-grupo" style="margin:0;">
+                                <label>Hasta</label>
+                                <input type="date" id="bit-hasta">
+                            </div>
+                            <button class="btn-odent" onclick="cargarBitacora()"><i class="bi bi-funnel"></i> Filtrar</button>
+                            <button class="btn-outline-odent" onclick="limpiarFiltrosBitacora()">Limpiar</button>
+                        </div>
+                        <table class="tabla-odent">
+                            <thead>
+                                <tr>
+                                    <th>Fecha y hora</th>
+                                    <th>Responsable</th>
+                                    <th>Acción</th>
+                                    <th>Detalle</th>
+                                    <th>IP</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bit-tbody">
+                                <tr>
+                                    <td colspan="5" style="text-align:center;color:var(--gris-azulado);">Cargando...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
             <?php endif; ?>
 
         </div>
     </div>
 
-          <?php include ROOT_PATH . '/views/shared/tratamientos_modales.php'; ?>
+    <?php include ROOT_PATH . '/views/shared/tratamientos_modales.php'; ?>
     <?php include ROOT_PATH . '/views/shared/agenda_modales.php'; ?>
     <?php if ($rol === 'administrador'): ?>
         <?php include ROOT_PATH . '/views/shared/inventario_modales.php'; ?>
+        <?php include ROOT_PATH . '/views/shared/asistente_reportes_modales.php'; ?>
     <?php endif; ?>
 
     <div class="modal-overlay" id="modal-nuevo-paciente">
@@ -933,12 +978,12 @@
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;">
                         <label style="display:flex;align-items:center;gap:8px;margin:0;font-weight:500;">
                             <input type="checkbox" class="ar-check" value="<?= $r['id'] ?>"
-                                   onchange="alCambiarRolCheck(this)">
+                                onchange="alCambiarRolCheck(this)">
                             <?= ucfirst(str_replace('_', ' ', $r['nombre'])) ?>
                         </label>
                         <label style="display:flex;align-items:center;gap:6px;margin:0;font-size:12px;">
                             <input type="radio" name="ar-principal" class="ar-radio" value="<?= $r['id'] ?>"
-                                   onchange="alCambiarRolRadio(this)">
+                                onchange="alCambiarRolRadio(this)">
                             Inicial
                         </label>
                     </div>
@@ -1034,108 +1079,291 @@
             </div>
             <p id="confirmar-mensaje" style="font-size:14px;color:var(--gris-texto);margin-bottom:20px;"></p>
             <div class="modal-footer">
-            <button class="btn-outline-odent" onclick="cerrarModal('modal-confirmar-estado')">Cancelar</button>
+                <button class="btn-outline-odent" onclick="cerrarModal('modal-confirmar-estado')">Cancelar</button>
                 <button id="btn-confirmar-estado" class="btn-peligro" onclick="ejecutarCambioEstado()">Confirmar</button>
             </div>
         </div>
     </div>
 
     <?php if ($rol === 'administrador'): ?>
-    <div class="modal-overlay" id="modal-nuevo-pago">
-        <div class="modal-caja">
-            <div class="modal-header">
-                <h3>Registrar pago</h3>
-                <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-pago')"><i class="bi bi-x-lg"></i></button>
-            </div>
-            <input type="hidden" id="pago-id-cotizacion">
-            <div class="campo-grupo">
-                <label>Paciente *</label>
-                <select id="pago-id-paciente" onchange="pagoCargarCotizaciones(this.value)">
-                    <option value="">— Seleccione un paciente —</option>
-                    <?php foreach ($pacientes as $p): ?>
-                        <option value="<?= $p['id_paciente'] ?>"><?= htmlspecialchars($p['nombre_completo']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="campo-grupo">
-                <label>Cotización *</label>
-                <select id="pago-sel-cotizacion" onchange="pagoSeleccionarCotizacion(this)">
-                    <option value="">— Seleccione primero un paciente —</option>
-                </select>
-            </div>
-            <div id="pago-saldo-info" style="display:none;background:var(--fondo-odent);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;">
-                <span>Total cotización: <strong id="pago-total-cot">—</strong></span>
-                &nbsp;·&nbsp;
-                <span style="color:var(--rojo-odent,#C0392B);">Saldo pendiente: <strong id="pago-saldo-pend">—</strong></span>
-            </div>
-            <div class="campo-grupo">
-                <label>Monto a pagar (₡) *</label>
-                <input type="number" id="pago-monto" placeholder="0" min="0">
-            </div>
-            <div class="campo-grupo">
-                <label>Método de pago *</label>
-                <select id="pago-metodo">
-                    <option value="efectivo">Efectivo</option>
-                    <option value="sinpe">SINPE Móvil</option>
-                    <option value="tarjeta">Tarjeta</option>
-                    <option value="transferencia">Transferencia</option>
-                </select>
-            </div>
-            <div class="campo-grupo">
-                <label>Comprobante <span style="color:var(--gris-azulado);font-size:12px;">(opcional)</span></label>
-                <input type="text" id="pago-referencia" placeholder="N.° comprobante, voucher o referencia">
-            </div>
-            <div class="campo-grupo">
-                <label>Fecha del pago *</label>
-                <input type="date" id="pago-fecha">
-            </div>
-            <div class="modal-footer">
-                <button class="btn-outline-odent" onclick="cerrarModal('modal-nuevo-pago')">Cancelar</button>
-                <button class="btn-odent" id="pago-btn-guardar" onclick="pagoGuardar()">
-                    <i class="bi bi-check-lg"></i> Registrar
-                </button>
+        <div class="modal-overlay" id="modal-nuevo-pago">
+            <div class="modal-caja">
+                <div class="modal-header">
+                    <h3>Registrar pago</h3>
+                    <button class="modal-cerrar" onclick="cerrarModal('modal-nuevo-pago')"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <input type="hidden" id="pago-id-cotizacion">
+                <div class="campo-grupo">
+                    <label>Paciente *</label>
+                    <select id="pago-id-paciente" onchange="pagoCargarCotizaciones(this.value)">
+                        <option value="">— Seleccione un paciente —</option>
+                        <?php foreach ($pacientes as $p): ?>
+                            <option value="<?= $p['id_paciente'] ?>"><?= htmlspecialchars($p['nombre_completo']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="campo-grupo">
+                    <label>Cotización *</label>
+                    <select id="pago-sel-cotizacion" onchange="pagoSeleccionarCotizacion(this)">
+                        <option value="">— Seleccione primero un paciente —</option>
+                    </select>
+                </div>
+                <div id="pago-saldo-info" style="display:none;background:var(--fondo-odent);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;">
+                    <span>Total cotización: <strong id="pago-total-cot">—</strong></span>
+                    &nbsp;·&nbsp;
+                    <span style="color:var(--rojo-odent,#C0392B);">Saldo pendiente: <strong id="pago-saldo-pend">—</strong></span>
+                </div>
+                <div class="campo-grupo">
+                    <label>Monto a pagar (₡) *</label>
+                    <input type="number" id="pago-monto" placeholder="0" min="0">
+                </div>
+                <div class="campo-grupo">
+                    <label>Método de pago *</label>
+                    <select id="pago-metodo">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="sinpe">SINPE Móvil</option>
+                        <option value="tarjeta">Tarjeta</option>
+                        <option value="transferencia">Transferencia</option>
+                    </select>
+                </div>
+                <div class="campo-grupo">
+                    <label>Comprobante <span style="color:var(--gris-azulado);font-size:12px;">(opcional)</span></label>
+                    <input type="text" id="pago-referencia" placeholder="N.° comprobante, voucher o referencia">
+                </div>
+                <div class="campo-grupo">
+                    <label>Fecha del pago *</label>
+                    <input type="date" id="pago-fecha">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-outline-odent" onclick="pagoCancelar()">Cancelar</button>
+                    <button class="btn-odent" id="pago-btn-guardar" onclick="pagoGuardar()">
+                        <i class="bi bi-check-lg"></i> Registrar
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="modal-overlay" id="modal-pac-editar-basico">
-        <div class="modal-caja" style="max-width:480px;">
-            <div class="modal-header">
-                <h3><i class="bi bi-person-gear" style="color:var(--azul-odent);margin-right:6px;"></i>Editar paciente</h3>
-                <button class="modal-cerrar" onclick="cerrarModal('modal-pac-editar-basico')"><i class="bi bi-x-lg"></i></button>
-            </div>
-            <input type="hidden" id="pac-edit-id-usuario">
-            <div class="campo-grupo">
-                <label>Nombre completo *</label>
-                <input type="text" id="pac-edit-nombre" maxlength="150" autocomplete="off">
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="modal-overlay" id="modal-pac-editar-basico">
+            <div class="modal-caja" style="max-width:480px;">
+                <div class="modal-header">
+                    <h3><i class="bi bi-person-gear" style="color:var(--azul-odent);margin-right:6px;"></i>Editar paciente</h3>
+                    <button class="modal-cerrar" onclick="cerrarModal('modal-pac-editar-basico')"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <input type="hidden" id="pac-edit-id-usuario">
                 <div class="campo-grupo">
-                    <label>Identificación *</label>
-                    <input type="text" id="pac-edit-cedula" maxlength="30" autocomplete="off">
+                    <label>Nombre completo *</label>
+                    <input type="text" id="pac-edit-nombre" maxlength="150" autocomplete="off">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div class="campo-grupo">
+                        <label>Identificación *</label>
+                        <input type="text" id="pac-edit-cedula" maxlength="30" autocomplete="off">
+                    </div>
+                    <div class="campo-grupo">
+                        <label>Teléfono</label>
+                        <input type="text" id="pac-edit-telefono" maxlength="20" autocomplete="off">
+                    </div>
                 </div>
                 <div class="campo-grupo">
-                    <label>Teléfono</label>
-                    <input type="text" id="pac-edit-telefono" maxlength="20" autocomplete="off">
+                    <label>Correo electrónico *</label>
+                    <input type="email" id="pac-edit-correo" maxlength="150" autocomplete="off">
                 </div>
-            </div>
-            <div class="campo-grupo">
-                <label>Correo electrónico *</label>
-                <input type="email" id="pac-edit-correo" maxlength="150" autocomplete="off">
-            </div>
-            <div class="campo-grupo">
-                <label>Nombre de usuario *</label>
-                <input type="text" id="pac-edit-usuario" maxlength="60" autocomplete="off"
-                    placeholder="Sin espacios ni caracteres especiales">
-            </div>
-            <div class="modal-footer">
-                <button class="btn-outline-odent" onclick="cerrarModal('modal-pac-editar-basico')">Cancelar</button>
-                <button class="btn-odent" id="pac-edit-btn-guardar" onclick="pacGuardarEditar()">
-                    <i class="bi bi-check-lg"></i> Guardar cambios
-                </button>
+                <div class="campo-grupo">
+                    <label>Nombre de usuario *</label>
+                    <input type="text" id="pac-edit-usuario" maxlength="60" autocomplete="off"
+                        placeholder="Sin espacios ni caracteres especiales">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-outline-odent" onclick="cerrarModal('modal-pac-editar-basico')">Cancelar</button>
+                    <button class="btn-odent" id="pac-edit-btn-guardar" onclick="pacGuardarEditar()">
+                        <i class="bi bi-check-lg"></i> Guardar cambios
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
+
+
+        <!-- ═══════════════════════════════════════════════════════════════
+     FIN-05 — Estado financiero del paciente
+═══════════════════════════════════════════════════════════════ -->
+
+        <div class="modal-overlay" id="modal-estado-financiero">
+            <div class="modal-caja" style="max-width:850px;">
+                <div class="modal-header">
+                    <div>
+                        <h3>
+                            <i class="bi bi-wallet2"
+                                style="color:var(--azul-odent);margin-right:6px;"></i>
+                            Estado financiero
+                        </h3>
+                        <p id="fin-paciente-info"
+                            style="font-size:13px;color:var(--gris-azulado);margin:4px 0 0;">
+                        </p>
+                    </div>
+                    <button class="modal-cerrar"
+                        onclick="cerrarModal('modal-estado-financiero')">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Cargando -->
+                <div id="fin-cargando"
+                    style="text-align:center;padding:35px 20px;color:var(--gris-azulado);">
+                    <span>
+                        Consultando estado financiero…
+                    </span>
+                </div>
+
+                <!-- Contenido -->
+                <div id="fin-contenido" style="display:none;">
+
+                    <!-- Resumen financiero -->
+                    <div style="
+                display:grid;
+                grid-template-columns:repeat(3,1fr);
+                gap:12px;
+                margin-bottom:18px;
+            ">
+                        <div style="
+                    background:var(--fondo-odent);
+                    border-radius:10px;
+                    padding:14px;
+                ">
+                            <div style="
+                        font-size:12px;
+                        color:var(--gris-azulado);
+                        margin-bottom:4px;
+                    ">
+                                Total cotizado
+                            </div>
+                            <strong id="fin-total-cotizado"
+                                style="font-size:19px;color:var(--azul-odent);">
+                                ₡0
+                            </strong>
+                        </div>
+
+                        <div style="
+                    background:var(--fondo-odent);
+                    border-radius:10px;
+                    padding:14px;
+                ">
+                            <div style="
+                        font-size:12px;
+                        color:var(--gris-azulado);
+                        margin-bottom:4px;
+                    ">
+                                Total pagado
+                            </div>
+                            <strong id="fin-total-pagado"
+                                style="font-size:19px;color:var(--azul-odent);">
+                                ₡0
+                            </strong>
+                        </div>
+                        <div style="
+                    background:var(--fondo-odent);
+                    border-radius:10px;
+                    padding:14px;
+                ">
+                            <div style="
+                        font-size:12px;
+                        color:var(--gris-azulado);
+                        margin-bottom:4px;
+                    ">
+                                Saldo pendiente
+                            </div>
+                            <strong id="fin-saldo"
+                                style="font-size:19px;">
+                                ₡0
+                            </strong>
+                        </div>
+                    </div>
+                    <!-- Estado actual -->
+                    <div id="fin-estado-box"
+                        style="margin-bottom:20px;">
+                    </div>
+                    <!-- Sin movimientos -->
+                    <div id="fin-sin-movimientos"
+                        style="display:none;
+                        background:var(--fondo-odent);
+                        border-radius:8px;
+                        padding:16px;
+                        margin-bottom:18px;
+                        color:var(--gris-azulado);">
+
+                        <i class="bi bi-info-circle"
+                            style="margin-right:5px;"></i>
+                        Este paciente no cuenta con movimientos financieros registrados.
+                    </div>
+
+                    <!-- Movimientos -->
+                    <div id="fin-movimientos">
+                        <!-- Cotizaciones -->
+                        <div style="margin-bottom:24px;">
+                            <h4 style="margin-bottom:10px;">
+                                <i class="bi bi-receipt"
+                                    style="color:var(--azul-odent);margin-right:5px;"></i>
+                                Cotizaciones
+                            </h4>
+                            <div style="overflow-x:auto;">
+                                <table class="tabla-odent">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Tratamiento</th>
+                                            <th>Fecha</th>
+                                            <th>Total</th>
+                                            <th>Pagado</th>
+                                            <th>Saldo</th>
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fin-cotizaciones-tbody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Pagos -->
+                        <div>
+                            <h4 style="margin-bottom:10px;">
+                                <i class="bi bi-cash-stack"
+                                    style="color:var(--azul-odent);margin-right:5px;"></i>
+                                Historial de pagos
+                            </h4>
+                            <div style="overflow-x:auto;">
+                                <table class="tabla-odent">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Fecha</th>
+                                            <th>Monto</th>
+                                            <th>Método</th>
+                                            <th>Cotización</th>
+                                            <th>Referencia</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fin-pagos-tbody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                        class="btn-outline-odent"
+                        onclick="cerrarModal('modal-estado-financiero')">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+
+
     <?php endif; ?>
 
     <div class="modal-overlay" id="modal-nueva-cotizacion">
@@ -1168,7 +1396,18 @@
                 <input type="number" id="cot-descuento" placeholder="0" min="0" value="0" oninput="cotRecalcular()">
             </div>
             <div class="campo-grupo">
-                <label>IVA (13%)</label>
+                    <label>Piezas dentales (FDI) *</label>
+                    <div class="tr-picker" id="cot-picker"></div>
+                    <div class="tr-picker-resumen" id="cot-picker-resumen"></div>
+                    <input type="hidden" id="cot-piezas">
+                </div>
+                <div class="campo-grupo">
+                    <label>Impuesto (IVA %) *</label>
+                    <input type="number" id="cot-iva-pct" min="0" max="100" step="0.01" value="13" oninput="cotRecalcular()">
+                </div>
+                
+            <div class="campo-grupo">
+                <label>IVA (según %)</label>
                 <input type="text" id="cot-iva" readonly placeholder="Se calcula automáticamente" style="background:var(--fondo-odent);">
             </div>
             <div class="campo-grupo">
@@ -1285,7 +1524,7 @@
             <div class="campo-grupo">
                 <label>Fecha de nacimiento</label>
                 <input type="date" id="ep-fecha-nac" max="<?= date('Y-m-d') ?>"
-                       oninput="epActualizarEdad(this.value)">
+                    oninput="epActualizarEdad(this.value)">
                 <small id="ep-edad-preview" style="color:var(--gris-azulado);font-size:12px;margin-top:4px;display:block;"></small>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
@@ -1355,12 +1594,13 @@
 
     <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
     <script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
-        <script src="<?= BASE_URL ?>/public/js/tratamientos.js?v=<?= @filemtime(ROOT_PATH . '/public/js/tratamientos.js') ?>"></script>
-                  <?php if ($rol === 'administrador'): ?>
-          <script src="<?= BASE_URL ?>/public/js/reportes.js?v=<?= @filemtime(ROOT_PATH . '/public/js/reportes.js') ?>"></script>
-          <?php endif; ?>
+    <script src="<?= BASE_URL ?>/public/js/tratamientos.js?v=<?= @filemtime(ROOT_PATH . '/public/js/tratamientos.js') ?>"></script>
+    <?php if ($rol === 'administrador'): ?>
+        <script src="<?= BASE_URL ?>/public/js/reportes.js?v=<?= @filemtime(ROOT_PATH . '/public/js/reportes.js') ?>"></script>
+    <?php endif; ?>
     <?php if ($rol === 'administrador'): ?>
         <script src="<?= BASE_URL ?>/public/js/inventario.js?v=<?= @filemtime(ROOT_PATH . '/public/js/inventario.js') ?>"></script>
+        <script src="<?= BASE_URL ?>/public/js/asistente_reportes.js?v=<?= @filemtime(ROOT_PATH . '/public/js/asistente_reportes.js') ?>"></script>
     <?php endif; ?>
     <script>
         const BASE = '<?= BASE_URL ?>';
@@ -1378,23 +1618,211 @@
             document.getElementById('buscar-paciente')?.addEventListener('input', buscarPacienteTabla);
         });
 
+        function finFormatoMonto(valor) {
+            return '₡' + Number(valor ?? 0).toLocaleString('es-CR', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function finEstadoTexto(estado) {
+            const estados = {
+                con_deuda: 'Con deuda',
+                al_dia: 'Al día',
+                saldo_favor: 'Saldo a favor',
+                sin_movimientos: 'Sin movimientos'
+            };
+
+            return estados[estado] ?? 'Sin información';
+        }
+
+        function finEstadoClase(estado) {
+            const clases = {
+                con_deuda: 'pendiente',
+                al_dia: 'completada',
+                saldo_favor: 'confirmada',
+                sin_movimientos: 'confirmada'
+            };
+
+            return clases[estado] ?? 'pendiente';
+        }
+
+        async function finAbrirEstadoPaciente(idPaciente) {
+            if (!idPaciente) {
+                return mostrarToast('No se pudo identificar al paciente.', 'aviso');
+            }
+
+            const cargando = document.getElementById('fin-cargando');
+            const contenido = document.getElementById('fin-contenido');
+            const sinMovimientos = document.getElementById('fin-sin-movimientos');
+            const movimientos = document.getElementById('fin-movimientos');
+
+            cargando.style.display = '';
+            contenido.style.display = 'none';
+            sinMovimientos.style.display = 'none';
+            movimientos.style.display = 'none';
+            document.getElementById('fin-paciente-info').textContent = '';
+
+            abrirModal('modal-estado-financiero');
+
+            try {
+                const res = await fetch(
+                    `${BASE}/index.php?accion=pagos.estadoFinanciero&id_paciente=${encodeURIComponent(idPaciente)}`
+                );
+
+                const respuesta = await res.json();
+
+                if (!res.ok || !respuesta.ok) {
+                    throw new Error(
+                        respuesta.mensaje || 'No se pudo consultar el estado financiero.'
+                    );
+                }
+
+                const datos = respuesta.data;
+                const paciente = datos.paciente;
+                const resumen = datos.resumen;
+
+                document.getElementById('fin-paciente-info').textContent =
+                    `${paciente.nombre} · Cédula: ${paciente.identificacion || '—'}`;
+
+                document.getElementById('fin-total-cotizado').textContent =
+                    finFormatoMonto(resumen.total_cotizado);
+
+                document.getElementById('fin-total-pagado').textContent =
+                    finFormatoMonto(resumen.total_pagado);
+
+                const saldo = document.getElementById('fin-saldo');
+                saldo.textContent = finFormatoMonto(Math.abs(resumen.saldo));
+
+                if (resumen.estado === 'con_deuda') {
+                    saldo.style.color = '#C0392B';
+                } else if (resumen.estado === 'saldo_favor') {
+                    saldo.style.color = '#198754';
+                } else {
+                    saldo.style.color = 'var(--azul-odent)';
+                }
+
+                document.getElementById('fin-estado-box').innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--fondo-odent);border-radius:8px;padding:11px 14px;">
+                <span style="font-size:13px;color:var(--gris-azulado);">
+                    Estado actual de la cuenta
+                </span>
+                <span class="badge-estado badge-${finEstadoClase(resumen.estado)}">
+                    ${finEstadoTexto(resumen.estado)}
+                </span>
+            </div>
+        `;
+
+                if (!resumen.tiene_movimientos) {
+                    sinMovimientos.style.display = '';
+                    movimientos.style.display = 'none';
+                } else {
+                    sinMovimientos.style.display = 'none';
+                    movimientos.style.display = '';
+                    finRenderizarCotizaciones(datos.cotizaciones || []);
+                    finRenderizarPagos(datos.pagos || []);
+                }
+
+                cargando.style.display = 'none';
+                contenido.style.display = '';
+
+            } catch (error) {
+                cargando.style.display = 'none';
+                cerrarModal('modal-estado-financiero');
+                mostrarToast(
+                    error.message || 'No se pudo consultar el estado financiero.',
+                    'error',
+                    6000
+                );
+            }
+        }
+
+        function finRenderizarCotizaciones(cotizaciones) {
+            const tbody = document.getElementById('fin-cotizaciones-tbody');
+
+            if (!cotizaciones.length) {
+                tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align:center;color:var(--gris-azulado);padding:18px;">
+                    Sin cotizaciones registradas
+                </td>
+            </tr>
+        `;
+                return;
+            }
+
+            const badgeMap = {
+                aprobada: 'confirmada',
+                rechazada: 'cancelada',
+                pagada: 'completada',
+                pendiente: 'pendiente'
+            };
+
+            tbody.innerHTML = cotizaciones.map(c => {
+                const estado = c.estado || 'pendiente';
+                const badge = badgeMap[estado] || 'pendiente';
+
+                return `
+            <tr>
+                <td><strong>#${Number(c.id_cotizacion)}</strong></td>
+                <td>${escapar(c.tratamiento || '—')}</td>
+                <td>${escapar(c.fecha || '—')}</td>
+                <td>${finFormatoMonto(c.total)}</td>
+                <td>${finFormatoMonto(c.pagado)}</td>
+                <td><strong>${finFormatoMonto(Math.max(0, Number(c.saldo)))}</strong></td>
+                <td>
+                    <span class="badge-estado badge-${badge}">
+                        ${escapar(estado.charAt(0).toUpperCase() + estado.slice(1))}
+                    </span>
+                </td>
+            </tr>
+        `;
+            }).join('');
+        }
+
+        function finRenderizarPagos(pagos) {
+            const tbody = document.getElementById('fin-pagos-tbody');
+
+            if (!pagos.length) {
+                tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center;color:var(--gris-azulado);padding:18px;">
+                    Sin pagos registrados
+                </td>
+            </tr>
+        `;
+                return;
+            }
+
+            tbody.innerHTML = pagos.map(p => `
+        <tr>
+            <td><strong>#${Number(p.id_pago)}</strong></td>
+            <td>${escapar(p.fecha || '—')}</td>
+            <td>${finFormatoMonto(p.monto)}</td>
+            <td>${escapar(p.metodo || '—')}</td>
+            <td>#${Number(p.id_cotizacion)}</td>
+            <td>${escapar(p.referencia || '—')}</td>
+        </tr>
+    `).join('');
+        }
+
         function pacAbrirEditar(paciente) {
             document.getElementById('pac-edit-id-usuario').value = paciente.id_usuario;
-            document.getElementById('pac-edit-nombre').value     = paciente.nombre   || '';
-            document.getElementById('pac-edit-cedula').value     = paciente.cedula   || '';
-            document.getElementById('pac-edit-telefono').value   = paciente.telefono || '';
-            document.getElementById('pac-edit-correo').value     = paciente.correo   || '';
-            document.getElementById('pac-edit-usuario').value    = paciente.usuario  || '';
+            document.getElementById('pac-edit-nombre').value = paciente.nombre || '';
+            document.getElementById('pac-edit-cedula').value = paciente.cedula || '';
+            document.getElementById('pac-edit-telefono').value = paciente.telefono || '';
+            document.getElementById('pac-edit-correo').value = paciente.correo || '';
+            document.getElementById('pac-edit-usuario').value = paciente.usuario || '';
             abrirModal('modal-pac-editar-basico');
         }
 
         async function pacGuardarEditar() {
             const idUsuario = document.getElementById('pac-edit-id-usuario').value;
-            const nombre    = document.getElementById('pac-edit-nombre').value.trim();
-            const cedula    = document.getElementById('pac-edit-cedula').value.trim();
-            const telefono  = document.getElementById('pac-edit-telefono').value.trim();
-            const correo    = document.getElementById('pac-edit-correo').value.trim();
-            const usuario   = document.getElementById('pac-edit-usuario').value.trim();
+            const nombre = document.getElementById('pac-edit-nombre').value.trim();
+            const cedula = document.getElementById('pac-edit-cedula').value.trim();
+            const telefono = document.getElementById('pac-edit-telefono').value.trim();
+            const correo = document.getElementById('pac-edit-correo').value.trim();
+            const usuario = document.getElementById('pac-edit-usuario').value.trim();
 
             if (!nombre || !cedula || !correo || !usuario) {
                 mostrarToast('Complete todos los campos obligatorios.', 'aviso');
@@ -1408,13 +1836,16 @@
             try {
                 const form = new FormData();
                 form.append('id_usuario', idUsuario);
-                form.append('nombre',     nombre);
-                form.append('cedula',     cedula);
-                form.append('telefono',   telefono);
-                form.append('correo',     correo);
-                form.append('usuario',    usuario);
+                form.append('nombre', nombre);
+                form.append('cedula', cedula);
+                form.append('telefono', telefono);
+                form.append('correo', correo);
+                form.append('usuario', usuario);
 
-                const res  = await fetch(`${BASE}/index.php?accion=pacientes.editarDatosBasicos`, { method: 'POST', body: form });
+                const res = await fetch(`${BASE}/index.php?accion=pacientes.editarDatosBasicos`, {
+                    method: 'POST',
+                    body: form
+                });
                 const data = await res.json();
 
                 if (!data.ok) {
@@ -1443,11 +1874,17 @@
 
         function abrirNuevoUsuario() {
             ['nu-nombre', 'nu-cedula', 'nu-telefono', 'nu-correo', 'nu-usuario', 'nu-contrasena', 'nu-rol']
-                .forEach(id => document.getElementById(id).value = '');
+            .forEach(id => document.getElementById(id).value = '');
             abrirModal('modal-nuevo-usuario');
         }
 
-        const escapar = t => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const escapar = t => String(t ?? '').replace(/[&<>"']/g, c => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        } [c]));
 
         async function cargarBitacora() {
             const tbody = document.getElementById('bit-tbody');
@@ -1460,7 +1897,11 @@
                 hasta: document.getElementById('bit-hasta').value
             });
             try {
-                const res = await fetch(`${BASE}/index.php?${params}`, { headers: { 'Accept': 'application/json' } });
+                const res = await fetch(`${BASE}/index.php?${params}`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
                 const data = await res.json();
                 if (!data.ok) throw new Error(data.error);
 
@@ -1476,8 +1917,8 @@
                         <td><span class="badge-estado badge-confirmada">${escapar(r.accion.replaceAll('_', ' '))}</span></td>
                         <td>${escapar(r.descripcion)}</td>
                         <td style="color:var(--gris-azulado);">${escapar(r.ip)}</td>
-                    </tr>`).join('')
-                    : '<tr><td colspan="5" style="text-align:center;color:var(--gris-azulado);">No hay registros que cumplan los criterios.</td></tr>';
+                    </tr>`).join('') :
+                    '<tr><td colspan="5" style="text-align:center;color:var(--gris-azulado);">No hay registros que cumplan los criterios.</td></tr>';
             } catch (e) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No se pudo cargar la bitácora.</td></tr>';
             }
@@ -1515,7 +1956,10 @@
             if (errPolitica) return mostrarToast(errPolitica, 'aviso', 6000);
             if (nueva !== confirmar) return mostrarToast('Las contraseñas no coinciden.', 'aviso');
 
-            await guardarJSON('usuarios.restablecer', { id: usuarioIdSeleccionado, contrasena: nueva }, {
+            await guardarJSON('usuarios.restablecer', {
+                id: usuarioIdSeleccionado,
+                contrasena: nueva
+            }, {
                 boton: document.querySelector('#modal-restablecer .modal-footer .btn-odent'),
                 cerrarModal: 'modal-restablecer',
                 exito: 'Contraseña restablecida con éxito.'
@@ -1566,6 +2010,7 @@
 
             abrirModal('modal-asignar-rol');
         }
+
         function alCambiarRolRadio(radio) {
             const check = document.querySelector(`.ar-check[value="${radio.value}"]`);
             if (check) check.checked = true;
@@ -1586,7 +2031,11 @@
             if (roles.length === 0) return mostrarToast('Seleccione al menos un rol.', 'aviso');
             if (!principal) return mostrarToast('Seleccione cuál será el rol inicial.', 'aviso');
 
-            await guardarJSON('usuarios.asignarRol', { id, roles, rol_principal: Number(principal.value) }, {
+            await guardarJSON('usuarios.asignarRol', {
+                id,
+                roles,
+                rol_principal: Number(principal.value)
+            }, {
                 boton: document.querySelector('#modal-asignar-rol .modal-footer .btn-odent'),
                 cerrarModal: 'modal-asignar-rol',
                 exito: 'Roles actualizados con éxito.',
@@ -1623,18 +2072,28 @@
         }
 
         let _expPacienteActual = null;
-        let _expDatos          = null;
+        let _expDatos = null;
 
         const _exp = (id) => document.getElementById(id);
         const _expEsc = (t) => String(t ?? '—').replace(/[&<>"']/g, c =>
-            ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+            ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            } [c]));
 
         async function expCargarLista(q = '') {
             const tbody = _exp('exp-tbody');
             tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gris-azulado);">Cargando…</td></tr>';
             try {
                 const url = `${BASE}/index.php?accion=expedientes.pacientes` + (q ? `&q=${encodeURIComponent(q)}` : '');
-                const res  = await fetch(url, { headers: { Accept: 'application/json' } });
+                const res = await fetch(url, {
+                    headers: {
+                        Accept: 'application/json'
+                    }
+                });
                 const data = await res.json();
                 if (!Array.isArray(data) || data.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gris-azulado);">No se encontraron pacientes.</td></tr>';
@@ -1683,6 +2142,7 @@
         }
 
         let _expBuscarTimer = null;
+
         function expBuscar(q) {
             clearTimeout(_expBuscarTimer);
             _expBuscarTimer = setTimeout(() => expCargarLista(q.trim()), 300);
@@ -1690,20 +2150,20 @@
 
         async function expAbrirPaciente(paciente) {
             _expPacienteActual = paciente;
-            _exp('exp-vista-lista').style.display   = 'none';
+            _exp('exp-vista-lista').style.display = 'none';
             _exp('exp-vista-detalle').style.display = '';
             _exp('exp-sin-expediente').style.display = 'none';
-            _exp('exp-con-expediente').style.display  = 'none';
+            _exp('exp-con-expediente').style.display = 'none';
 
             _exp('exp-detalle-nombre').textContent = paciente.nombre_completo ?? '—';
             _exp('exp-detalle-cedula').textContent = 'Cédula: ' + (paciente.identificacion ?? '—');
 
             if (!paciente.id_paciente) {
-                _exp('exp-sin-expediente').style.display      = '';
-                _exp('btn-editar-pac').style.display          = 'none';
-                _exp('btn-editar-exp').style.display          = 'none';
-                _exp('btn-ver-odontograma').style.display     = 'none';
-                _exp('btn-ver-documentos').style.display      = 'none';
+                _exp('exp-sin-expediente').style.display = '';
+                _exp('btn-editar-pac').style.display = 'none';
+                _exp('btn-editar-exp').style.display = 'none';
+                _exp('btn-ver-odontograma').style.display = 'none';
+                _exp('btn-ver-documentos').style.display = 'none';
                 _exp('btn-ver-historial-trat').style.display = 'none';
                 return;
             }
@@ -1711,24 +2171,26 @@
             _exp('btn-editar-pac').style.display = '';
 
             try {
-                const res  = await fetch(`${BASE}/index.php?accion=expedientes.obtener&id_paciente=${paciente.id_paciente}`, {
-                    headers: { Accept: 'application/json' }
+                const res = await fetch(`${BASE}/index.php?accion=expedientes.obtener&id_paciente=${paciente.id_paciente}`, {
+                    headers: {
+                        Accept: 'application/json'
+                    }
                 });
                 const data = await res.json();
 
                 if (!data || !data.id_expediente) {
-                    _exp('exp-sin-expediente').style.display      = '';
-                    _exp('btn-editar-exp').style.display          = 'none';
-                    _exp('btn-ver-odontograma').style.display     = 'none';
-                    _exp('btn-ver-documentos').style.display      = 'none';
+                    _exp('exp-sin-expediente').style.display = '';
+                    _exp('btn-editar-exp').style.display = 'none';
+                    _exp('btn-ver-odontograma').style.display = 'none';
+                    _exp('btn-ver-documentos').style.display = 'none';
                     _exp('btn-ver-historial-trat').style.display = 'none';
                 } else {
                     _expDatos = data;
                     expRenderizarExpediente(data, paciente);
-                    _exp('exp-con-expediente').style.display      = '';
-                    _exp('btn-editar-exp').style.display          = '';
-                    _exp('btn-ver-odontograma').style.display     = '';
-                    _exp('btn-ver-documentos').style.display      = '';
+                    _exp('exp-con-expediente').style.display = '';
+                    _exp('btn-editar-exp').style.display = '';
+                    _exp('btn-ver-odontograma').style.display = '';
+                    _exp('btn-ver-documentos').style.display = '';
                     _exp('btn-ver-historial-trat').style.display = '';
                     expCargarAtenciones(data.id_expediente);
                 }
@@ -1738,27 +2200,29 @@
         }
 
         function expRenderizarExpediente(data, paciente) {
-            _exp('exp-motivo').textContent        = data.motivo_consulta  || '—';
-            _exp('exp-alergias').textContent      = data.alergias         || 'Ninguna';
-            _exp('exp-enfermedades').textContent  = data.enfermedades     || 'Ninguna';
-            _exp('exp-medicamentos').textContent  = data.medicamentos_actuales || 'Ninguno';
-            _exp('exp-antecedentes').textContent  = data.antecedentes     || 'Sin antecedentes';
-            _exp('exp-observaciones').textContent = data.observaciones    || '—';
+            _exp('exp-motivo').textContent = data.motivo_consulta || '—';
+            _exp('exp-alergias').textContent = data.alergias || 'Ninguna';
+            _exp('exp-enfermedades').textContent = data.enfermedades || 'Ninguna';
+            _exp('exp-medicamentos').textContent = data.medicamentos_actuales || 'Ninguno';
+            _exp('exp-antecedentes').textContent = data.antecedentes || 'Sin antecedentes';
+            _exp('exp-observaciones').textContent = data.observaciones || '—';
 
-            _exp('exp-pac-fnac').textContent  = paciente.fecha_nacimiento ? new Date(paciente.fecha_nacimiento + 'T00:00:00').toLocaleDateString('es-CR') : '—';
-            _exp('exp-pac-edad').textContent  = paciente.edad != null ? paciente.edad + ' años' : '—';
-            _exp('exp-pac-sexo').textContent  = paciente.sexo ? (paciente.sexo.charAt(0).toUpperCase() + paciente.sexo.slice(1)) : '—';
+            _exp('exp-pac-fnac').textContent = paciente.fecha_nacimiento ? new Date(paciente.fecha_nacimiento + 'T00:00:00').toLocaleDateString('es-CR') : '—';
+            _exp('exp-pac-edad').textContent = paciente.edad != null ? paciente.edad + ' años' : '—';
+            _exp('exp-pac-sexo').textContent = paciente.sexo ? (paciente.sexo.charAt(0).toUpperCase() + paciente.sexo.slice(1)) : '—';
             _exp('exp-pac-sangre').textContent = paciente.grupo_sanguineo || '—';
-            _exp('exp-pac-tel').textContent    = paciente.telefono   || '—';
-            _exp('exp-pac-correo').textContent = paciente.correo     || '—';
+            _exp('exp-pac-tel').textContent = paciente.telefono || '—';
+            _exp('exp-pac-correo').textContent = paciente.correo || '—';
         }
 
         async function expCargarAtenciones(idExpediente) {
             const lista = _exp('exp-atenciones-lista');
             lista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--gris-azulado);">Cargando atenciones…</div>';
             try {
-                const res  = await fetch(`${BASE}/index.php?accion=expedientes.atenciones&id_expediente=${idExpediente}`, {
-                    headers: { Accept: 'application/json' }
+                const res = await fetch(`${BASE}/index.php?accion=expedientes.atenciones&id_expediente=${idExpediente}`, {
+                    headers: {
+                        Accept: 'application/json'
+                    }
                 });
                 const data = await res.json();
                 _exp('exp-atenciones-count').textContent = `${data.length} registro${data.length !== 1 ? 's' : ''}`;
@@ -1798,22 +2262,32 @@
         function _expFecha(str) {
             if (!str) return '—';
             const d = new Date(str.replace(' ', 'T'));
-            return d.toLocaleDateString('es-CR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+            return d.toLocaleDateString('es-CR', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
         }
 
         function expVolverLista() {
             _expPacienteActual = null;
-            _expDatos          = null;
+            _expDatos = null;
             _exp('btn-editar-pac').style.display = 'none';
             _exp('exp-vista-detalle').style.display = 'none';
-            _exp('exp-vista-lista').style.display   = '';
+            _exp('exp-vista-lista').style.display = '';
         }
 
         async function _expRefrescarPaciente() {
             const ref = _expPacienteActual;
             if (!ref) return;
             try {
-                const res  = await fetch(`${BASE}/index.php?accion=expedientes.pacientes&q=${encodeURIComponent(ref.identificacion || ref.nombre_completo || '')}`, { headers: { Accept: 'application/json' } });
+                const res = await fetch(`${BASE}/index.php?accion=expedientes.pacientes&q=${encodeURIComponent(ref.identificacion || ref.nombre_completo || '')}`, {
+                    headers: {
+                        Accept: 'application/json'
+                    }
+                });
                 const data = await res.json();
                 const nuevo = Array.isArray(data) ? data.find(x => String(x.id_usuario) === String(ref.id_usuario)) : null;
                 expAbrirPaciente(nuevo || ref);
@@ -1827,14 +2301,14 @@
             if (!_expPacienteActual) return mostrarToast('No se identificó al paciente.', 'error');
 
             await guardarJSON('expedientes.crear', {
-                id_paciente:          _expPacienteActual.id_paciente,
-                id_usuario:          _expPacienteActual.id_usuario,
-                motivo_consulta:      _exp('ec-motivo').value.trim(),
-                alergias:             _exp('ec-alergias').value.trim(),
-                enfermedades:         _exp('ec-enfermedades').value.trim(),
-                medicamentos_actuales:_exp('ec-medicamentos').value.trim(),
-                antecedentes:         _exp('ec-antecedentes').value.trim(),
-                observaciones:        _exp('ec-observaciones').value.trim()
+                id_paciente: _expPacienteActual.id_paciente,
+                id_usuario: _expPacienteActual.id_usuario,
+                motivo_consulta: _exp('ec-motivo').value.trim(),
+                alergias: _exp('ec-alergias').value.trim(),
+                enfermedades: _exp('ec-enfermedades').value.trim(),
+                medicamentos_actuales: _exp('ec-medicamentos').value.trim(),
+                antecedentes: _exp('ec-antecedentes').value.trim(),
+                observaciones: _exp('ec-observaciones').value.trim()
             }, {
                 boton: document.querySelector('#modal-exp-crear .modal-footer .btn-odent'),
                 cerrarModal: 'modal-exp-crear',
@@ -1846,12 +2320,12 @@
         function abrirEditarExpediente() {
             if (!_expDatos) return;
             _exp('ee-id-expediente').value = _expDatos.id_expediente;
-            _exp('ee-motivo').value        = _expDatos.motivo_consulta          || '';
-            _exp('ee-alergias').value      = _expDatos.alergias                 || '';
-            _exp('ee-enfermedades').value  = _expDatos.enfermedades             || '';
-            _exp('ee-medicamentos').value  = _expDatos.medicamentos_actuales    || '';
-            _exp('ee-antecedentes').value  = _expDatos.antecedentes             || '';
-            _exp('ee-observaciones').value = _expDatos.observaciones            || '';
+            _exp('ee-motivo').value = _expDatos.motivo_consulta || '';
+            _exp('ee-alergias').value = _expDatos.alergias || '';
+            _exp('ee-enfermedades').value = _expDatos.enfermedades || '';
+            _exp('ee-medicamentos').value = _expDatos.medicamentos_actuales || '';
+            _exp('ee-antecedentes').value = _expDatos.antecedentes || '';
+            _exp('ee-observaciones').value = _expDatos.observaciones || '';
             abrirModal('modal-exp-editar');
         }
 
@@ -1859,13 +2333,13 @@
             if (!validarCampos(['ee-motivo'], 'El motivo de consulta es obligatorio.')) return;
 
             await guardarJSON('expedientes.actualizar', {
-                id_expediente:        _exp('ee-id-expediente').value,
-                motivo_consulta:      _exp('ee-motivo').value.trim(),
-                alergias:             _exp('ee-alergias').value.trim(),
-                enfermedades:         _exp('ee-enfermedades').value.trim(),
-                medicamentos_actuales:_exp('ee-medicamentos').value.trim(),
-                antecedentes:         _exp('ee-antecedentes').value.trim(),
-                observaciones:        _exp('ee-observaciones').value.trim()
+                id_expediente: _exp('ee-id-expediente').value,
+                motivo_consulta: _exp('ee-motivo').value.trim(),
+                alergias: _exp('ee-alergias').value.trim(),
+                enfermedades: _exp('ee-enfermedades').value.trim(),
+                medicamentos_actuales: _exp('ee-medicamentos').value.trim(),
+                antecedentes: _exp('ee-antecedentes').value.trim(),
+                observaciones: _exp('ee-observaciones').value.trim()
             }, {
                 boton: document.querySelector('#modal-exp-editar .modal-footer .btn-odent'),
                 cerrarModal: 'modal-exp-editar',
@@ -1876,21 +2350,24 @@
 
         function abrirEditarPaciente() {
             if (!_expPacienteActual?.id_paciente) return;
-            _exp('ep-id-paciente').value       = _expPacienteActual.id_paciente;
-            _exp('ep-fecha-nac').value         = _expPacienteActual.fecha_nacimiento || '';
-            _exp('ep-sexo').value              = _expPacienteActual.sexo            || '';
-            _exp('ep-sangre').value            = _expPacienteActual.grupo_sanguineo || '';
+            _exp('ep-id-paciente').value = _expPacienteActual.id_paciente;
+            _exp('ep-fecha-nac').value = _expPacienteActual.fecha_nacimiento || '';
+            _exp('ep-sexo').value = _expPacienteActual.sexo || '';
+            _exp('ep-sangre').value = _expPacienteActual.grupo_sanguineo || '';
             epActualizarEdad(_expPacienteActual.fecha_nacimiento || '');
             abrirModal('modal-editar-paciente');
         }
 
         function epActualizarEdad(fechaStr) {
             const preview = _exp('ep-edad-preview');
-            if (!fechaStr) { preview.textContent = ''; return; }
-            const hoy   = new Date();
-            const nac   = new Date(fechaStr + 'T00:00:00');
-            let edad    = hoy.getFullYear() - nac.getFullYear();
-            const m     = hoy.getMonth() - nac.getMonth();
+            if (!fechaStr) {
+                preview.textContent = '';
+                return;
+            }
+            const hoy = new Date();
+            const nac = new Date(fechaStr + 'T00:00:00');
+            let edad = hoy.getFullYear() - nac.getFullYear();
+            const m = hoy.getMonth() - nac.getMonth();
             if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
             preview.textContent = edad >= 0 ? `Edad: ${edad} años` : '';
         }
@@ -1898,9 +2375,9 @@
         async function guardarEditarPaciente() {
             const pacienteRef = _expPacienteActual;
             const res = await guardarJSON('expedientes.paciente.actualizar', {
-                id_paciente:     _exp('ep-id-paciente').value,
-                fecha_nacimiento:_exp('ep-fecha-nac').value,
-                sexo:            _exp('ep-sexo').value,
+                id_paciente: _exp('ep-id-paciente').value,
+                fecha_nacimiento: _exp('ep-fecha-nac').value,
+                sexo: _exp('ep-sexo').value,
                 grupo_sanguineo: _exp('ep-sangre').value
             }, {
                 cerrarModal: 'modal-editar-paciente',
@@ -1908,10 +2385,11 @@
             });
             if (res?.ok && pacienteRef) {
                 pacienteRef.fecha_nacimiento = _exp('ep-fecha-nac').value || null;
-                pacienteRef.sexo             = _exp('ep-sexo').value      || null;
-                pacienteRef.grupo_sanguineo  = _exp('ep-sangre').value    || null;
+                pacienteRef.sexo = _exp('ep-sexo').value || null;
+                pacienteRef.grupo_sanguineo = _exp('ep-sangre').value || null;
                 if (pacienteRef.fecha_nacimiento) {
-                    const hoy = new Date(), nac = new Date(pacienteRef.fecha_nacimiento + 'T00:00:00');
+                    const hoy = new Date(),
+                        nac = new Date(pacienteRef.fecha_nacimiento + 'T00:00:00');
                     let edad = hoy.getFullYear() - nac.getFullYear();
                     if (hoy.getMonth() - nac.getMonth() < 0 || (hoy.getMonth() - nac.getMonth() === 0 && hoy.getDate() < nac.getDate())) edad--;
                     pacienteRef.edad = edad;
@@ -1926,11 +2404,11 @@
             if (!_expDatos) {
                 return mostrarToast('Primero cree el expediente clínico del paciente.', 'aviso');
             }
-            _exp('ea-id-expediente').value     = _expDatos.id_expediente;
+            _exp('ea-id-expediente').value = _expDatos.id_expediente;
             _exp('ea-paciente-nombre').textContent = _expPacienteActual?.nombre_completo ?? '';
-            _exp('ea-diagnostico').value        = '';
-            _exp('ea-tratamiento').value        = '';
-            _exp('ea-observaciones').value      = '';
+            _exp('ea-diagnostico').value = '';
+            _exp('ea-tratamiento').value = '';
+            _exp('ea-observaciones').value = '';
             abrirModal('modal-exp-atencion');
         }
 
@@ -1938,10 +2416,10 @@
             if (!validarCampos(['ea-diagnostico'], 'El diagnóstico es obligatorio.')) return;
 
             await guardarJSON('expedientes.atencion.registrar', {
-                id_expediente:        _exp('ea-id-expediente').value,
-                diagnostico:          _exp('ea-diagnostico').value.trim(),
-                tratamiento_realizado:_exp('ea-tratamiento').value.trim(),
-                observaciones:        _exp('ea-observaciones').value.trim()
+                id_expediente: _exp('ea-id-expediente').value,
+                diagnostico: _exp('ea-diagnostico').value.trim(),
+                tratamiento_realizado: _exp('ea-tratamiento').value.trim(),
+                observaciones: _exp('ea-observaciones').value.trim()
             }, {
                 boton: document.querySelector('#modal-exp-atencion .modal-footer .btn-odent'),
                 cerrarModal: 'modal-exp-atencion',
@@ -1954,7 +2432,7 @@
 
         let _navegandoDesdeExpediente = false;
 
-        window.mostrarPagina = function (slug) {
+        window.mostrarPagina = function(slug) {
             _mostrarPaginaBase(slug);
             if (slug === 'expedientes') {
                 expVolverLista();
@@ -1982,24 +2460,26 @@
             }
         };
 
-        let _odoExpediente  = null;
-        let _odoPiezas      = {};
+        let _odoExpediente = null;
+        let _odoPiezas = {};
         let _odoPiezaActual = null;
 
-        const ODO_SUPERIOR = [18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28];
-        const ODO_INFERIOR = [48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
+        const ODO_SUPERIOR = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
+        const ODO_INFERIOR = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
 
         const ODO_CLASES = {
-            sano:        'sano',
-            caries:      'caries',
-            corona:      'corona',
-            ausente:     'ausente',
-            endodoncia:  'endodoncia',
-            extraccion:  'extraccion',
-            implante:    'implante',
+            sano: 'sano',
+            caries: 'caries',
+            corona: 'corona',
+            ausente: 'ausente',
+            endodoncia: 'endodoncia',
+            extraccion: 'extraccion',
+            implante: 'implante',
         };
 
-        function _odo(id) { return document.getElementById(id); }
+        function _odo(id) {
+            return document.getElementById(id);
+        }
 
         function _odoEstado(num) {
             return (_odoPiezas[num]?.estado) ?? 'sano';
@@ -2058,22 +2538,26 @@
                 _odoPiezas = data.piezas ?? {};
                 [...ODO_SUPERIOR, ...ODO_INFERIOR].forEach(_odoActualizarDomPieza);
                 if (typeof treOdontograma === 'function') treOdontograma(_odoExpediente.id_expediente);
-            } catch(e) {
+            } catch (e) {
                 mostrarToast('Error al cargar el odontograma.', 'error');
             }
         }
 
         function odoSeleccionarDiente(num) {
             _odoPiezaActual = num;
-            const datos = _odoPiezas[num] ?? { estado: 'sano', observaciones: '', updated_at: null };
+            const datos = _odoPiezas[num] ?? {
+                estado: 'sano',
+                observaciones: '',
+                updated_at: null
+            };
 
-            _odo('odo-hint').style.display          = 'none';
-            _odo('odo-loading').style.display        = 'none';
-            _odo('odo-panel-edicion').style.display  = '';
+            _odo('odo-hint').style.display = 'none';
+            _odo('odo-loading').style.display = 'none';
+            _odo('odo-panel-edicion').style.display = '';
 
-            _odo('odo-numero').value          = num;
-            _odo('odo-estado').value          = datos.estado ?? 'sano';
-            _odo('odo-observaciones').value   = datos.observaciones ?? '';
+            _odo('odo-numero').value = num;
+            _odo('odo-estado').value = datos.estado ?? 'sano';
+            _odo('odo-observaciones').value = datos.observaciones ?? '';
 
             if (datos.updated_at) {
                 _odo('odo-fecha-mod').textContent = datos.updated_at;
@@ -2089,9 +2573,9 @@
 
         function _odoCancelarSeleccion() {
             _odoPiezaActual = null;
-            _odo('odo-hint').style.display          = '';
-            _odo('odo-loading').style.display        = 'none';
-            _odo('odo-panel-edicion').style.display  = 'none';
+            _odo('odo-hint').style.display = '';
+            _odo('odo-loading').style.display = 'none';
+            _odo('odo-panel-edicion').style.display = 'none';
             document.querySelectorAll('#pagina-odontograma .diente').forEach(el => el.classList.remove('seleccionado'));
         }
 
@@ -2103,21 +2587,21 @@
             if (!_odoPiezaActual || !_odoExpediente) return;
 
             const estado = _odo('odo-estado').value;
-            const obs    = _odo('odo-observaciones').value.trim();
+            const obs = _odo('odo-observaciones').value.trim();
 
             await guardarJSON('odontograma.guardar', {
                 id_expediente: _odoExpediente.id_expediente,
-                numero_pieza:  _odoPiezaActual,
+                numero_pieza: _odoPiezaActual,
                 estado,
                 observaciones: obs || null,
             }, {
-                boton:  _odo('odo-btn-guardar'),
-                exito:  `Pieza ${_odoPiezaActual} guardada como "${estado}".`,
+                boton: _odo('odo-btn-guardar'),
+                exito: `Pieza ${_odoPiezaActual} guardada como "${estado}".`,
                 alExito: (res) => {
                     if (!_odoPiezas[_odoPiezaActual]) _odoPiezas[_odoPiezaActual] = {};
-                    _odoPiezas[_odoPiezaActual].estado        = estado;
+                    _odoPiezas[_odoPiezaActual].estado = estado;
                     _odoPiezas[_odoPiezaActual].observaciones = obs || null;
-                    _odoPiezas[_odoPiezaActual].updated_at    = new Date().toLocaleString('es-CR');
+                    _odoPiezas[_odoPiezaActual].updated_at = new Date().toLocaleString('es-CR');
                     _odoActualizarDomPieza(_odoPiezaActual);
                     _odoCancelarSeleccion();
                 }
@@ -2129,7 +2613,7 @@
                 return mostrarToast('Primero abra un expediente clínico.', 'aviso');
             }
             _odoExpediente = {
-                id_expediente:  _expDatos.id_expediente,
+                id_expediente: _expDatos.id_expediente,
                 nombre_completo: _expPacienteActual.nombre_completo,
             };
             _navegandoDesdeExpediente = true;
@@ -2159,7 +2643,7 @@
                 const data = await r.json();
                 _odoPacientesCache = Array.isArray(data) ? data : (data.pacientes ?? []);
                 _odoRenderizarListaPacientes(_odoPacientesCache, '');
-            } catch(e) {
+            } catch (e) {
                 document.getElementById('odo-lista-pacientes').innerHTML =
                     '<p style="color:var(--gris-azulado);text-align:center;padding:20px;">No se pudo cargar la lista de pacientes.</p>';
             }
@@ -2169,9 +2653,9 @@
             const contenedor = document.getElementById('odo-lista-pacientes');
             lista = lista.filter(p => p.id_expediente);
             const termino = filtro.trim().toLowerCase();
-            const filtrados = termino
-                ? lista.filter(p => (p.nombre_completo || '').toLowerCase().includes(termino))
-                : lista;
+            const filtrados = termino ?
+                lista.filter(p => (p.nombre_completo || '').toLowerCase().includes(termino)) :
+                lista;
 
             if (!filtrados.length) {
                 contenedor.innerHTML = '<p style="color:var(--gris-azulado);text-align:center;padding:20px;">No se encontraron pacientes.</p>';
@@ -2179,8 +2663,8 @@
             }
 
             contenedor.innerHTML = filtrados.map(p => {
-                const nombre   = escapar(p.nombre_completo || 'Paciente');
-                const idPac    = p.id_paciente;
+                const nombre = escapar(p.nombre_completo || 'Paciente');
+                const idPac = p.id_paciente;
                 const nombreJs = (p.nombre_completo || 'Paciente').replace(/'/g, "\\'");
                 return `
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--borde);">
@@ -2215,25 +2699,30 @@
                     btn.innerHTML = '<i class="bi bi-clipboard2-pulse"></i> Ver odontograma';
                     return;
                 }
-                _odoExpediente = { id_expediente: data.id_expediente, nombre_completo: nombreCompleto };
+                _odoExpediente = {
+                    id_expediente: data.id_expediente,
+                    nombre_completo: nombreCompleto
+                };
                 _navegandoDesdeExpediente = true;
                 odoIniciar();
-            } catch(e) {
+            } catch (e) {
                 mostrarToast('Error al cargar el expediente.', 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-clipboard2-pulse"></i> Ver odontograma';
             }
         }
 
-        let _docExpediente      = null;
-        let _docIdAEliminar     = null;
+        let _docExpediente = null;
+        let _docIdAEliminar = null;
         let _docNombreAEliminar = '';
 
-        function _doc(id) { return document.getElementById(id); }
+        function _doc(id) {
+            return document.getElementById(id);
+        }
 
         function _docIcono(mime) {
-            if (mime === 'application/pdf')                     return 'bi-file-earmark-pdf text-danger';
-            if (mime.startsWith('image/'))                      return 'bi-file-earmark-image text-success';
+            if (mime === 'application/pdf') return 'bi-file-earmark-pdf text-danger';
+            if (mime.startsWith('image/')) return 'bi-file-earmark-image text-success';
             if (mime.includes('word') || mime.includes('docx')) return 'bi-file-earmark-word text-primary';
             return 'bi-file-earmark';
         }
@@ -2246,8 +2735,8 @@
                 _docCargarListaPacientes();
                 return;
             }
-            _doc('doc-sin-expediente').style.display     = 'none';
-            _doc('doc-con-expediente').style.display     = '';
+            _doc('doc-sin-expediente').style.display = 'none';
+            _doc('doc-con-expediente').style.display = '';
             _doc('doc-btn-subir-cabecera').style.display = '';
             _doc('doc-cabecera-paciente').innerHTML =
                 `Paciente: <strong>${escapar(_docExpediente.nombre_completo)}</strong> — Archivos adjuntos del expediente`;
@@ -2258,18 +2747,18 @@
 
         async function docCargarLista() {
             _doc('doc-loading').style.display = '';
-            _doc('doc-lista').style.display   = 'none';
-            _doc('doc-vacio').style.display   = 'none';
+            _doc('doc-lista').style.display = 'none';
+            _doc('doc-vacio').style.display = 'none';
 
             try {
-                const r    = await fetch(`${BASE}/index.php?accion=documentos.listar&id_expediente=${_docExpediente.id_expediente}`);
+                const r = await fetch(`${BASE}/index.php?accion=documentos.listar&id_expediente=${_docExpediente.id_expediente}`);
                 const data = await r.json();
 
                 _doc('doc-loading').style.display = 'none';
 
                 if (!data.ok || !data.documentos.length) {
                     _doc('doc-vacio').style.display = '';
-                    _doc('doc-count').textContent   = '0 documentos';
+                    _doc('doc-count').textContent = '0 documentos';
                     return;
                 }
 
@@ -2301,7 +2790,7 @@
                 if (items.length) items[items.length - 1].style.borderBottom = 'none';
 
                 _doc('doc-lista').style.display = '';
-            } catch(e) {
+            } catch (e) {
                 _doc('doc-loading').style.display = 'none';
                 mostrarToast('Error al cargar los documentos.', 'error');
             }
@@ -2316,18 +2805,18 @@
             archivoInput.classList.remove('campo-invalido');
 
             const formData = new FormData();
-            formData.append('archivo',       archivoInput.files[0]);
+            formData.append('archivo', archivoInput.files[0]);
             formData.append('id_expediente', _docExpediente.id_expediente);
-            formData.append('descripcion',   _doc('doc-descripcion').value.trim());
+            formData.append('descripcion', _doc('doc-descripcion').value.trim());
 
             const btn = _doc('doc-btn-subir');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Subiendo…';
 
             try {
-                const res  = await fetch(`${BASE}/index.php?accion=documentos.subir`, {
+                const res = await fetch(`${BASE}/index.php?accion=documentos.subir`, {
                     method: 'POST',
-                    body:   formData,
+                    body: formData,
                 });
                 const data = await res.json();
 
@@ -2336,11 +2825,11 @@
                 } else {
                     mostrarToast('Documento subido correctamente.', 'exito');
                     cerrarModal('modal-doc-subir');
-                    archivoInput.value  = '';
+                    archivoInput.value = '';
                     _doc('doc-descripcion').value = '';
                     docCargarLista();
                 }
-            } catch(e) {
+            } catch (e) {
                 mostrarToast('Error de conexión al subir el archivo.', 'error');
             } finally {
                 btn.disabled = false;
@@ -2349,7 +2838,7 @@
         }
 
         function docAbrirEliminar(idDocumento, nombre) {
-            _docIdAEliminar     = idDocumento;
+            _docIdAEliminar = idDocumento;
             _docNombreAEliminar = nombre;
             _doc('doc-nombre-a-eliminar').textContent = nombre;
             abrirModal('modal-doc-confirmar-eliminar');
@@ -2359,14 +2848,14 @@
             if (!_docIdAEliminar || !_docExpediente) return;
 
             await guardarJSON('documentos.eliminar', {
-                id_documento:  _docIdAEliminar,
+                id_documento: _docIdAEliminar,
                 id_expediente: _docExpediente.id_expediente,
             }, {
-                boton:        _doc('doc-btn-confirmar-eliminar'),
-                cerrarModal:  'modal-doc-confirmar-eliminar',
-                exito:        'Documento eliminado.',
-                alExito:      () => {
-                    _docIdAEliminar     = null;
+                boton: _doc('doc-btn-confirmar-eliminar'),
+                cerrarModal: 'modal-doc-confirmar-eliminar',
+                exito: 'Documento eliminado.',
+                alExito: () => {
+                    _docIdAEliminar = null;
                     _docNombreAEliminar = '';
                     docCargarLista();
                 }
@@ -2378,7 +2867,7 @@
                 return mostrarToast('Primero abra un expediente clínico.', 'aviso');
             }
             _docExpediente = {
-                id_expediente:   _expDatos.id_expediente,
+                id_expediente: _expDatos.id_expediente,
                 nombre_completo: _expPacienteActual.nombre_completo,
             };
             _navegandoDesdeExpediente = true;
@@ -2408,7 +2897,7 @@
                 const data = await r.json();
                 _docPacientesCache = Array.isArray(data) ? data : (data.pacientes ?? []);
                 _docRenderizarListaPacientes(_docPacientesCache, '');
-            } catch(e) {
+            } catch (e) {
                 document.getElementById('doc-lista-pacientes').innerHTML =
                     '<p style="color:var(--gris-azulado);text-align:center;padding:20px;">No se pudo cargar la lista de pacientes.</p>';
             }
@@ -2418,9 +2907,9 @@
             const contenedor = document.getElementById('doc-lista-pacientes');
             lista = lista.filter(p => p.id_expediente);
             const termino = filtro.trim().toLowerCase();
-            const filtrados = termino
-                ? lista.filter(p => (p.nombre_completo || '').toLowerCase().includes(termino))
-                : lista;
+            const filtrados = termino ?
+                lista.filter(p => (p.nombre_completo || '').toLowerCase().includes(termino)) :
+                lista;
 
             if (!filtrados.length) {
                 contenedor.innerHTML = '<p style="color:var(--gris-azulado);text-align:center;padding:20px;">No se encontraron pacientes.</p>';
@@ -2428,8 +2917,8 @@
             }
 
             contenedor.innerHTML = filtrados.map(p => {
-                const nombre   = escapar(p.nombre_completo || 'Paciente');
-                const idPac    = p.id_paciente;
+                const nombre = escapar(p.nombre_completo || 'Paciente');
+                const idPac = p.id_paciente;
                 const nombreJs = (p.nombre_completo || 'Paciente').replace(/'/g, "\\'");
                 return `
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--borde);">
@@ -2464,10 +2953,13 @@
                     btn.innerHTML = '<i class="bi bi-folder2-open"></i> Ver documentos';
                     return;
                 }
-                _docExpediente = { id_expediente: data.id_expediente, nombre_completo: nombreCompleto };
+                _docExpediente = {
+                    id_expediente: data.id_expediente,
+                    nombre_completo: nombreCompleto
+                };
                 _navegandoDesdeExpediente = true;
                 docIniciar();
-            } catch(e) {
+            } catch (e) {
                 mostrarToast('Error al cargar el expediente.', 'error');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-folder2-open"></i> Ver documentos';
@@ -2491,7 +2983,10 @@
         async function ejecutarCambioEstado() {
             const nuevoEstado = estadoActualSeleccionado === 'activo' ? 'inactivo' : 'activo';
 
-            await guardarJSON('usuarios.estado', { id: usuarioIdSeleccionado, estado: nuevoEstado }, {
+            await guardarJSON('usuarios.estado', {
+                id: usuarioIdSeleccionado,
+                estado: nuevoEstado
+            }, {
                 boton: document.getElementById('btn-confirmar-estado'),
                 cerrarModal: 'modal-confirmar-estado',
                 exito: nuevoEstado === 'activo' ? 'Usuario activado con éxito.' : 'Usuario inactivado con éxito.',
@@ -2503,15 +2998,15 @@
 
         async function recargarCotizaciones() {
             try {
-                const res  = await fetch(`${BASE}/index.php?accion=cotizaciones.listar`);
+                const res = await fetch(`${BASE}/index.php?accion=cotizaciones.listar`);
                 const data = await res.json();
                 if (!Array.isArray(data)) return;
                 const tbody = document.getElementById('cot-tbody');
                 if (!tbody) return;
                 tbody.innerHTML = data.length ? data.map(c => {
-                    const badgeClass = c.estado === 'aprobada' ? 'confirmada'
-                        : c.estado === 'rechazada' ? 'cancelada'
-                        : c.estado === 'pagada'    ? 'completada' : 'pendiente';
+                    const badgeClass = c.estado === 'aprobada' ? 'confirmada' :
+                        c.estado === 'rechazada' ? 'cancelada' :
+                        c.estado === 'pagada' ? 'completada' : 'pendiente';
                     return `<tr>
                         <td><strong>#${c.id_cotizacion}</strong></td>
                         <td>${escapar(c.paciente)}</td>
@@ -2520,12 +3015,12 @@
                         <td><span class="badge-estado badge-${badgeClass}">${c.estado.charAt(0).toUpperCase()+c.estado.slice(1)}</span></td>
                     </tr>`;
                 }).join('') : '<tr><td colspan="5" style="text-align:center;color:#888;">Sin cotizaciones registradas</td></tr>';
-            } catch(e) {}
+            } catch (e) {}
         }
 
         async function recargarPagos() {
             try {
-                const res  = await fetch(`${BASE}/index.php?accion=pagos.listar`);
+                const res = await fetch(`${BASE}/index.php?accion=pagos.listar`);
                 const rows = await res.json();
                 if (!Array.isArray(rows)) return;
                 const tbody = document.getElementById('pago-tbody');
@@ -2539,7 +3034,8 @@
                     <td>#${p.id_cotizacion}</td>
                     <td><span class="badge-estado badge-${p.cotizacion_estado === 'pagada' ? 'completada' : 'pendiente'}">${p.cotizacion_estado ? p.cotizacion_estado.charAt(0).toUpperCase()+p.cotizacion_estado.slice(1) : '—'}</span></td>
                 </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;color:#888;">Sin pagos registrados</td></tr>';
-            } catch(e) {}
+                if (window.actualizarKpisCobro) window.actualizarKpisCobro();
+            } catch (e) {}
         }
 
         /* ── Cotizaciones (FIN-01) ──────────────────────────────── */
@@ -2554,7 +3050,7 @@
                 return;
             }
             try {
-                const res  = await fetch(`${BASE}/index.php?accion=cotizaciones.tratamientosDisponibles`);
+                const res = await fetch(`${BASE}/index.php?accion=cotizaciones.tratamientosDisponibles`);
                 const data = await res.json();
                 if (!data.ok) throw new Error(data.mensaje);
                 _cotTratamientos = (data.tratamientos || []).filter(t => String(t.id_paciente) === String(idPaciente));
@@ -2564,54 +3060,58 @@
                 }
                 sel.innerHTML = '<option value="">— Seleccione un tratamiento —</option>' +
                     _cotTratamientos.map(t => `<option value="${t.id_tratamiento}">${escapar(t.nombre)}</option>`).join('');
-            } catch(e) {
+            } catch (e) {
                 sel.innerHTML = '<option value="">Error al cargar tratamientos</option>';
                 mostrarToast('No se pudieron cargar los tratamientos.', 'error');
             }
         }
 
         function cotRecalcular() {
-            const sub  = parseFloat(document.getElementById('cot-subtotal').value)  || 0;
+            const sub = parseFloat(document.getElementById('cot-subtotal').value) || 0;
             const desc = parseFloat(document.getElementById('cot-descuento').value) || 0;
             const base = Math.max(0, sub - desc);
-            const iva  = Math.round(base * 0.13 * 100) / 100;
-            const tot  = Math.round((base + iva) * 100) / 100;
-            document.getElementById('cot-iva').value   = iva > 0   ? '₡' + tot.toLocaleString('es-CR', {minimumFractionDigits:2}) : '';
-            document.getElementById('cot-total').value = tot > 0   ? '₡' + tot.toLocaleString('es-CR', {minimumFractionDigits:2}) : '';
+            const iva = Math.round(base * 0.13 * 100) / 100;
+            const tot = Math.round((base + iva) * 100) / 100;
+            document.getElementById('cot-iva').value = iva > 0 ? '₡' + tot.toLocaleString('es-CR', {
+                minimumFractionDigits: 2
+            }) : '';
+            document.getElementById('cot-total').value = tot > 0 ? '₡' + tot.toLocaleString('es-CR', {
+                minimumFractionDigits: 2
+            }) : '';
         }
 
         async function cotGuardar() {
-            const idPaciente    = document.getElementById('cot-id-paciente').value;
+            const idPaciente = document.getElementById('cot-id-paciente').value;
             const idTratamiento = document.getElementById('cot-id-tratamiento').value;
-            const subtotal      = parseFloat(document.getElementById('cot-subtotal').value)  || 0;
-            const descuento     = parseFloat(document.getElementById('cot-descuento').value) || 0;
-            const descripcion   = document.getElementById('cot-descripcion').value.trim();
+            const subtotal = parseFloat(document.getElementById('cot-subtotal').value) || 0;
+            const descuento = parseFloat(document.getElementById('cot-descuento').value) || 0;
+            const descripcion = document.getElementById('cot-descripcion').value.trim();
 
-            if (!idPaciente)    return mostrarToast('Seleccione un paciente.',    'aviso');
+            if (!idPaciente) return mostrarToast('Seleccione un paciente.', 'aviso');
             if (!idTratamiento) return mostrarToast('Seleccione un tratamiento.', 'aviso');
-            if (subtotal <= 0)  return mostrarToast('Ingrese un subtotal mayor a 0.', 'aviso');
-            if (!descripcion)   return mostrarToast('Ingrese una descripción.',   'aviso');
+            if (subtotal <= 0) return mostrarToast('Ingrese un subtotal mayor a 0.', 'aviso');
+            if (!descripcion) return mostrarToast('Ingrese una descripción.', 'aviso');
 
             await guardarJSON('cotizaciones.crear', {
-                id_paciente:    parseInt(idPaciente),
+                id_paciente: parseInt(idPaciente),
                 id_tratamiento: parseInt(idTratamiento),
                 subtotal,
                 descuento,
                 descripcion,
                 observaciones: document.getElementById('cot-observaciones').value.trim(),
             }, {
-                boton:       document.getElementById('cot-btn-guardar'),
+                boton: document.getElementById('cot-btn-guardar'),
                 cerrarModal: 'modal-nueva-cotizacion',
-                exito:       'Cotización creada correctamente.',
+                exito: 'Cotización creada correctamente.',
                 alExito: () => {
-                    document.getElementById('cot-id-paciente').value    = '';
+                    document.getElementById('cot-id-paciente').value = '';
                     document.getElementById('cot-id-tratamiento').innerHTML = '<option value="">— Seleccione primero un paciente —</option>';
-                    document.getElementById('cot-subtotal').value       = '';
-                    document.getElementById('cot-descuento').value      = '0';
-                    document.getElementById('cot-iva').value            = '';
-                    document.getElementById('cot-total').value          = '';
-                    document.getElementById('cot-descripcion').value    = '';
-                    document.getElementById('cot-observaciones').value  = '';
+                    document.getElementById('cot-subtotal').value = '';
+                    document.getElementById('cot-descuento').value = '0';
+                    document.getElementById('cot-iva').value = '';
+                    document.getElementById('cot-total').value = '';
+                    document.getElementById('cot-descripcion').value = '';
+                    document.getElementById('cot-observaciones').value = '';
                     recargarCotizaciones();
                 }
             });
@@ -2636,11 +3136,10 @@
                 return;
             }
             try {
-                const res  = await fetch(`${BASE}/index.php?accion=cotizaciones.listar`);
+                const res = await fetch(`${BASE}/index.php?accion=cotizaciones.listar`);
                 const data = await res.json();
-                _pagoCotizacionesCache = Array.isArray(data)
-                    ? data.filter(c => String(c.id_paciente) === String(idPaciente) && !['rechazada','pagada'].includes(c.estado))
-                    : [];
+                _pagoCotizacionesCache = Array.isArray(data) ?
+                    data.filter(c => String(c.id_paciente) === String(idPaciente) && !['rechazada', 'pagada'].includes(c.estado)) : [];
                 if (!_pagoCotizacionesCache.length) {
                     sel.innerHTML = '<option value="">Sin cotizaciones para este paciente</option>';
                     return;
@@ -2649,7 +3148,7 @@
                     _pagoCotizacionesCache.map(c =>
                         `<option value="${c.id_cotizacion}">#${c.id_cotizacion} — ${escapar(c.tratamiento)} — ₡${Number(c.total).toLocaleString('es-CR')} (${c.estado})</option>`
                     ).join('');
-            } catch(e) {
+            } catch (e) {
                 sel.innerHTML = '<option value="">Error al cargar cotizaciones</option>';
             }
         }
@@ -2658,25 +3157,31 @@
             const idCot = sel.value;
             document.getElementById('pago-id-cotizacion').value = idCot;
             const info = document.getElementById('pago-saldo-info');
-            if (!idCot) { info.style.display = 'none'; return; }
+            if (!idCot) {
+                info.style.display = 'none';
+                return;
+            }
 
             const cot = _pagoCotizacionesCache.find(c => String(c.id_cotizacion) === String(idCot));
-            if (!cot) { info.style.display = 'none'; return; }
+            if (!cot) {
+                info.style.display = 'none';
+                return;
+            }
 
             info.style.display = '';
             document.getElementById('pago-total-cot').textContent = '₡' + Number(cot.total).toLocaleString('es-CR');
 
             // Consultar saldo real desde el servidor
             try {
-                const res  = await fetch(`${BASE}/index.php?accion=pagos.listar`);
+                const res = await fetch(`${BASE}/index.php?accion=pagos.listar`);
                 const rows = await res.json();
-                const pagados = Array.isArray(rows)
-                    ? rows.filter(p => String(p.id_cotizacion) === String(idCot)).reduce((s, p) => s + Number(p.monto), 0)
-                    : 0;
+                const pagados = Array.isArray(rows) ?
+                    rows.filter(p => String(p.id_cotizacion) === String(idCot)).reduce((s, p) => s + Number(p.monto), 0) :
+                    0;
                 const saldo = Math.max(0, Number(cot.total) - pagados);
                 document.getElementById('pago-saldo-pend').textContent = '₡' + saldo.toLocaleString('es-CR');
                 document.getElementById('pago-monto').value = saldo > 0 ? saldo : '';
-            } catch(e) {
+            } catch (e) {
                 document.getElementById('pago-saldo-pend').textContent = '—';
             }
         }
@@ -2702,9 +3207,9 @@
             fetch(`${BASE}/index.php?accion=pagos.listar`)
                 .then(r => r.json())
                 .then(rows => {
-                    const pagados = Array.isArray(rows)
-                        ? rows.filter(p => String(p.id_cotizacion) === String(idCot)).reduce((s, p) => s + Number(p.monto), 0)
-                        : 0;
+                    const pagados = Array.isArray(rows) ?
+                        rows.filter(p => String(p.id_cotizacion) === String(idCot)).reduce((s, p) => s + Number(p.monto), 0) :
+                        0;
                     const saldo = Math.max(0, Number(total) - pagados);
                     document.getElementById('pago-saldo-pend').textContent = '₡' + saldo.toLocaleString('es-CR');
                     document.getElementById('pago-monto').value = saldo > 0 ? saldo : '';
@@ -2713,12 +3218,12 @@
 
         async function pagoGuardar() {
             const idCotizacion = document.getElementById('pago-id-cotizacion').value;
-            const monto        = parseFloat(document.getElementById('pago-monto').value) || 0;
-            const metodo       = document.getElementById('pago-metodo').value;
+            const monto = parseFloat(document.getElementById('pago-monto').value) || 0;
+            const metodo = document.getElementById('pago-metodo').value;
 
             if (!idCotizacion) return mostrarToast('Seleccione una cotización.', 'aviso');
-            if (monto <= 0)    return mostrarToast('Ingrese un monto mayor a 0.', 'aviso');
-            if (!metodo)       return mostrarToast('Seleccione un método de pago.', 'aviso');
+            if (monto <= 0) return mostrarToast('Ingrese un monto mayor a 0.', 'aviso');
+            if (!metodo) return mostrarToast('Seleccione un método de pago.', 'aviso');
 
             // Validar que no supere el saldo pendiente
             const saldoTexto = document.getElementById('pago-saldo-pend').textContent.replace(/[₡\s.]/g, '').replace(',', '.');
@@ -2733,19 +3238,19 @@
                 id_cotizacion: parseInt(idCotizacion),
                 monto,
                 metodo,
-                referencia:    document.getElementById('pago-referencia').value.trim(),
-                fecha_pago:    fechaPago,
+                referencia: document.getElementById('pago-referencia').value.trim(),
+                fecha_pago: fechaPago,
             }, {
-                boton:       document.getElementById('pago-btn-guardar'),
+                boton: document.getElementById('pago-btn-guardar'),
                 cerrarModal: 'modal-nuevo-pago',
-                exito:       'Pago registrado correctamente.',
+                exito: 'Pago registrado correctamente.',
                 alExito: () => {
-                    document.getElementById('pago-id-cotizacion').value  = '';
-                    document.getElementById('pago-id-paciente').value    = '';
+                    document.getElementById('pago-id-cotizacion').value = '';
+                    document.getElementById('pago-id-paciente').value = '';
                     document.getElementById('pago-sel-cotizacion').innerHTML = '<option value="">— Seleccione primero un paciente —</option>';
-                    document.getElementById('pago-monto').value          = '';
-                    document.getElementById('pago-referencia').value     = '';
-                    document.getElementById('pago-fecha').value          = new Date().toISOString().slice(0, 10);
+                    document.getElementById('pago-monto').value = '';
+                    document.getElementById('pago-referencia').value = '';
+                    document.getElementById('pago-fecha').value = new Date().toISOString().slice(0, 10);
                     document.getElementById('pago-saldo-info').style.display = 'none';
                     recargarPagos();
                     recargarCotizaciones();
@@ -2753,6 +3258,8 @@
             });
         }
     </script>
+    <?php include ROOT_PATH . '/views/shared/cotizaciones_acciones.php'; ?>
+
 </body>
 
 </html>

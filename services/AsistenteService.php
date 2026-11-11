@@ -200,7 +200,10 @@ class AsistenteService
         return [
             'tipo'    => 'lista',
             'titulo'  => 'Pagos pendientes',
-            'mensaje' => 'Tiene un saldo pendiente de ₡' . number_format($total, 0, ',', '.') . '. Para coordinar el pago comuníquese con recepción.',
+            'mensaje' => 'Tiene un saldo pendiente de ₡' . number_format($total, 0, ',', '.')
+                . '. Para coordinar el pago comuníquese con recepción'
+                . (($tel = defined('CLINICA_TELEFONO') ? trim((string) CLINICA_TELEFONO) : '') !== '' ? ' al ' . $tel : '')
+                . '.',
             'items'   => $items,
         ];
     }

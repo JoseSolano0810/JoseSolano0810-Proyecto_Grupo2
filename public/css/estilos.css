@@ -126,12 +126,15 @@ h4 {
     color: var(--blanco);
     border: none;
     border-radius: var(--radio);
-    padding: 8px 18px;
+    padding: 10px 22px;
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color var(--transicion);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color var(--transicion), transform var(--transicion);
 }
 
 .btn-peligro:hover {
@@ -2878,3 +2881,208 @@ button:disabled {
 @media (max-width: 560px) {
     .rep-fila-barra { grid-template-columns: 90px 1fr auto; }
 }
+
+
+/* ── Reportes: pestañas, serie doble y detalles de REP-01 ── */
+.rep-tabs {
+    display: flex;
+    gap: 6px;
+    border-bottom: 2px solid var(--borde);
+    margin-bottom: 20px;
+}
+.rep-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--gris-azulado);
+    cursor: pointer;
+    transition: var(--transicion);
+}
+.rep-tab:hover { color: var(--azul-odent); }
+.rep-tab-activa { color: var(--azul-odent); border-bottom-color: var(--verde-odent); }
+.rep-panel[hidden] { display: none !important; }
+.rep-btn-derecha { margin-left: auto; }
+.rep-sub { font-size: 12px; color: var(--gris-azulado); }
+
+.rep-pista-roja i { background: #C0392B; }
+
+/* Dos barras por período: ingresos y egresos */
+.rep-col-doble { flex: 1 0 42px; max-width: 90px; }
+.rep-par {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 3px;
+}
+.rep-par i {
+    display: block;
+    width: 45%;
+    max-width: 22px;
+    border-radius: 5px 5px 0 0;
+    min-height: 0;
+}
+.rep-barra-ing { background: #2F7F7A; }
+.rep-barra-egr { background: #C0392B; }
+
+@media (max-width: 700px) {
+    #rep-fin-resultado .kpi-grid { grid-template-columns: 1fr !important; }
+    .rep-btn-derecha { margin-left: 0; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   Controles de filtros de Reportes y Asistente (mismo estilo que el resto)
+   ═══════════════════════════════════════════════════════════ */
+.rep-campo select,
+.arep-filtros input[type="text"],
+.arep-filtros input[type="date"],
+.arep-filtros select {
+    border: 1.5px solid var(--borde);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    color: var(--gris-texto);
+    background: var(--blanco);
+    transition: border-color var(--transicion), box-shadow var(--transicion);
+}
+.rep-campo select:focus,
+.arep-filtros input:focus,
+.arep-filtros select:focus {
+    outline: none;
+    border-color: var(--verde-odent);
+    box-shadow: 0 0 0 3px rgba(47, 127, 122, .15);
+}
+.arep-filtros input[type="text"] { flex: 1 1 170px; min-width: 150px; }
+
+.arep-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: flex-end;
+}
+.arep-fecha {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gris-azulado);
+}
+
+.arep-sub { font-size: 12px; color: var(--gris-azulado); margin: 2px 0 0; }
+
+.arep-resumen { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.arep-resumen:empty { display: none; }
+.arep-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    font-size: 13px;
+    color: var(--gris-texto);
+}
+.arep-chip-urgente     { background: #fde8e8; border-color: #C0392B; color: #a93226; }
+.arep-chip-prioritario { background: #fff8e1; border-color: #f0ad00; color: #8a5a00; }
+.arep-chip-normal      { background: #e0f2f1; border-color: #2F7F7A; color: #1f5f5b; }
+
+.arep-vacio {
+    text-align: center;
+    padding: 34px 20px;
+    color: var(--gris-azulado);
+    font-size: 14px;
+}
+.arep-vacio i { display: block; font-size: 42px; margin-bottom: 10px; opacity: .6; }
+.arep-vacio h4 { margin: 0 0 6px; font-size: 16px; color: var(--azul-odent); }
+.arep-vacio p { margin: 0 0 14px; }
+.arep-vacio .btn-odent,
+.arep-vacio .btn-outline-odent { margin-top: 4px; }
+
+.arep-tabla-scroll { overflow-x: auto; }
+.arep-fila { cursor: pointer; transition: background-color var(--transicion); }
+.arep-fila:hover, .arep-fila:focus-visible { background: var(--fondo-odent); outline: none; }
+.arep-fila-urgente     td:first-child { box-shadow: inset 4px 0 0 #C0392B; }
+.arep-fila-prioritario td:first-child { box-shadow: inset 4px 0 0 #f0ad00; }
+.arep-fila-normal      td:first-child { box-shadow: inset 4px 0 0 #2F7F7A; }
+.arep-desc { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.arep-prio {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 11px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.arep-prio-urgente     { background: #fde8e8; color: #a93226; }
+.arep-prio-prioritario { background: #fff8e1; color: #8a5a00; }
+.arep-prio-normal      { background: #e0f2f1; color: #1f5f5b; }
+
+.arep-det-cab {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.arep-det-cab h4 { margin: 0; color: var(--azul-odent); }
+.arep-det-meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    background: var(--fondo-odent);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    margin-bottom: 14px;
+}
+.arep-det-sub { margin: 16px 0 8px; font-size: 14px; color: var(--azul-odent); }
+.arep-respuestas { margin: 0; font-size: 14px; }
+.arep-respuestas dt { font-size: 12px; font-weight: 600; color: var(--gris-azulado); margin-top: 10px; }
+.arep-respuestas dd { margin: 2px 0 0; color: var(--gris-texto); }
+.arep-intensidad { display: inline-flex; align-items: center; gap: 10px; }
+.arep-intensidad-barra {
+    display: inline-block;
+    width: 120px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--borde);
+    overflow: hidden;
+}
+.arep-intensidad-barra i { display: block; height: 100%; background: var(--verde-odent); }
+.arep-criterios { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6; }
+.arep-sugerencia {
+    margin: 16px 0 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+.arep-sugerencia-urgente     { background: #fde8e8; color: #a93226; }
+.arep-sugerencia-prioritario { background: #fff8e1; color: #8a5a00; }
+.arep-sugerencia-normal      { background: #e0f2f1; color: #1f5f5b; }
+
+@media (max-width: 560px) {
+    .arep-det-meta { grid-template-columns: 1fr; }
+    .arep-filtros input[type="text"] { flex-basis: 100%; }
+}
+
+/* Odontograma de cotizaciones: solo lectura (refleja el tratamiento elegido) */
+#cot-picker .tr-pieza { pointer-events: none; cursor: default; }
+#cot-picker { background: var(--fondo-odent); }

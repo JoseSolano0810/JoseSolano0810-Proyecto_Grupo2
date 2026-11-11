@@ -10,6 +10,7 @@ $asi_telefono = defined('CLINICA_TELEFONO') ? trim((string) CLINICA_TELEFONO) : 
 
     <div class="tarjeta asi-contenedor"
          id="asi-app"
+         data-saldo="<?= (float) ($saldo_pendiente ?? 0) ?>"
          data-telefono="<?= htmlspecialchars($asi_telefono) ?>"
          data-clinica="<?= htmlspecialchars(defined('CLINICA_NOMBRE') ? CLINICA_NOMBRE : 'la clínica') ?>">
 

@@ -93,8 +93,53 @@ window.Citas = (function () {
                 llenarSelect($('cita-odontologo'), d.odontologos, 'Seleccione un odontólogo');
                 llenarSelect($('cita-tipo'), d.tipos.map(t => ({ id: t, nombre: t })), 'Seleccione');
                 llenarSelect($('cita-duracion'), d.duraciones.map(m => ({ id: m, nombre: m + ' minutos' })), 'Seleccione');
+                configurarHorario(d.clinica);
+                $('cita-tipo').addEventListener('change', ajustarDuracionPorTipo);
             }
         } catch (e) {}
+    }
+
+    /** Las horas se eligen de una lista: solo bloques de 15 min dentro del horario de la clínica */
+    function configurarHorario(cl) {
+        if (!cl) return;
+        const m = h => parseInt(h.slice(0, 2), 10) * 60 + parseInt(h.slice(3, 5), 10);
+        const horas = [];
+        for (let t = m(cl.apertura); t < m(cl.cierre); t += cl.paso) horas.push(pad(Math.floor(t / 60)) + ':' + pad(t % 60));
+        S.horas = horas;
+        ['cita-hora', 'rep-hora'].forEach(id => {
+            const el = $(id);
+            if (!el) return;
+            el.innerHTML = '<option value="">Seleccione</option>' +
+                horas.map(h => '<option value="' + h + '">' + h12(h) + '</option>').join('');
+        });
+    }
+
+    function h12(h) {
+        const hh = parseInt(h.slice(0, 2), 10);
+        return ((hh % 12) || 12) + ':' + h.slice(3, 5) + ' ' + (hh < 12 ? 'a. m.' : 'p. m.');
+    }
+
+    /** Pone la hora en el select; si es una cita antigua con una hora fuera de la lista, la agrega para no perderla */
+    function ponerHora(id, hora) {
+        const el = $(id);
+        if (hora && ![...el.options].some(o => o.value === hora)) {
+            const o = document.createElement('option');
+            o.value = hora; o.textContent = h12(hora) + ' (hora anterior)';
+            el.appendChild(o);
+        }
+        el.value = hora || '';
+    }
+
+    /** Al elegir el tipo de consulta: solo se ofrecen duraciones lógicas y se sugiere la habitual */
+    function ajustarDuracionPorTipo() {
+        const rangos = S.cat.tipo_duracion || {};
+        const r = rangos[$('cita-tipo').value];
+        if (!r) return;
+        const [min, max, sugerida] = r;
+        const permitidas = S.cat.duraciones.filter(m => m >= min && m <= max);
+        const actual = $('cita-duracion').value;
+        llenarSelect($('cita-duracion'), permitidas.map(m => ({ id: m, nombre: m + ' minutos' })), 'Seleccione');
+        $('cita-duracion').value = permitidas.includes(Number(actual)) ? actual : (permitidas.includes(sugerida) ? sugerida : '');
     }
 
     function llenarSelect(sel, items, vacio) {
@@ -280,7 +325,9 @@ window.Citas = (function () {
     function htmlSemana() {
         const lunes = lunesDe(parseISO(S.ref));
         const dias = Array.from({ length: 7 }, (_, i) => sumarDias(lunes, i));
-        let hMin = 8, hMax = 17;
+        const cl = S.cat.clinica;
+        let hMin = cl ? parseInt(cl.apertura.slice(0, 2), 10) : 9;
+        let hMax = cl ? Math.ceil(parseInt(cl.cierre.slice(0, 2), 10) + parseInt(cl.cierre.slice(3, 5), 10) / 60) - 1 : 17;
         S.citas.forEach(c => {
             const h = parseInt(c.hora.slice(0, 2), 10);
             hMin = Math.min(hMin, h); hMax = Math.max(hMax, h);
@@ -349,6 +396,9 @@ window.Citas = (function () {
         });
         $('cita-estado').value = 'programada';
         $('cita-paciente').disabled = false;
+        if (S.cat.duraciones && S.cat.duraciones.length) {
+            llenarSelect($('cita-duracion'), S.cat.duraciones.map(m => ({ id: m, nombre: m + ' minutos' })), 'Seleccione');
+        }
     }
 
     function nueva() {
@@ -375,7 +425,7 @@ window.Citas = (function () {
         $('cita-odontologo').value = c.id_odontologo;
         $('cita-fecha').min = c.fecha < hoy() ? c.fecha : hoy();
         $('cita-fecha').value = c.fecha;
-        $('cita-hora').value = c.hora;
+        ponerHora('cita-hora', c.hora);
         $('cita-duracion').value = c.duracion;
         $('cita-tipo').value = c.tipo_consulta;
         $('cita-obs').value = c.observaciones || '';
@@ -389,6 +439,24 @@ window.Citas = (function () {
         if (typeof mostrarPagina === 'function') mostrarPagina('agenda');  
     }
 
+    /** Avisa antes de enviar si la cita se sale del horario de atención */
+    function horaDentroDeClinica(hora, duracion) {
+        const cl = S.cat.clinica;
+        if (!cl || !hora) return true;
+        const m = h => parseInt(h.slice(0, 2), 10) * 60 + parseInt(h.slice(3, 5), 10);
+        if (m(hora) < m(cl.apertura) || m(hora) + (duracion || 0) > m(cl.cierre)) {
+            mostrarToast('La cita debe quedar dentro del horario de atención (' + cl.apertura + ' a ' + cl.cierre + ').', 'aviso');
+            $('cita-hora').classList.add('campo-invalido');
+            return false;
+        }
+        if ((m(hora) - m(cl.apertura)) % cl.paso !== 0) {
+            mostrarToast('La hora debe ir en intervalos de ' + cl.paso + ' minutos desde las ' + cl.apertura + ' (por ejemplo 9:30, 9:45, 10:00).', 'aviso');
+            $('cita-hora').classList.add('campo-invalido');
+            return false;
+        }
+        return true;
+    }
+
     async function guardar(btn) {
         const crear = S.modo === 'crear';
         const requeridos = [
@@ -398,6 +466,7 @@ window.Citas = (function () {
             ...(crear ? [['cita-estado', 'Estado']] : []),
         ];
         if (!validarRequeridos(requeridos)) return;
+        if (!horaDentroDeClinica($('cita-hora').value, Number($('cita-duracion').value))) return;
 
         const payload = {
             id_odontologo: Number($('cita-odontologo').value),
@@ -426,13 +495,22 @@ window.Citas = (function () {
             '<br>Actual: ' + esc(c.fecha_fmt) + ' a las ' + esc(c.hora) + ' (' + c.duracion + ' min)';
         $('rep-fecha').min = hoy();
         $('rep-fecha').value = c.fecha;
-        $('rep-hora').value = c.hora;
+        ponerHora('rep-hora', c.hora);
         ['rep-fecha', 'rep-hora'].forEach(id => $(id).classList.remove('campo-invalido'));
         abrirModal('modal-cita-reprogramar');
     }
 
     async function guardarReprogramacion(btn) {
         if (!validarRequeridos([['rep-fecha', 'Nueva fecha'], ['rep-hora', 'Nueva hora']])) return;
+        {
+            const cl = S.cat.clinica, h = $('rep-hora').value;
+            if (cl && h) {
+                const m = x => parseInt(x.slice(0, 2), 10) * 60 + parseInt(x.slice(3, 5), 10);
+                if ((m(h) - m(cl.apertura)) % cl.paso !== 0) {
+                    return mostrarToast('La hora debe ir en intervalos de ' + cl.paso + ' minutos desde las ' + cl.apertura + ' (por ejemplo 9:30, 9:45, 10:00).', 'aviso');
+                }
+            }
+        }
         await guardarJSON('citas.reprogramar', {
             id: Number($('rep-id').value), fecha: $('rep-fecha').value, hora: $('rep-hora').value,
         }, {

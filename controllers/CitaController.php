@@ -187,6 +187,16 @@ class CitaController
             'odontologos' => $odontologos,
             'tipos'       => Cita::TIPOS,
             'duraciones'  => Cita::DURACIONES,
+            'tipo_duracion' => Cita::TIPO_DURACION,
+            'clinica'     => (function () {
+                [$ap, $ci, $dias] = Cita::horarioClinica();
+                return [
+                    'apertura' => sprintf('%02d:%02d', intdiv($ap, 60), $ap % 60),
+                    'cierre'   => sprintf('%02d:%02d', intdiv($ci, 60), $ci % 60),
+                    'dias'     => $dias,
+                    'paso'     => Cita::PASO_MIN,
+                ];
+            })(),
             'estados'     => Cita::ESTADOS,
         ]);
     }
@@ -273,7 +283,9 @@ class CitaController
             'id_odontologo' => 'Odontólogo', 'fecha' => 'Fecha', 'hora' => 'Hora',
             'duracion' => 'Duración', 'tipo_consulta' => 'Tipo de consulta',
         ]);
-        $datos = $this->validarCita($d, $cita['fecha']);
+        $datos = $this->validarCita($d, $cita['fecha'], [
+            'fecha' => $cita['fecha'], 'hora' => substr($cita['hora_inicio'], 0, 5), 'duracion' => (int) $cita['duracion_min'],
+        ]);
 
         try {
             $this->model->actualizar($id, $datos);
@@ -453,7 +465,7 @@ class CitaController
         }
     }
 
-    private function validarCita(array $d, ?string $fechaOriginal = null): array
+    private function validarCita(array $d, ?string $fechaOriginal = null, ?array $original = null): array
     {
         $fecha = trim((string) $d['fecha']);
         $hora  = trim((string) $d['hora']);
@@ -472,6 +484,12 @@ class CitaController
             $this->responder(['ok' => false, 'error' => 'El tipo de consulta seleccionado no es válido.'], 400);
         }
 
+        // La duración debe tener sentido para el tipo de consulta
+        [$durMin, $durMax] = Cita::TIPO_DURACION[$tipo] ?? [15, 180];
+        if ($duracion < $durMin || $duracion > $durMax) {
+            $this->responder(['ok' => false, 'error' => "Para «$tipo» la duración debe estar entre $durMin y $durMax minutos."], 400);
+        }
+
         $obs = trim((string) ($d['observaciones'] ?? ''));
         if (mb_strlen($obs) > 500) {
             $this->responder(['ok' => false, 'error' => 'Las observaciones no pueden superar los 500 caracteres.'], 400);
@@ -487,6 +505,18 @@ class CitaController
         $finMin    = $inicioMin + $duracion;
         if ($finMin >= 24 * 60) {
             $this->responder(['ok' => false, 'error' => 'La cita debe terminar dentro del mismo día.'], 400);
+        }
+
+        // Si se está editando y no cambió fecha, hora ni duración, no se vuelve a exigir el horario
+        $sinCambioHorario = $original
+            && $original['fecha'] === $fecha && $original['hora'] === $hora && $original['duracion'] === $duracion;
+        if (!$sinCambioHorario) {
+            if ($error = Cita::errorHorarioClinica($fecha, $inicioMin, $duracion)) {
+                $this->responder(['ok' => false, 'error' => $error], 400);
+            }
+            if ($fecha === date('Y-m-d') && $inicioMin <= (int) date('G') * 60 + (int) date('i')) {
+                $this->responder(['ok' => false, 'error' => 'Esa hora ya pasó. Elija una hora posterior a la actual.'], 400);
+            }
         }
 
         return [

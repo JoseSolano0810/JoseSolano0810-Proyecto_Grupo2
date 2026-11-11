@@ -8,12 +8,12 @@ require_once ROOT_PATH . '/services/AuthService.php';
 
 /**
  * AsistenteReportesController.php — ASI-04 y seguimiento de ASI-05
- * Recepción y asistente dental consultan los reportes que los pacientes registran con el
+ * Recepción, asistente dental y administrador consultan los reportes que los pacientes registran con el
  * asistente inteligente y atienden las solicitudes de cita que salen de ellos.
  */
 class AsistenteReportesController
 {
-    private const ROLES = ['recepcionista', 'asistente_dental'];
+    private const ROLES = ['recepcionista', 'asistente_dental', 'administrador'];
 
     private const ESTADOS = [
         'registrado'     => 'Registrado',

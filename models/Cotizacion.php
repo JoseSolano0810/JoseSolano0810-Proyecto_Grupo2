@@ -118,6 +118,31 @@ class Cotizacion
         }
     }
 
+    /**
+     * Piezas dentales (FDI) de cada tratamiento: [id_tratamiento => [11, 12, ...]].
+     * Nunca lanza: si la tabla no existe devuelve [] para no romper el selector.
+     */
+    public function piezasPorTratamiento(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (!$ids) return [];
+        try {
+            $in   = implode(',', array_fill(0, count($ids), '?'));
+            $stmt = $this->db->prepare(
+                "SELECT id_tratamiento, numero_pieza FROM tratamiento_pieza
+                 WHERE id_tratamiento IN ($in) ORDER BY numero_pieza"
+            );
+            $stmt->execute($ids);
+            $mapa = [];
+            foreach ($stmt->fetchAll() as $r) {
+                $mapa[(int) $r['id_tratamiento']][] = (int) $r['numero_pieza'];
+            }
+            return $mapa;
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
     /* ── Escritura ───────────────────────────────────────────────── */
 
     /**
@@ -132,17 +157,19 @@ class Cotizacion
     {
         $stmt = $this->db->prepare(
             "INSERT INTO cotizacion
-                (id_tratamiento, id_paciente, descripcion,
-                 subtotal, descuento, iva, total,
+                (id_tratamiento, id_paciente, descripcion, piezas_dentales,
+                 subtotal, descuento, tasa_iva, iva, total,
                  observaciones, id_creado_por)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         $stmt->execute([
             (int)   $datos['id_tratamiento'],
             (int)   $datos['id_paciente'],
                     $datos['descripcion'],
+                    ($datos['piezas_dentales'] ?? '') ?: null,
             (float) $datos['subtotal'],
             (float) ($datos['descuento']   ?? 0),
+            (float) ($datos['tasa_iva']    ?? 13),
             (float) $datos['iva'],
             (float) $datos['total'],
                     ($datos['observaciones'] ?? '') ?: null,
@@ -151,9 +178,23 @@ class Cotizacion
         return (int) $this->db->lastInsertId();
     }
 
-    /** Actualiza el estado de una cotización (pendiente / aprobada / rechazada / pagada). */
-    public function cambiarEstado(int $id, string $estado): void
+    /**
+     * Actualiza el estado de una cotización (pendiente / aprobada / rechazada / pagada).
+     * Cuando es una decisión del paciente (aprobada / rechazada) guarda además la fecha,
+     * las observaciones y quién la registró (FIN-02).
+     */
+    public function cambiarEstado(int $id, string $estado, ?string $observaciones = null, ?int $idUsuario = null): void
     {
+        if (in_array($estado, ['aprobada', 'rechazada'], true)) {
+            $stmt = $this->db->prepare(
+                "UPDATE cotizacion
+                 SET estado = ?, fecha_decision = NOW(), observaciones_decision = ?, id_decidido_por = ?
+                 WHERE id_cotizacion = ?"
+            );
+            $stmt->execute([$estado, ($observaciones ?? '') !== '' ? $observaciones : null, $idUsuario, $id]);
+            return;
+        }
+
         $stmt = $this->db->prepare(
             "UPDATE cotizacion SET estado = ? WHERE id_cotizacion = ?"
         );
