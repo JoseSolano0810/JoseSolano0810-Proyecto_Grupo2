@@ -207,6 +207,10 @@
                 <i class="bi bi-bandaid"></i> Mis tratamientos
             </a>
 
+            <a class="sidebar-enlace <?= $pagina_activa === 'finalizados' ? 'activo' : '' ?>" onclick="mostrarPagina('finalizados')">
+                <i class="bi bi-clipboard2-check"></i> Tratamientos finalizados
+            </a>
+
             <a class="sidebar-enlace <?= $pagina_activa === 'pagos' ? 'activo' : '' ?>" onclick="mostrarPagina('pagos')">
                 <i class="bi bi-wallet2"></i> Mis pagos
             </a>

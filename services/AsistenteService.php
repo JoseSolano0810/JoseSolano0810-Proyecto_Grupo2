@@ -22,6 +22,18 @@ class AsistenteService
         'indicaciones'   => ['indicacion', 'indicaciones', 'recomendacion', 'recomendaciones', 'cuidados', 'instrucciones'],
     ];
 
+    /** Frases con las que el paciente pide hablar con la clínica (tienen prioridad sobre las demás consultas) */
+    private const PIDE_CONTACTO = [
+        'hablar con', 'comunicarme', 'comunicar con', 'contacto', 'contactar', 'telefono', 'llamar',
+        'numero de la clinica', 'numero de telefono', 'una persona', 'humano', 'operador', 'asesor',
+    ];
+
+    /** Pedir ayuda en general: solo cuenta si no se entendió otra consulta concreta */
+    private const PIDE_AYUDA = ['ayud', 'auxilio', 'socorro', 'no entiendo'];
+
+    /** Intentos seguidos sin reconocer la consulta antes de dar el contacto de la clínica */
+    public const MAX_NO_RECONOCIDOS = 3;
+
     private const SINTOMAS = [
         'dolor', 'duele', 'molestia', 'molesta', 'sangr', 'inflam', 'hincha', 'fiebre', 'se cayo', 'se me cayo',
         ' roto', 'rompi', 'quebr', 'sensibilidad', 'reportar', 'reporte', 'golpe', 'bracket', 'absceso',
@@ -44,11 +56,17 @@ class AsistenteService
         foreach (self::SINTOMAS as $s) {
             if (str_contains($t, $s)) return 'reportar';
         }
+        foreach (self::PIDE_CONTACTO as $p) {
+            if (str_contains($t, ' ' . $p)) return 'ayuda';
+        }
         foreach (self::PALABRAS as $intencion => $palabras) {
             foreach ($palabras as $p) {
                 // inicio de palabra: "cita" también coincide con "citas"
                 if (str_contains($t, ' ' . $p)) return $intencion;
             }
+        }
+        foreach (self::PIDE_AYUDA as $p) {
+            if (str_contains($t, ' ' . $p)) return 'ayuda';
         }
         return 'desconocida';
     }
@@ -63,6 +81,7 @@ class AsistenteService
             'procedimientos' => $this->procedimientos(),
             'pagos'          => $this->pagosPendientes(),
             'indicaciones'   => $this->indicaciones(),
+            'ayuda'          => $this->contactoClinica(false),
             default          => $this->menu(),
         };
     }
@@ -241,6 +260,34 @@ class AsistenteService
             'titulo'   => 'Sin información disponible',
             'mensaje'  => $detalle . $cierre,
             'contacto' => self::contacto(),
+            'clinica_abierta'  => $clinica['abierta'],
+            'proxima_apertura' => $clinica['proxima'],
+        ];
+    }
+
+    /**
+     * Entrega el contacto de la clínica: cuando el paciente pide ayuda
+     * o tras varias consultas seguidas que el asistente no pudo entender.
+     */
+    public function contactoClinica(bool $trasNoReconocido): array
+    {
+        $clinica = self::estadoClinica();
+        $nombre  = defined('CLINICA_NOMBRE') ? CLINICA_NOMBRE : 'la clínica';
+        $tel     = $clinica['telefono'] !== '' ? trim($clinica['telefono']) : '';
+
+        $intro = $trasNoReconocido
+            ? 'No he logrado entender su consulta. Para atenderle mejor, comuníquese directamente con ' . $nombre
+            : 'Con gusto. Para recibir ayuda de una persona, comuníquese con ' . $nombre;
+        $mensaje = $intro . ($tel !== '' ? ' al ' . $tel : '') . '. Atendemos ' . rtrim($clinica['horario'], '.') . '.';
+        if (!$clinica['abierta']) {
+            $mensaje .= ' Ahora la clínica está cerrada; puede llamar ' . rtrim($clinica['proxima'], '.') . '.';
+        }
+
+        return [
+            'tipo'             => 'contacto',
+            'titulo'           => 'Contacto de la clínica',
+            'mensaje'          => $mensaje,
+            'contacto'         => self::contacto(),
             'clinica_abierta'  => $clinica['abierta'],
             'proxima_apertura' => $clinica['proxima'],
         ];

@@ -3,6 +3,7 @@
 require_once ROOT_PATH . '/models/Tratamiento.php';
 require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/AuthService.php';
+require_once ROOT_PATH . '/services/NotificacionService.php';
 
 /**
  * TratamientoController.php — TRA-01 / TRA-02 / TRA-03 / TRA-04
@@ -107,6 +108,7 @@ class TratamientoController
             'inicio'             => $this->fecha($t['fecha_inicio']),
             'fecha_fin_estimada' => $t['fecha_fin_estimada'],
             'fin_estimada'       => $this->fecha($t['fecha_fin_estimada']),
+            'fecha_fin_real'     => $t['fecha_fin_real'],
             'fin_real'           => $this->fecha($t['fecha_fin_real']),
             'estado'             => $t['estado'],
             'estado_texto'       => Tratamiento::ETIQUETAS[$t['estado']] ?? $t['estado'],
@@ -210,10 +212,16 @@ class TratamientoController
             $this->responder(['ok' => false, 'error' => 'No encontramos ese tratamiento.'], 404);
         }
 
+        $historial = $this->model->historial($id);
+        // El paciente ve las etapas del tratamiento, no los movimientos internos de la clínica
+        if ($this->rolActivo() === 'paciente') {
+            $historial = array_values(array_filter($historial, fn($h) => $h['accion'] !== 'asociado'));
+        }
+
         $this->responder([
             'ok'        => true,
             'data'      => $this->formatear($t),
-            'historial' => array_map([$this, 'formatearHistorial'], $this->model->historial($id)),
+            'historial' => array_map([$this, 'formatearHistorial'], $historial),
         ]);
     }
 
@@ -363,6 +371,9 @@ class TratamientoController
                 'TRATAMIENTO_ESTADO',
                 "Plan #$id: {$etq[$anterior]} → {$etq[$estado]}" . ($estado === 'en_proceso' ? " ({$nuevoProgreso}%)" : '')
             );
+
+            // PAC-08: avisar al paciente del nuevo avance (no interrumpe el guardado si falla)
+            NotificacionService::avanceRegistrado($t);
 
             $this->responder([
                 'ok'      => true,

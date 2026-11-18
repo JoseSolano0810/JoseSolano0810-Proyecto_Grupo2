@@ -18,6 +18,7 @@ require_once ROOT_PATH . '/controllers/UsuarioController.php';
 require_once ROOT_PATH . '/controllers/CitaController.php';
 require_once ROOT_PATH . '/controllers/PacienteController.php';
 require_once ROOT_PATH . '/controllers/TratamientoController.php';
+require_once ROOT_PATH . '/controllers/NotificacionController.php';
 require_once ROOT_PATH . '/controllers/CotizacionController.php';
 require_once ROOT_PATH . '/controllers/PagoController.php';
 require_once ROOT_PATH . '/models/Pago.php';
@@ -69,6 +70,20 @@ switch ($accion) {
     case 'perfil.contrasena':
         header('Content-Type: application/json; charset=utf-8');
         (new LoginController())->cambiarContrasena();
+        break;
+
+    // PAC-08: enlace de una notificación (correo o campana); pide login si no hay sesión
+    case 'abrir_notificacion':
+        NotificacionController::abrir();
+        break;
+
+    // PAC-08: campana de notificaciones del portal del paciente
+    case 'notificaciones.listar':
+        (new NotificacionController())->listar();
+        break;
+
+    case 'notificaciones.leer':
+        (new NotificacionController())->leer();
         break;
 
     // bitácora
@@ -466,6 +481,8 @@ function cargarPanel(array $sesion): void
             $mis_citas        = $citaCtrl->listarMisCitas();
             $proxima_cita     = $citaCtrl->proximaCita();
             $mis_tratamientos = (new TratamientoController())->listar();
+            $notif_campana    = (new NotificacionController())->datosCampana();
+            $abrir_tratamiento = (int) ($_GET['trat'] ?? 0);
             try {
                 $resumen_pagos = (new Pago())->resumenPortalPaciente((int) $sesion['id']);
             } catch (Throwable $e) {

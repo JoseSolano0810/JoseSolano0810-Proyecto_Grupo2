@@ -38,3 +38,4 @@ define('CLINICA_HORA_APERTURA', '09:30');
 define('CLINICA_HORA_CIERRE',   '18:00');
 define('CLINICA_DIAS_ATENCION', [1, 2, 3, 4, 5, 6]);
 define('MAIL_REMITENTE', 'no-responder@' . (explode(':', $host)[0] ?: 'localhost'));
+define('NOTIFICACION_MEDIO', 'ambos');
