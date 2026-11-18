@@ -22,7 +22,16 @@ $mis_citas    = $mis_citas    ?? [];
 
 // Tratamientos reales del paciente (el controlador ya filtra por el paciente en sesión)
 $mis_tratamientos = $mis_tratamientos ?? [];
-$etiquetas_trat   = ['pendiente' => 'Pendiente', 'proceso' => 'En proceso', 'finalizado' => 'Finalizado', 'cancelado' => 'Cancelado'];
+$etiquetas_trat   = ['pendiente' => 'Pendiente', 'en_proceso' => 'En proceso', 'finalizado' => 'Finalizado', 'cancelado' => 'Cancelado'];
+
+// PAC-07: los finalizados van a su propia sección (historial); "Mis tratamientos" queda con los vigentes
+$trat_activos     = array_values(array_filter($mis_tratamientos, fn($t) => $t['estado'] !== 'finalizado'));
+$trat_finalizados = array_values(array_filter($mis_tratamientos, fn($t) => $t['estado'] === 'finalizado'));
+usort($trat_finalizados, fn($a, $b) => strcmp((string) ($b['fecha_fin_real'] ?: $b['fecha_inicio']), (string) ($a['fecha_fin_real'] ?: $a['fecha_inicio'])));
+
+// PAC-08: campana de notificaciones y tratamiento a abrir si el paciente llegó desde una notificación
+$notif_campana     = $notif_campana     ?? ['items' => [], 'no_leidas' => 0];
+$abrir_tratamiento = (int) ($abrir_tratamiento ?? 0);
 
 // Pagos reales (Pago::resumenPortalPaciente); misma fuente que el asistente
 $resumen_pagos    = $resumen_pagos ?? ['pagos' => [], 'pendientes' => [], 'saldo' => 0.0];
@@ -41,9 +50,20 @@ $saldo_pendiente  = (float) $resumen_pagos['saldo'];
             <span class="topbar-titulo" id="topbar-titulo">Mi portal</span>
             <div class="topbar-acciones">
                 <span class="topbar-fecha"><?= date('d/m/Y') ?></span>
-                <div class="topbar-notificacion">
-                    <i class="bi bi-bell"></i>
-                    <?php if ($saldo_pendiente > 0): ?><span class="notif-badge"><?= count($mis_pendientes) ?></span><?php endif; ?>
+                <div class="notif-wrap" id="notif-wrap"
+                     data-inicial="<?= htmlspecialchars(json_encode($notif_campana, JSON_UNESCAPED_UNICODE), ENT_QUOTES) ?>">
+                    <button type="button" class="topbar-notificacion" id="notif-boton"
+                            aria-label="Notificaciones" aria-haspopup="true" aria-expanded="false">
+                        <i class="bi bi-bell"></i>
+                        <span class="notif-badge" id="notif-badge" hidden></span>
+                    </button>
+                    <div class="notif-panel" id="notif-panel" role="menu" hidden>
+                        <div class="notif-panel-cab">
+                            <strong>Notificaciones</strong>
+                            <button type="button" class="notif-marcar" id="notif-marcar-todas">Marcar todas como leídas</button>
+                        </div>
+                        <div class="notif-lista" id="notif-lista"></div>
+                    </div>
                 </div>
             </div>
         </header>
@@ -110,18 +130,21 @@ $saldo_pendiente  = (float) $resumen_pagos['saldo'];
                     <div class="panel-titulo">
                         <h3>Mis tratamientos</h3>
                     </div>
-                    <?php if (!$mis_tratamientos): ?>
-    <p style="color:var(--gris-azulado);font-size:14px;">Aún no tiene tratamientos registrados. Cuando su odontólogo cree un plan, lo verá aquí.</p>
+                    <?php if (!$trat_activos): ?>
+    <p style="color:var(--gris-azulado);font-size:14px;">
+        <?= $trat_finalizados
+            ? 'No tiene tratamientos en curso. Puede revisar los concluidos en «Tratamientos finalizados».'
+            : 'Aún no tiene tratamientos registrados. Cuando su odontólogo cree un plan, lo verá aquí.' ?>
+    </p>
 <?php endif; ?>
-<?php foreach (array_slice($mis_tratamientos, 0, 3) as $t): ?>
+<?php foreach (array_slice($trat_activos, 0, 3) as $t): ?>
 <div class="tratamiento-item">
     <div class="tratamiento-header">
         <span><?= htmlspecialchars($t['nombre']) ?></span>
         <span><?= (int) $t['progreso'] ?>%</span>
     </div>
     <div style="font-size:12px;color:var(--gris-azulado);margin-bottom:6px;">
-        <?= (int) $t['sesiones_realizadas'] ?> de <?= (int) $t['sesiones_total'] ?> sesiones
-        — Inicio: <?= $t['inicio'] ?>
+        Inicio: <?= $t['inicio'] ?>
     </div>
     <div class="barra-progreso">
         <div class="barra-relleno" style="width:<?= (int) $t['progreso'] ?>%;"></div>
@@ -168,15 +191,19 @@ $saldo_pendiente  = (float) $resumen_pagos['saldo'];
 
         <div class="pagina" id="pagina-tratamientos">
             <h2 style="margin-bottom:20px;">Mis tratamientos</h2>
-            <?php if (!$mis_tratamientos): ?>
+            <?php if (!$trat_activos): ?>
     <div class="tarjeta" style="text-align:center;padding:40px 16px;">
         <i class="bi bi-clipboard2-pulse" style="font-size:36px;color:var(--verde-odent);"></i>
-        <h3 style="margin:10px 0 6px;">Todavía no tiene tratamientos</h3>
-        <p style="color:var(--gris-azulado);font-size:14px;">Cuando su odontólogo cree un plan para usted, podrá seguir su avance desde aquí.</p>
+        <h3 style="margin:10px 0 6px;"><?= $trat_finalizados ? 'No tiene tratamientos en curso' : 'Todavía no tiene tratamientos' ?></h3>
+        <p style="color:var(--gris-azulado);font-size:14px;">
+            <?= $trat_finalizados
+                ? 'Sus tratamientos concluidos están en «Tratamientos finalizados».'
+                : 'Cuando su odontólogo cree un plan para usted, podrá seguir su avance desde aquí.' ?>
+        </p>
     </div>
 <?php endif; ?>
 <div class="panel-grid col-2">
-    <?php foreach ($mis_tratamientos as $t): ?>
+    <?php foreach ($trat_activos as $t): ?>
     <div class="tarjeta">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;">
             <h3><?= htmlspecialchars($t['nombre']) ?></h3>
@@ -187,7 +214,6 @@ $saldo_pendiente  = (float) $resumen_pagos['saldo'];
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;color:var(--gris-azulado);margin-bottom:14px;">
             <div><strong style="color:var(--gris-texto);">Inicio</strong><br><?= $t['inicio'] ?></div>
             <div><strong style="color:var(--gris-texto);">Fin estimado</strong><br><?= date('d/m/Y', strtotime($t['fecha_fin_estimada'])) ?></div>
-            <div><strong style="color:var(--gris-texto);">Sesiones</strong><br><?= (int) $t['sesiones_realizadas'] ?> / <?= (int) $t['sesiones_total'] ?></div>
             <div><strong style="color:var(--gris-texto);">Su odontólogo</strong><br><?= htmlspecialchars($t['odontologo']) ?></div>
         </div>
         <?php if (!empty($t['piezas'])): ?>
@@ -207,9 +233,54 @@ $saldo_pendiente  = (float) $resumen_pagos['saldo'];
         <?php if (!empty($t['observaciones'])): ?>
             <div class="tre-pac-obs"><strong>Nota de su odontólogo:</strong> <?= htmlspecialchars($t['observaciones']) ?></div>
         <?php endif; ?>
+        <div style="margin-top:14px;">
+            <button type="button" class="btn-outline-odent" style="font-size:13px;padding:7px 12px;"
+                    onclick="abrirDetalleTratamiento(<?= (int) $t['id'] ?>)">
+                <i class="bi bi-list-check"></i> Ver detalle y avances
+            </button>
+        </div>
     </div>
     <?php endforeach; ?>
 </div>
+        </div>
+
+        <!-- PAC-07: historial de tratamientos concluidos -->
+        <div class="pagina" id="pagina-finalizados">
+            <h2 style="margin-bottom:6px;">Tratamientos finalizados</h2>
+            <p style="font-size:14px;color:var(--gris-azulado);margin-bottom:20px;">
+                Historial de la atención que ya concluyó.
+            </p>
+            <?php if (!$trat_finalizados): ?>
+            <div class="tarjeta" style="text-align:center;padding:40px 16px;">
+                <i class="bi bi-clipboard2-check" style="font-size:36px;color:var(--verde-odent);"></i>
+                <h3 style="margin:10px 0 6px;">Sin tratamientos finalizados</h3>
+                <p style="color:var(--gris-azulado);font-size:14px;">No existen tratamientos finalizados para consultar.</p>
+            </div>
+            <?php else: ?>
+            <div class="tarjeta" style="overflow-x:auto;">
+                <table class="tabla-odent">
+                    <thead>
+                        <tr><th>Tratamiento</th><th>Inicio</th><th>Finalización</th><th>Odontólogo</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($trat_finalizados as $t): ?>
+                        <tr>
+                            <td><strong><?= htmlspecialchars($t['nombre']) ?></strong></td>
+                            <td><?= htmlspecialchars($t['inicio']) ?></td>
+                            <td><?= htmlspecialchars($t['fin_real'] ?: $t['fin_estimada']) ?></td>
+                            <td><?= htmlspecialchars($t['odontologo']) ?></td>
+                            <td style="text-align:right;">
+                                <button type="button" class="btn-outline-odent" style="font-size:13px;padding:6px 12px;"
+                                        onclick="abrirDetalleTratamiento(<?= (int) $t['id'] ?>)">
+                                    <i class="bi bi-eye"></i> Ver detalle
+                                </button>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
         </div>
 
         <div class="pagina" id="pagina-pagos">
@@ -250,7 +321,26 @@ $saldo_pendiente  = (float) $resumen_pagos['saldo'];
 
 </div>
 
+<!-- Detalle de un tratamiento (finalizados y notificaciones) -->
+<div class="modal-overlay" id="modal-trat-detalle">
+    <div class="modal-caja" style="max-width:580px;">
+        <div class="modal-header">
+            <h3 id="td-titulo">Detalle del tratamiento</h3>
+            <button type="button" class="modal-cerrar" onclick="cerrarModal('modal-trat-detalle')" aria-label="Cerrar">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div id="td-cuerpo"></div>
+        <div class="modal-footer">
+            <button type="button" class="btn-outline-odent" onclick="cerrarModal('modal-trat-detalle')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<script>window.PACIENTE = { abrirTratamiento: <?= $abrir_tratamiento ?> };</script>
+
 <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
+<script src="<?= BASE_URL ?>/public/js/paciente.js?v=<?= @filemtime(ROOT_PATH . '/public/js/paciente.js') ?>"></script>
 <script src="<?= BASE_URL ?>/public/js/asistente.js?v=<?= @filemtime(ROOT_PATH . '/public/js/asistente.js') ?>"></script>
 </body>
 </html>

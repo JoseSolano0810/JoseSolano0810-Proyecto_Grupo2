@@ -48,6 +48,7 @@ const titulos = {
     cotizaciones:  'Cotizaciones',
     pagos:         'Pagos',
     citas:         'Mis citas',
+    finalizados:   'Tratamientos finalizados',
     asistente:     'Asistente inteligente',
         'asistente-reportes': 'Reportes del asistente',
     inventario:    'Inventario',

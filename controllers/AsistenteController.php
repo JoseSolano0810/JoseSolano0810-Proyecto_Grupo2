@@ -54,15 +54,18 @@ class AsistenteController
         $d         = $this->entrada();
         $intencion = (string) ($d['intencion'] ?? '');
         $texto     = mb_substr(trim((string) ($d['texto'] ?? '')), 0, 300);
+        $porTexto  = false;
 
         if (!in_array($intencion, AsistenteService::INTENCIONES, true)) {
             if ($texto === '') {
                 $this->responder(['ok' => false, 'error' => 'Escriba su consulta o elija una opción.'], 422);
             }
             $intencion = AsistenteService::detectarIntencion($texto);
+            $porTexto  = true;
         }
 
         if ($intencion === 'reportar') {
+            $this->reiniciarNoReconocidos();
             $this->responder(['ok' => true, 'respuesta' => [
                 'tipo'    => 'sugerir_reporte',
                 'titulo'  => 'Parece que tiene una molestia',
@@ -70,10 +73,36 @@ class AsistenteController
             ]]);
         }
 
-        $respuesta = (new AsistenteService($this->idUsuario()))->responder($intencion);
+        $servicio = new AsistenteService($this->idUsuario());
+
+        // Retroalimentación: tras 3 consultas seguidas sin entender, se entrega el contacto de la clínica
+        if ($porTexto && $intencion === 'desconocida') {
+            $fallos = $this->contarNoReconocido();
+            if ($fallos >= AsistenteService::MAX_NO_RECONOCIDOS) {
+                $this->reiniciarNoReconocidos();
+                Bitacora::registrar('ASISTENTE_CONSULTA', 'Contacto entregado tras consultas no reconocidas');
+                $this->responder(['ok' => true, 'respuesta' => $servicio->contactoClinica(true)]);
+            }
+        } else {
+            $this->reiniciarNoReconocidos();
+        }
+
+        $respuesta = $servicio->responder($intencion);
 
         Bitacora::registrar('ASISTENTE_CONSULTA', 'Consulta al asistente: ' . $intencion);
         $this->responder(['ok' => true, 'respuesta' => $respuesta]);
+    }
+
+    /** Suma una consulta no reconocida (consecutiva) en la sesión y devuelve el total */
+    private function contarNoReconocido(): int
+    {
+        $_SESSION['asistente_no_reconocidos'] = (int) ($_SESSION['asistente_no_reconocidos'] ?? 0) + 1;
+        return $_SESSION['asistente_no_reconocidos'];
+    }
+
+    private function reiniciarNoReconocidos(): void
+    {
+        unset($_SESSION['asistente_no_reconocidos']);
     }
 
     /* ── ASI-02: reporte guiado ─────────────────────────────── */

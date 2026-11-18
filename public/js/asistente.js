@@ -121,8 +121,8 @@
 
     /* ── Contacto con la clínica ────────────────────────────── */
 
-    function bloqueContacto(abierta) {
-        if (abierta === false) return null;
+    function bloqueContacto(abierta, forzar) {
+        if (abierta === false && !forzar) return null;
         const c = el('div', 'asi-contacto');
         if (TELEFONO) {
             const a = el('a', 'asi-btn asi-btn-primario');
@@ -166,6 +166,7 @@
             case 'cita':           return pintarCita(r);
             case 'lista':          return pintarLista(r);
             case 'sin_datos':      return pintarSinDatos(r);
+            case 'contacto':       return pintarContacto(r);
             case 'sugerir_reporte':return pintarSugerencia(r);
             default:               return burbujaBot(r.mensaje || 'No logré identificar su consulta. Elija una de las opciones de abajo.');
         }
@@ -207,6 +208,14 @@
         caja.appendChild(icono('info-circle'));
         caja.appendChild(el('span', null, r.mensaje));
         burbujaBot(caja, bloqueContacto(r.clinica_abierta !== false));
+    }
+
+    /** El paciente pidió ayuda o el asistente no lo entendió 3 veces: se muestra el contacto, incluso con la clínica cerrada */
+    function pintarContacto(r) {
+        const caja = el('div', 'asi-sin-datos');
+        caja.appendChild(icono('headset'));
+        caja.appendChild(el('span', null, r.mensaje));
+        burbujaBot(caja, bloqueContacto(r.clinica_abierta !== false, true));
     }
 
     function pintarSugerencia(r) {

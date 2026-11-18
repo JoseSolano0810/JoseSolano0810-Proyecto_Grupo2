@@ -34,6 +34,9 @@
             <?php endif; ?>
 
             <form action="<?= BASE_URL ?>/index.php?accion=login" method="POST" id="form-login">
+                <?php if (!empty($notif)): ?>
+                    <input type="hidden" name="notif" value="<?= (int) $notif ?>">
+                <?php endif; ?>
 
                 <div class="campo-grupo">
                     <label for="nombre">Nombre de usuario</label>

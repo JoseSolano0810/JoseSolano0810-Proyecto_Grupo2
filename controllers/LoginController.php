@@ -32,6 +32,9 @@ class LoginController
         ];
         $error = $mensajes[$codigoError] ?? null;
 
+        // PAC-08 esc. 2: el paciente llegó desde el enlace de una notificación
+        $notif = (int) ($_GET['notif'] ?? 0);
+
         require_once ROOT_PATH . '/views/login/index.php';
     }
 
@@ -78,6 +81,13 @@ class LoginController
         }
 
         AuthService::login($usuario);
+
+        // PAC-08 esc. 2: tras autenticarse, abrir el tratamiento de la notificación
+        $notif = (int) ($_POST['notif'] ?? 0);
+        if ($notif > 0) {
+            header('Location: ' . BASE_URL . '/index.php?accion=abrir_notificacion&id=' . $notif);
+            exit;
+        }
         $this->redirigirPorRol();
     }
 
