@@ -437,6 +437,7 @@ function cargarPanel(array $sesion): void
     $rol           = $sesion['rol'];                 // rol activo
     $roles_sesion  = $sesion['roles'] ?? [$rol];     // todos sus roles
     $pagina_activa = 'inicio';
+    $notif_campana = (new NotificacionController())->datosCampana();   // campana del topbar (todos los roles)
 
     switch ($rol) {
 
@@ -481,7 +482,7 @@ function cargarPanel(array $sesion): void
             $mis_citas        = $citaCtrl->listarMisCitas();
             $proxima_cita     = $citaCtrl->proximaCita();
             $mis_tratamientos = (new TratamientoController())->listar();
-            $notif_campana    = (new NotificacionController())->datosCampana();
+            // PAC-08 esc. 2: tratamiento a abrir al llegar desde una notificación
             $abrir_tratamiento = (int) ($_GET['trat'] ?? 0);
             try {
                 $resumen_pagos = (new Pago())->resumenPortalPaciente((int) $sesion['id']);

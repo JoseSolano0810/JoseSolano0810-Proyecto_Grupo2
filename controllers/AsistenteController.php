@@ -1,6 +1,7 @@
 <?php
 
 require_once ROOT_PATH . '/models/ReporteAsistente.php';
+require_once ROOT_PATH . '/services/NotificacionService.php';
 require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/AuthService.php';
 require_once ROOT_PATH . '/services/AsistenteService.php';
@@ -166,6 +167,7 @@ class AsistenteController
         ]);
 
         Bitacora::registrar('ASISTENTE_REPORTE', "Reporte #{$id} registrado con prioridad {$clasif['prioridad']}");
+        NotificacionService::reporteNuevo($id, $clasif['prioridad']);
 
         $clinica = AsistenteService::estadoClinica();
         $o = ClasificadorPrioridad::orientacion($clasif['prioridad'], $reporte, $clinica);

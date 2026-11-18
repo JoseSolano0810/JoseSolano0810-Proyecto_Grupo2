@@ -3,6 +3,7 @@
 require_once ROOT_PATH . '/models/Cita.php';
 require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/AuthService.php';
+require_once ROOT_PATH . '/services/NotificacionService.php';
 require_once ROOT_PATH . '/services/RecordatorioService.php';
 
 class CitaController
@@ -255,6 +256,8 @@ class CitaController
             error_log('CIT-01 crear cita: ' . $e->getMessage());
             $this->responder(['ok' => false, 'error' => 'No se pudo registrar la cita.'], 500);
         }
+
+        NotificacionService::citaNueva((int) $datos['id_odontologo'], $datos['fecha'], $datos['hora_inicio'], $this->idUsuario());
 
         $this->auditar($id, 'CREADA', 'CITA_CREADA',
             "Cita registrada para el {$datos['fecha']} a las " . substr($datos['hora_inicio'], 0, 5)

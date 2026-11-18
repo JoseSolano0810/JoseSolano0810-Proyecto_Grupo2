@@ -28,10 +28,7 @@
                 <span class="topbar-titulo" id="topbar-titulo">Panel principal</span>
                 <div class="topbar-acciones">
                     <span class="topbar-fecha"><?= date('d/m/Y') ?></span>
-                    <div class="topbar-notificacion">
-                        <i class="bi bi-bell"></i>
-                        <span class="notif-badge">3</span>
-                    </div>
+                    <?php include ROOT_PATH . '/views/shared/campana.php'; ?>
                 </div>
             </header>
 
@@ -1593,6 +1590,7 @@
     </div>
 
     <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
+    <script src="<?= BASE_URL ?>/public/js/notificaciones.js?v=<?= @filemtime(ROOT_PATH . '/public/js/notificaciones.js') ?>"></script>
     <script src="<?= BASE_URL ?>/public/js/citas.js?v=<?= @filemtime(ROOT_PATH . '/public/js/citas.js') ?>"></script>
     <script src="<?= BASE_URL ?>/public/js/tratamientos.js?v=<?= @filemtime(ROOT_PATH . '/public/js/tratamientos.js') ?>"></script>
     <?php if ($rol === 'administrador'): ?>
