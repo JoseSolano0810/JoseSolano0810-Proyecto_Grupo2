@@ -6,6 +6,10 @@ require_once ROOT_PATH . '/models/Bitacora.php';
 /**
  * NotificacionService.php — PAC-08
  * Genera las notificaciones al paciente cuando el odontólogo registra un avance.
+ *
+ * El medio lo define la clínica con NOTIFICACION_MEDIO ('portal' | 'correo' | 'ambos').
+ * Lo que sale del portal (correo) es un mensaje general: nunca lleva nombre del
+ * tratamiento, porcentajes ni observaciones; el detalle se ve solo tras autenticarse.
  */
 class NotificacionService
 {
@@ -63,6 +67,77 @@ class NotificacionService
         } catch (Throwable $e) {
             error_log('PAC-08 notificar avance: ' . $e->getMessage());
             return null;
+        }
+    }
+
+    /* ── Avisos para el personal (campana de administrador, odontólogo, recepción y asistente) ── */
+
+    /** Roles que gestionan reportes, solicitudes e inventario */
+    private const ROLES_GESTION = ['recepcionista', 'asistente_dental', 'administrador'];
+
+    /** Crea el aviso para cada usuario de esos roles. Nunca lanza. */
+    private static function avisarRoles(array $roles, string $tipo, string $titulo, string $mensaje, ?int $excluirUsuario = null): void
+    {
+        try {
+            $modelo = new Notificacion();
+            foreach ($modelo->usuariosConRol($roles) as $idUsuario) {
+                if ($idUsuario === $excluirUsuario) continue;
+                $modelo->crear($idUsuario, $tipo, $titulo, $mensaje, null);
+            }
+        } catch (Throwable $e) {
+            error_log('Notificación al personal (' . $tipo . '): ' . $e->getMessage());
+        }
+    }
+
+    /** El paciente envió un reporte de molestia desde el asistente */
+    public static function reporteNuevo(int $idReporte, string $prioridad): void
+    {
+        $alta = $prioridad === 'alta';
+        self::avisarRoles(
+            self::ROLES_GESTION,
+            Notificacion::TIPO_REPORTE,
+            $alta ? 'Reporte de prioridad ALTA' : 'Nuevo reporte de un paciente',
+            "Un paciente envió el reporte #{$idReporte} (prioridad {$prioridad}) desde el asistente. Revíselo en «Reportes del asistente»."
+        );
+    }
+
+    /** El paciente pidió una cita desde su reporte */
+    public static function solicitudCitaNueva(int $idSolicitud, ?string $fecha, ?string $hora): void
+    {
+        $cuando = ($fecha && $hora) ? ' para el ' . date('d/m/Y', strtotime($fecha)) . ' a las ' . substr($hora, 0, 5) : ' sin horario definido';
+        self::avisarRoles(
+            self::ROLES_GESTION,
+            Notificacion::TIPO_SOLICITUD,
+            'Nueva solicitud de cita',
+            "Un paciente solicitó la cita #{$idSolicitud}{$cuando}. Está pendiente de programar."
+        );
+    }
+
+    /** Un insumo quedó por debajo de su nivel mínimo */
+    public static function insumoBajo(string $nombre, int $cantidad, int $minimo): void
+    {
+        self::avisarRoles(
+            self::ROLES_GESTION,
+            Notificacion::TIPO_INSUMO,
+            'Insumo bajo el nivel mínimo',
+            "«{$nombre}» tiene {$cantidad} unidades (mínimo {$minimo}). Conviene reponerlo."
+        );
+    }
+
+    /** Se agendó una cita al odontólogo (no se avisa a quien la creó) */
+    public static function citaNueva(int $idOdontologo, string $fecha, string $hora, int $creadaPor): void
+    {
+        try {
+            if ($idOdontologo === $creadaPor) return;
+            (new Notificacion())->crear(
+                $idOdontologo,
+                Notificacion::TIPO_CITA,
+                'Nueva cita asignada',
+                'Tiene una cita el ' . date('d/m/Y', strtotime($fecha)) . ' a las ' . substr($hora, 0, 5) . '.',
+                null
+            );
+        } catch (Throwable $e) {
+            error_log('Notificación de cita: ' . $e->getMessage());
         }
     }
 

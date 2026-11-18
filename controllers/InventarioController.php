@@ -3,6 +3,7 @@
 require_once ROOT_PATH . '/models/Insumo.php';
 require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/AuthService.php';
+require_once ROOT_PATH . '/services/NotificacionService.php';
 
 class InventarioController
 {
@@ -326,6 +327,13 @@ class InventarioController
                 (int) $usuario['id'],
                 $observacion
             );
+
+            // Aviso al personal si esta salida dejó el insumo por debajo del mínimo
+            if ($tipo === 'salida' && is_array($insumo)
+                && (int) $insumo['cantidad_disponible'] < (int) $insumo['nivel_minimo']
+                && (int) $insumo['cantidad_disponible'] + (int) $cantidad >= (int) $insumo['nivel_minimo']) {
+                NotificacionService::insumoBajo((string) $insumo['nombre'], (int) $insumo['cantidad_disponible'], (int) $insumo['nivel_minimo']);
+            }
 
             Bitacora::registrar(
                 $tipo === 'entrada'

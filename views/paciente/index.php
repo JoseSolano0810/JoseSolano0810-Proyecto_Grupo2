@@ -50,21 +50,7 @@ $saldo_pendiente  = (float) $resumen_pagos['saldo'];
             <span class="topbar-titulo" id="topbar-titulo">Mi portal</span>
             <div class="topbar-acciones">
                 <span class="topbar-fecha"><?= date('d/m/Y') ?></span>
-                <div class="notif-wrap" id="notif-wrap"
-                     data-inicial="<?= htmlspecialchars(json_encode($notif_campana, JSON_UNESCAPED_UNICODE), ENT_QUOTES) ?>">
-                    <button type="button" class="topbar-notificacion" id="notif-boton"
-                            aria-label="Notificaciones" aria-haspopup="true" aria-expanded="false">
-                        <i class="bi bi-bell"></i>
-                        <span class="notif-badge" id="notif-badge" hidden></span>
-                    </button>
-                    <div class="notif-panel" id="notif-panel" role="menu" hidden>
-                        <div class="notif-panel-cab">
-                            <strong>Notificaciones</strong>
-                            <button type="button" class="notif-marcar" id="notif-marcar-todas">Marcar todas como leídas</button>
-                        </div>
-                        <div class="notif-lista" id="notif-lista"></div>
-                    </div>
-                </div>
+                <?php include ROOT_PATH . '/views/shared/campana.php'; ?>
             </div>
         </header>
 
@@ -340,6 +326,7 @@ $saldo_pendiente  = (float) $resumen_pagos['saldo'];
 <script>window.PACIENTE = { abrirTratamiento: <?= $abrir_tratamiento ?> };</script>
 
 <script src="<?= BASE_URL ?>/public/js/app.js?v=<?= @filemtime(ROOT_PATH . '/public/js/app.js') ?>"></script>
+<script src="<?= BASE_URL ?>/public/js/notificaciones.js?v=<?= @filemtime(ROOT_PATH . '/public/js/notificaciones.js') ?>"></script>
 <script src="<?= BASE_URL ?>/public/js/paciente.js?v=<?= @filemtime(ROOT_PATH . '/public/js/paciente.js') ?>"></script>
 <script src="<?= BASE_URL ?>/public/js/asistente.js?v=<?= @filemtime(ROOT_PATH . '/public/js/asistente.js') ?>"></script>
 </body>

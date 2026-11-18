@@ -2,6 +2,7 @@
 
 require_once ROOT_PATH . '/models/SolicitudCitaAsistente.php';
 require_once ROOT_PATH . '/models/ReporteAsistente.php';
+require_once ROOT_PATH . '/services/NotificacionService.php';
 require_once ROOT_PATH . '/models/Bitacora.php';
 require_once ROOT_PATH . '/services/AuthService.php';
 
@@ -203,6 +204,7 @@ class AsistenteSolicitudController
             );
 
             $s = $this->solicitudes->obtenerPorId($id);
+            NotificacionService::solicitudCitaNueva($id, $conHorario ? $fecha : null, $conHorario ? $hora : null);
             $this->responder([
                 'ok'        => true,
                 'id'        => $id,

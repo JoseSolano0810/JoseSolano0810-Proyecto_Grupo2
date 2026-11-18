@@ -13,8 +13,14 @@ class NotificacionController
 
     public function __construct()
     {
-        AuthService::requerir(['paciente']);
+        AuthService::requerir(AuthService::ROLES);
         $this->model = new Notificacion();
+    }
+
+    /** Tipos de aviso que corresponden al rol con el que está trabajando el usuario */
+    private function tipos(): array
+    {
+        return Notificacion::tiposDeRol((string) (AuthService::usuarioActual()['rol'] ?? ''));
     }
 
     private function idUsuario(): int
@@ -30,6 +36,7 @@ class NotificacionController
         exit;
     }
 
+    /** Fecha corta y legible: "Hoy 14:30", "Ayer 09:10" o "12/11/2026" */
     public static function fechaRelativa(string $f): string
     {
         $t = strtotime($f);
@@ -59,11 +66,12 @@ class NotificacionController
             'titulo'         => $n['titulo'],
             'mensaje'        => $n['mensaje'],
             'id_tratamiento' => $n['id_tratamiento'] !== null ? (int) $n['id_tratamiento'] : null,
+            'destino'        => Notificacion::DESTINOS[$n['tipo']] ?? null,
             'leida'          => (bool) $n['leida'],
             'fecha'          => self::fechaRelativa($n['created_at']),
-        ], $this->model->listar($this->idUsuario()));
+        ], $this->model->listar($this->idUsuario(), $this->tipos()));
 
-        return ['items' => $items, 'no_leidas' => $this->model->contarNoLeidas($this->idUsuario())];
+        return ['items' => $items, 'no_leidas' => $this->model->contarNoLeidas($this->idUsuario(), $this->tipos())];
     }
 
     /** GET: notificaciones.listar */
@@ -79,17 +87,18 @@ class NotificacionController
         $d = is_array($d) ? $d : [];
 
         if (!empty($d['todas'])) {
-            $this->model->marcarTodasLeidas($this->idUsuario());
+            $this->model->marcarTodasLeidas($this->idUsuario(), $this->tipos());
         } else {
             $id = (int) ($d['id'] ?? 0);
             if (!$id) $this->responder(['ok' => false, 'error' => 'Falta la notificación.'], 400);
             $this->model->marcarLeida($id, $this->idUsuario());
         }
-        $this->responder(['ok' => true, 'no_leidas' => $this->model->contarNoLeidas($this->idUsuario())]);
+        $this->responder(['ok' => true, 'no_leidas' => $this->model->contarNoLeidas($this->idUsuario(), $this->tipos())]);
     }
 
     /**
      * PAC-08 esc. 2: enlace de la notificación (viene en el correo).
+     * Sin sesión → login y luego regresa aquí; con sesión → marca leída y abre el tratamiento.
      */
     public static function abrir(): void
     {
